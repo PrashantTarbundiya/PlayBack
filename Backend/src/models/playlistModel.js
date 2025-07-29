@@ -17,7 +17,20 @@ const playlistSchema = new Schema({
     owner : {
         type : mongoose.Schema.Types.ObjectId,
         ref : "User"
-    }
+    },
+    isPublic: {
+        type: Boolean,
+        default: true
+    },
+    visibility: {
+        type: String,
+        enum: ['public', 'private'],
+        default: 'public'
+    },
+    savedBy: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+    }]
 },{timestamps:true});
 
 export const playlistModel = model("Playlist",playlistSchema);

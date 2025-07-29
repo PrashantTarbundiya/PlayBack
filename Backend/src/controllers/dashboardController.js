@@ -100,9 +100,6 @@ const getChannelVideos = asyncHandler(async (req, res) => {
         },
         {
             $addFields :{
-                createdAt: {
-                    $dateToParts: { date: "$createdAt" }
-                },
                 likesCount: {
                     $size: "$likes"
                 }
@@ -116,15 +113,12 @@ const getChannelVideos = asyncHandler(async (req, res) => {
         {
             $project : {
                 _id : 1,
-                "videoFile.url": 1,
-                "thumbnail.url": 1,
+                videoFile: 1,
+                thumbnail: 1,
                 title: 1,
                 description: 1,
-                createdAt: {
-                    year: 1,
-                    month: 1,
-                    day: 1
-                },
+                views: 1,
+                createdAt: 1,
                 isPublished: 1,
                 likesCount: 1
             }

@@ -39,4 +39,21 @@ const deleteOnCloudinary = async (public_id, resource_type="image") => {
 };
 
 
-export {uploadOnCloudinary,deleteOnCloudinary}
+const uploadFromUrlToCloudinary = async (imageUrl) => {
+    try {
+        if (!imageUrl) return null;
+
+        // Upload directly from URL to Cloudinary
+        const response = await cloudinary.uploader.upload(imageUrl, {
+            resource_type: "auto",
+            folder: "oauth_avatars"
+        });
+
+        return response;
+    } catch (error) {
+        console.error('Cloudinary URL upload error:', error);
+        return null;
+    }
+};
+
+export {uploadOnCloudinary, deleteOnCloudinary, uploadFromUrlToCloudinary}

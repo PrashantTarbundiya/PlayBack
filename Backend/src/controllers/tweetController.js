@@ -3,6 +3,7 @@ import {apiErrors} from "../utils/apiErrors.js"
 import {apiResponse} from "../utils/apiResponse.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
 import { tweetModel } from "../models/tweetModel.js"
+import { createTweetNotification } from "./notificationController.js"
 
 const createTweet = asyncHandler(async (req, res) => {
     const {content} = req.body;
@@ -13,12 +14,14 @@ const createTweet = asyncHandler(async (req, res) => {
 
     const tweet = await tweetModel.create({
         content,
-        owner : req.user?._id 
+        owner : req.user?._id
     })
 
     if(!tweet){
         throw new apiErrors(500, "failed to create tweet please try again")
     }
+
+    createTweetNotification(tweet._id, req.user._id);
 
     return res.status(200)
     .json(
@@ -46,21 +49,22 @@ const getUserTweets = asyncHandler(async (req, res) => {
         },
         {
             $lookup :{
-                from : "User",
+                from : "users",
                 localField : "owner",
                 foreignField : "_id",
                 as : "ownerDetails",
                 pipeline : [{
                     $project :{
                         username : 1,
-                        "avatar.url" : 1,
+                        fullName: 1,
+                        avatar : 1,
                     }
                 }]
             }
         },
         {
             $lookup:{
-                from : "Like",
+                from : "likes",
                 localField : "_id",
                 foreignField : "tweet",
                 as : "likeDetails",
@@ -73,21 +77,15 @@ const getUserTweets = asyncHandler(async (req, res) => {
         },
         {
             $addFields:{
-                likeCount : {
+                likesCount : {
                     $size: "$likeDetails"
                 },
                 ownerDetails :{
                     $first : "$ownerDetails"
                 },
-                isliked : {
-                    $cond :{
-                        if:{
-                            $in: [req.user?._id,"$likeDetails.likedBy"]
-                        },
-                        then : true,
-                        else : false
-                    }
-                }
+                isLiked: req.user?._id ? {
+                    $in: [new mongoose.Types.ObjectId(req.user._id), "$likeDetails.likedBy"]
+                } : false
             }
         },
         {
@@ -193,9 +191,88 @@ const deleteTweet = asyncHandler(async (req, res) => {
     
 })
 
+const getAllTweets = asyncHandler(async (req, res) => {
+    const { page = 1, limit = 10 } = req.query;
+
+    const tweets = await tweetModel.aggregate([
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "ownerDetails",
+                pipeline: [{
+                    $project: {
+                        username: 1,
+                        fullName: 1,
+                        avatar: 1,
+                    }
+                }]
+            }
+        },
+        {
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "tweet",
+                as: "likeDetails",
+                pipeline: [{
+                    $project: {
+                        likedBy: 1,
+                    }
+                }]
+            }
+        },
+        {
+            $addFields: {
+                likesCount: {
+                    $size: "$likeDetails"
+                },
+                ownerDetails: {
+                    $first: "$ownerDetails"
+                },
+                isLiked: req.user?._id ? {
+                    $in: [new mongoose.Types.ObjectId(req.user._id), "$likeDetails.likedBy"]
+                } : false
+            }
+        },
+        {
+            $sort: {
+                createdAt: -1
+            }
+        },
+        {
+            $skip: (page - 1) * parseInt(limit)
+        },
+        {
+            $limit: parseInt(limit)
+        },
+        {
+            $project: {
+                content: 1,
+                owner: 1,
+                ownerDetails: 1,
+                likesCount: 1,
+                createdAt: 1,
+                isLiked: 1
+            }
+        }
+    ]);
+
+    return res.status(200)
+        .json(
+            new apiResponse(
+                200,
+                tweets,
+                "All tweets fetched successfully"
+            )
+        )
+})
+
 export {
     createTweet,
     getUserTweets,
     updateTweet,
-    deleteTweet
+    deleteTweet,
+    getAllTweets
 }

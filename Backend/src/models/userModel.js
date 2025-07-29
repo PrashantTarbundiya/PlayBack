@@ -39,10 +39,47 @@ const userSchema = new Schema({
     ],
     password:{
         type:String,
-        required:[true,'Password is required'],
+        required:function() {
+            // Password is required only if no OAuth provider is used
+            return !this.googleId && !this.facebookId && !this.githubId;
+        },
     },
     refreshToken:{
         type:String
+    },
+    resetPasswordOTP:{
+        type:String
+    },
+    resetPasswordOTPExpiry:{
+        type:Date
+    },
+    resetPasswordAttempts:{
+        type:Number,
+        default:0
+    },
+    resetPasswordLastAttempt:{
+        type:Date
+    },
+    googleId:{
+        type:String,
+        sparse:true
+    },
+    facebookId:{
+        type:String,
+        sparse:true
+    },
+    githubId:{
+        type:String,
+        sparse:true
+    },
+    provider:{
+        type:String,
+        enum:['local', 'google', 'facebook', 'github'],
+        default:'local'
+    },
+    isEmailVerified:{
+        type:Boolean,
+        default:false
     }
 },{timestamps:true})
 

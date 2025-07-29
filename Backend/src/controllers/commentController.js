@@ -45,7 +45,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
         },
         {
             $addFields :{
-                likeCount : {
+                likesCount : {
                     $size : "$likes"
                 },
                 owner : {
@@ -71,7 +71,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
             $project : {
                 content: 1,
                 createdAt: 1,
-                likeCount: 1,
+                likesCount: 1,
                 owner: {
                     username: 1,
                     fullName: 1,
@@ -126,11 +126,70 @@ const addComment = asyncHandler(async (req, res) => {
         throw new apiErrors(500,"Failed to add comment please try again")
     }
 
+    // Populate the comment with owner details and like information
+    const populatedComment = await commentModel.aggregate([
+        {
+            $match: {
+                _id: comment._id
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner"
+            }
+        },
+        {
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "comment",
+                as: "likes"
+            }
+        },
+        {
+            $addFields: {
+                likesCount: {
+                    $size: "$likes"
+                },
+                owner: {
+                    $first: "$owner"
+                },
+                isLiked: {
+                    $cond: {
+                        if: {
+                            $in: [req.user?._id, "$likes.likedBy"]
+                        },
+                        then: true,
+                        else: false
+                    }
+                }
+            }
+        },
+        {
+            $project: {
+                content: 1,
+                createdAt: 1,
+                likesCount: 1,
+                owner: {
+                    username: 1,
+                    fullName: 1,
+                    "avatar.url": 1
+                },
+                isLiked: 1
+            }
+        }
+    ])
+
+    const commentWithDetails = populatedComment[0] || comment
+
     return res.status(200)
     .json(
         new apiResponse(
             200,
-            comment,
+            commentWithDetails,
             "Comment added successfully"
         )
     )

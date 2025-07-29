@@ -156,6 +156,11 @@ const getLikedVideos = asyncHandler(async (req, res) => {
                     },
                     {
                         $unwind: "$ownerDetails",
+                    },
+                    {
+                        $addFields: {
+                            owner: "$ownerDetails"
+                        }
                     }
                 ]
             }
@@ -175,18 +180,18 @@ const getLikedVideos = asyncHandler(async (req, res) => {
                     _id : 1,
                     "videoFile.url" : 1,
                     "thumbnail.url" : 1,
-                    owner : 1,
+                    owner : {
+                        _id: 1,
+                        username: 1,
+                        fullName: 1,
+                        avatar: 1,
+                    },
                     title : 1,
                     description: 1,
                     views: 1,
                     duration: 1,
                     createdAt: 1,
-                    isPublished: 1,
-                    ownerDetails: {
-                        username: 1,
-                        fullName: 1,
-                        "avatar.url": 1,
-                    }
+                    isPublished: 1
                 }
             }
         }
