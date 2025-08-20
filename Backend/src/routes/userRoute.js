@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { apiErrors } from "../utils/apiErrors.js";
 import {
     registerUser,
     loginUser,
@@ -81,10 +82,10 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     );
 } else {
     router.get("/auth/google", (req, res) => {
-        res.status(501).json({ success: false, message: "Google OAuth not configured" });
+        res.status(501).json(new apiErrors(501, "Google OAuth not configured"));
     });
     router.get("/auth/google/callback", (req, res) => {
-        res.status(501).json({ success: false, message: "Google OAuth not configured" });
+        res.status(501).json(new apiErrors(501, "Google OAuth not configured"));
     });
 }
 
@@ -100,10 +101,10 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
     );
 } else {
     router.get("/auth/facebook", (req, res) => {
-        res.status(501).json({ success: false, message: "Facebook OAuth not configured" });
+        res.status(501).json(new apiErrors(501, "Facebook OAuth not configured"));
     });
     router.get("/auth/facebook/callback", (req, res) => {
-        res.status(501).json({ success: false, message: "Facebook OAuth not configured" });
+        res.status(501).json(new apiErrors(501, "Facebook OAuth not configured"));
     });
 }
 
@@ -119,10 +120,10 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
     );
 } else {
     router.get("/auth/github", (req, res) => {
-        res.status(501).json({ success: false, message: "GitHub OAuth not configured" });
+        res.status(501).json(new apiErrors(501, "GitHub OAuth not configured"));
     });
     router.get("/auth/github/callback", (req, res) => {
-        res.status(501).json({ success: false, message: "GitHub OAuth not configured" });
+        res.status(501).json(new apiErrors(501, "GitHub OAuth not configured"));
     });
 }
 
