@@ -71,8 +71,8 @@ const Upload = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!videoFile) return toast.error("Please select a video file")
-    if (!user) return toast.error("Please login to upload videos")
+    if (!videoFile) return toast.remove(), toast.error("Please select a video file")
+    if (!user) return toast.remove(), toast.error("Please login to upload videos")
 
     setUploading(true)
     setUploadProgress(0)
@@ -92,6 +92,7 @@ const Upload = () => {
         },
       })
 
+      toast.remove()
       toast.success("Video uploaded successfully!")
       
       // Extract video ID from response - backend returns video directly in response.data
@@ -111,6 +112,7 @@ const Upload = () => {
       }
     } catch (error) {
       // If upload fails completely, still redirect to profile instead of showing error
+      toast.remove()
       toast.success("Video upload completed!")
       navigate(`/profile/${user.username}`)
     } finally {

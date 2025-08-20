@@ -32,6 +32,7 @@ const Settings = () => {
     e.preventDefault()
     
     if (!formData.fullName.trim() || !formData.email.trim()) {
+      toast.remove()
       toast.error("Please fill in all fields")
       return
     }
@@ -40,9 +41,10 @@ const Settings = () => {
       setLoading(true)
       const response = await authAPI.updateProfile(formData)
       updateUser(response.data.data)
+      toast.remove()
       toast.success("Profile updated successfully")
     } catch (error) {
-      console.error("Profile update error:", error)
+      toast.remove()
       toast.error("Failed to update profile")
     } finally {
       setLoading(false)
@@ -53,16 +55,19 @@ const Settings = () => {
     e.preventDefault()
     
     if (!passwordData.oldPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+      toast.remove()
       toast.error("Please fill in all password fields")
       return
     }
 
     if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.remove()
       toast.error("New passwords don't match")
       return
     }
 
     if (passwordData.newPassword.length < 6) {
+      toast.remove()
       toast.error("New password must be at least 6 characters")
       return
     }
@@ -78,9 +83,10 @@ const Settings = () => {
         newPassword: "",
         confirmPassword: "",
       })
+      toast.remove()
       toast.success("Password changed successfully")
     } catch (error) {
-      console.error("Password change error:", error)
+      toast.remove()
       toast.error("Failed to change password")
     } finally {
       setLoading(false)
@@ -98,9 +104,10 @@ const Settings = () => {
       setLoading(true)
       const response = await authAPI.updateAvatar(formData)
       updateUser(response.data.data)
+      toast.remove()
       toast.success("Avatar updated successfully")
     } catch (error) {
-      console.error("Avatar upload error:", error)
+      toast.remove()
       toast.error("Failed to update avatar")
     } finally {
       setLoading(false)
@@ -118,9 +125,10 @@ const Settings = () => {
       setLoading(true)
       const response = await authAPI.updateCoverImage(formData)
       updateUser(response.data.data)
+      toast.remove()
       toast.success("Cover image updated successfully")
     } catch (error) {
-      console.error("Cover image upload error:", error)
+      toast.remove()
       toast.error("Failed to update cover image")
     } finally {
       setLoading(false)

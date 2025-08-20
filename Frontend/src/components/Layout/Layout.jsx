@@ -5,6 +5,7 @@ import { Outlet } from "react-router-dom"
 import { useResponsive } from "../../hooks/useResponsive"
 import Header from "./Header"
 import Sidebar from "./Sidebar"
+import MiniPlayer from "../MiniPlayer/MiniPlayer"
 
 const Layout = memo(() => {
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -49,6 +50,9 @@ const Layout = memo(() => {
           <Outlet />
         </main>
       </div>
+
+      {/* Mini Player - Rendered at layout level for global access */}
+      <MiniPlayer />
     </div>
   )
 })

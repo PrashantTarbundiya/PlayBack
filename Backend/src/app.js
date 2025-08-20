@@ -3,6 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import session from "express-session";
 import passport from "./config/passport.js";
+import { apiErrors } from "./utils/apiErrors.js";
 
 const app = express();
 app.use(cors({
@@ -57,19 +58,15 @@ app.use("/api/v1/notifications", notificationRouter)
 
 app.use((err, req, res, next) => {
     if (err.statusCode) {
-        return res.status(err.statusCode).json({
-            success: false,
-            message: err.message,
-            errors: err.errors || []
-        });
+        return res.status(err.statusCode).json(
+            new apiErrors(err.statusCode, err.message, err.errors || [])
+        );
     }
 
-    
     console.error(err.stack);
-    return res.status(500).json({
-        success: false,
-        message: "Internal server error"
-    });
+    return res.status(500).json(
+        new apiErrors(500, "Internal server error")
+    );
 });
 
 export { app }

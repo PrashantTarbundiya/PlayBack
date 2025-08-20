@@ -29,7 +29,8 @@ api.interceptors.response.use(
   },
   (error) => {
     const status = error?.response?.status;
-    const message = error?.response?.data?.message || "An error occurred";
+    const payload = error?.response?.data || {};
+    const message = payload?.message || (Array.isArray(payload?.errors) && payload.errors[0]?.message) || "An error occurred";
 
     if (error.code === "ECONNABORTED") {
       toast.error("Request timeout. Please try again.");

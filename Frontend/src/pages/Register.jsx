@@ -133,6 +133,7 @@ const Register = () => {
 
   const verifyOTP = async () => {
     if (!formData.otp || formData.otp.length !== 6) {
+      toast.remove()
       toast.error("Please enter a valid 6-digit OTP")
       return
     }
@@ -145,10 +146,11 @@ const Register = () => {
       })
       
       setStep(4)
+      toast.remove()
       toast.success("OTP verified successfully!")
     } catch (error) {
-      console.error('OTP verification error:', error)
       const errorMessage = error.response?.data?.message || "Invalid or expired OTP"
+      toast.remove()
       toast.error(errorMessage)
       setErrors({ otp: errorMessage })
     } finally {
@@ -165,6 +167,7 @@ const Register = () => {
       
       // Check if there's a development OTP
       if (response.data?.data?.developmentOTP) {
+        toast.remove()
         toast.success(`Development OTP: ${response.data.data.developmentOTP}`, {
           duration: 10000,
           style: {
@@ -174,10 +177,11 @@ const Register = () => {
           }
         })
       } else {
+        toast.remove()
         toast.success('OTP sent to your email!')
       }
     } catch (error) {
-      console.error('OTP error:', error)
+      toast.remove()
       toast.error(error.response?.data?.message || 'Failed to send OTP')
     } finally {
       setOtpLoading(false)
@@ -224,7 +228,7 @@ const Register = () => {
       await register(form)
       navigate("/", { replace: true })
     } catch (error) {
-      console.error("Registration error:", error)
+      // console.error("Registration error:", error)
     } finally {
       setLoading(false)
     }

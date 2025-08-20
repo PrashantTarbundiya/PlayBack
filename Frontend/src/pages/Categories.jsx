@@ -38,7 +38,7 @@ const Categories = () => {
       const categoriesData = response.data?.data || []
       setCategories([{ name: 'All', count: categoriesData.reduce((sum, cat) => sum + cat.count, 0) }, ...categoriesData])
     } catch (error) {
-      console.error('Failed to fetch categories:', error)
+      // console.error('Failed to fetch categories:', error)
     } finally {
       setCategoriesLoading(false)
     }
@@ -82,7 +82,7 @@ const Categories = () => {
       }
       
     } catch (error) {
-      console.error('Failed to fetch videos:', error)
+      // console.error('Failed to fetch videos:', error)
       if (reset) {
         setVideos([])
       }

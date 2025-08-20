@@ -51,7 +51,6 @@ const Tweets = () => {
           
           setTweets(followingTweets);
         } catch (subscriptionError) {
-          console.error('Error fetching subscriptions:', subscriptionError);
           // Fallback to showing all tweets if subscription fetch fails
           setTweets(tweetsWithLikeState);
         }
@@ -59,7 +58,7 @@ const Tweets = () => {
         setTweets(tweetsWithLikeState);
       }
     } catch (error) {
-      console.error('Error fetching tweets:', error);
+      toast.remove()
       toast.error('Failed to load tweets');
     } finally {
       setLoading(false);
@@ -74,6 +73,7 @@ const Tweets = () => {
   const handleCreateTweet = async (e) => {
     e.preventDefault();
     if (!newTweet.trim()) {
+      toast.remove()
       toast.error('Tweet content cannot be empty');
       return;
     }
@@ -97,9 +97,10 @@ const Tweets = () => {
       
       setTweets(prevTweets => [tweetWithDetails, ...prevTweets]);
       setNewTweet('');
+      toast.remove()
       toast.success('Tweet created successfully!');
     } catch (error) {
-      console.error('Error creating tweet:', error);
+      toast.remove()
       toast.error('Failed to create tweet');
     } finally {
       setSubmitting(false);
@@ -108,6 +109,7 @@ const Tweets = () => {
 
   const handleUpdateTweet = async (tweetId) => {
     if (!editContent.trim()) {
+      toast.remove()
       toast.error('Tweet content cannot be empty');
       return;
     }
@@ -122,9 +124,10 @@ const Tweets = () => {
       setEditingTweet(null);
       setEditContent('');
       setShowDropdown(null);
+      toast.remove()
       toast.success('Tweet updated successfully!');
     } catch (error) {
-      console.error('Error updating tweet:', error);
+      toast.remove()
       toast.error('Failed to update tweet');
     }
   };
@@ -138,15 +141,17 @@ const Tweets = () => {
       await tweetAPI.deleteTweet(tweetId);
       setTweets(prevTweets => prevTweets.filter(tweet => tweet._id !== tweetId));
       setShowDropdown(null);
+      toast.remove()
       toast.success('Tweet deleted successfully!');
     } catch (error) {
-      console.error('Error deleting tweet:', error);
+      toast.remove()
       toast.error('Failed to delete tweet');
     }
   };
 
   const handleToggleLike = async (tweetId) => {
     if (!user) {
+      toast.remove()
       toast.error('Please login to like tweets');
       return;
     }
@@ -182,7 +187,7 @@ const Tweets = () => {
       await fetchTweets();
       
     } catch (error) {
-      console.error('Error toggling like:', error);
+      toast.remove()
       toast.error('Failed to toggle like');
       
       // Revert optimistic update on error

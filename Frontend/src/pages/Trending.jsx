@@ -50,7 +50,6 @@ const Trending = () => {
       
       setVideos(sortedVideos.slice(0, 20)) // Limit to top 20
     } catch (error) {
-      console.error("Error fetching trending videos:", error)
       setError("Failed to load trending videos")
     } finally {
       setLoading(false)

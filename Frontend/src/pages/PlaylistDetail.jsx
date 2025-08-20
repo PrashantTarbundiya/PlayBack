@@ -36,7 +36,7 @@ const PlaylistDetail = () => {
         setPlaylist(playlistData)
       }
     } catch (error) {
-      console.error("Error fetching playlist details:", error)
+      toast.remove()
       toast.error("Failed to load playlist")
     } finally {
       setLoading(false)
@@ -60,7 +60,6 @@ const PlaylistDetail = () => {
       
       setIsSaved(isPlaylistSaved)
     } catch (error) {
-      console.error("Error checking playlist save status:", error)
       // Don't show error to user, just assume not saved
       setIsSaved(false)
     } finally {
@@ -70,6 +69,7 @@ const PlaylistDetail = () => {
 
   const handleSavePlaylist = async () => {
     if (!user) {
+      toast.remove()
       toast.error("Please login to save playlists")
       return
     }
@@ -82,6 +82,7 @@ const PlaylistDetail = () => {
       // If already saved, unsave it
       await playlistAPI.unsavePlaylist(playlist._id)
       setIsSaved(false)
+      toast.remove()
       toast.success(`Removed "${playlist.name}" from your library!`)
     } else {
       // If not saved, save it
@@ -90,6 +91,7 @@ const PlaylistDetail = () => {
         description: `Saved from ${playlist.owner?.fullName || playlist.owner?.username || 'Unknown'}'s collection`
       })
       setIsSaved(true)
+      toast.remove()
       toast.success(`Saved "${playlist.name}" to your library!`)
     }
 
@@ -112,13 +114,20 @@ const PlaylistDetail = () => {
       }).catch(() => {})
     } else {
       navigator.clipboard.writeText(window.location.href)
-        .then(() => toast.success("Link copied!"))
-        .catch(() => toast.error("Copy failed"))
+        .then(() => {
+          toast.remove()
+          toast.success("Link copied!")
+        })
+        .catch(() => {
+          toast.remove()
+          toast.error("Copy failed")
+        })
     }
   }
 
   const handleRemoveVideo = async (videoId, videoTitle) => {
     if (!user || !playlist || !isOwner) {
+      toast.remove()
       toast.error("You don't have permission to remove videos")
       return
     }
@@ -137,9 +146,10 @@ const PlaylistDetail = () => {
         totalVideos: (prev.totalVideos || prev.videos?.length || 0) - 1
       }))
       
+      toast.remove()
       toast.success(`Removed "${videoTitle}" from playlist`)
     } catch (error) {
-      console.error("Error removing video from playlist:", error)
+      toast.remove()
       toast.error(error.response?.data?.message || "Failed to remove video")
     } finally {
       setRemovingVideo(null)

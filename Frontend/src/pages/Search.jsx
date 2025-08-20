@@ -25,7 +25,6 @@ const Search = () => {
       const videosData = res.data?.data?.docs || res.data?.data || res.data || []
       setVideos(videosData)
     } catch (err) {
-      console.error("Search failed:", err)
       setVideos([])
     } finally {
       setLoading(false)

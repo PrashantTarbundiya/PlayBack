@@ -104,7 +104,7 @@ const Profile = () => {
       const userData = response.data.data
       setUser(userData)
     } catch (error) {
-      console.error("Failed to fetch user profile:", error)
+      toast.remove()
       toast.error("Failed to load profile")
     }
   }, [username])
@@ -115,7 +115,6 @@ const Profile = () => {
       const videosData = response.data.data?.docs || []
       setVideos(videosData)
     } catch (error) {
-      console.error("Failed to fetch user videos:", error)
       setVideos([])
     } finally {
       setLoading(false)
@@ -130,7 +129,6 @@ const Profile = () => {
       const tweetsData = response.data?.data || []
       setTweets(tweetsData)
     } catch (error) {
-      console.error("Failed to fetch user tweets:", error)
       setTweets([])
     }
   }, [user?._id])
@@ -143,7 +141,6 @@ const Profile = () => {
       const subscriptionsData = response.data.data || []
       setSubscribedChannels(subscriptionsData)
     } catch (error) {
-      console.error("Failed to fetch subscribed channels:", error)
       setSubscribedChannels([])
     }
   }, [currentUser?._id])
@@ -198,7 +195,6 @@ const Profile = () => {
         setTimeout(() => checkSavedPlaylists(playlistsData), 100)
       }
     } catch (error) {
-      console.error("Failed to fetch user playlists:", error)
       setPlaylists([])
     }
   }, [isOwnProfile, user?._id, currentUser])
@@ -208,6 +204,7 @@ const Profile = () => {
       // Find the playlist to get its current data
       const playlist = playlists.find(p => p._id === playlistId)
       if (!playlist) {
+        toast.remove()
         toast.error("Playlist not found")
         return
       }
@@ -230,9 +227,10 @@ const Profile = () => {
           : p
       ))
       
+      toast.remove()
       toast.success(`Playlist is now ${newVisibility}`)
     } catch (error) {
-      console.error("Failed to update playlist visibility:", error)
+      toast.remove()
       toast.error("Failed to update playlist visibility")
     }
   }
@@ -245,15 +243,17 @@ const Profile = () => {
     try {
       await playlistAPI.deletePlaylist(playlistId)
       setPlaylists(prev => prev.filter(p => p._id !== playlistId))
+      toast.remove()
       toast.success("Playlist deleted successfully")
     } catch (error) {
-      console.error("Error deleting playlist:", error)
+      toast.remove()
       toast.error("Failed to delete playlist")
     }
   }
 
   const handleSavePlaylist = async (playlistId, playlistName) => {
     if (!currentUser) {
+      toast.remove()
       toast.error("Please login to save playlists")
       return
     }
@@ -265,10 +265,11 @@ const Profile = () => {
       await playlistAPI.savePlaylist(playlistId)
       
       setSavedPlaylists(prev => new Set(prev).add(playlistId))
+      toast.remove()
       toast.success(`Bookmarked "${playlistName}"! You can find it in your Playlists page.`)
     } catch (error) {
-      console.error("Error saving playlist:", error)
       const errorMessage = error.response?.data?.message || "Failed to save playlist"
+      toast.remove()
       toast.error(errorMessage)
     } finally {
       setSavingPlaylists(prev => {
@@ -304,12 +305,12 @@ const Profile = () => {
       
       setSavedPlaylists(savedPlaylistIds)
     } catch (error) {
-      console.error('Error checking saved playlists:', error)
     }
   }, [currentUser, isOwnProfile, playlists])
 
   const handleUnsavePlaylist = async (playlistId, playlistName) => {
     if (!currentUser) {
+      toast.remove()
       toast.error("Please login to unsave playlists")
       return
     }
@@ -324,10 +325,11 @@ const Profile = () => {
         newSet.delete(playlistId)
         return newSet
       })
+      toast.remove()
       toast.success(`Removed "${playlistName}" from your bookmarks.`)
     } catch (error) {
-      console.error("Error unsaving playlist:", error)
       const errorMessage = error.response?.data?.message || "Failed to unsave playlist"
+      toast.remove()
       toast.error(errorMessage)
     } finally {
       setUnsavingPlaylists(prev => {
@@ -348,6 +350,7 @@ const Profile = () => {
 
   const handleSubscribe = useCallback(async () => {
     if (!currentUser) {
+      toast.remove()
       toast.error("Please login to subscribe")
       return
     }
@@ -365,9 +368,10 @@ const Profile = () => {
           : (prev.subscribersCount || 0) + 1
       }))
       
+      toast.remove()
       toast.success(user.isSubscribed ? "Unsubscribed" : "Subscribed")
     } catch (error) {
-      console.error("Subscription error:", error)
+      toast.remove()
       toast.error("Failed to update subscription")
     } finally {
       setSubscribing(false)
@@ -376,6 +380,7 @@ const Profile = () => {
 
   const handleUpdateTweet = async (tweetId) => {
     if (!editContent.trim()) {
+      toast.remove()
       toast.error('Tweet content cannot be empty')
       return
     }
@@ -390,9 +395,10 @@ const Profile = () => {
       setEditingTweet(null)
       setEditContent('')
       setShowDropdown(null)
+      toast.remove()
       toast.success('Tweet updated successfully!')
     } catch (error) {
-      console.error('Error updating tweet:', error)
+      toast.remove()
       toast.error('Failed to update tweet')
     }
   }
@@ -406,9 +412,10 @@ const Profile = () => {
       await tweetAPI.deleteTweet(tweetId)
       setTweets(tweets.filter(tweet => tweet._id !== tweetId))
       setShowDropdown(null)
+      toast.remove()
       toast.success('Tweet deleted successfully!')
     } catch (error) {
-      console.error('Error deleting tweet:', error)
+      toast.remove()
       toast.error('Failed to delete tweet')
     }
   }

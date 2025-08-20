@@ -35,6 +35,7 @@ const BrowsePlaylists = () => {
       setPage(pageNum)
     } catch (error) {
       console.error("Error fetching public playlists:", error)
+      toast.remove()
       toast.error("Failed to load playlists")
     } finally {
       setLoading(false)
@@ -43,6 +44,7 @@ const BrowsePlaylists = () => {
 
   const handleSavePlaylist = async (playlist) => {
     if (!user) {
+      toast.remove()
       toast.error("Please login to save playlists")
       return
     }
@@ -54,10 +56,12 @@ const BrowsePlaylists = () => {
         name: `Saved - ${playlist.name}`,
         description: `Saved from ${playlist.owner?.fullName || playlist.owner?.username || 'Unknown'}'s collection`
       })
+      toast.remove()
       toast.success(`Saved "${playlist.name}" to your library!`)
     } catch (error) {
       console.error("Error saving playlist:", error)
       const errorMessage = error.response?.data?.message || "Failed to save playlist"
+      toast.remove()
       toast.error(errorMessage)
     } finally {
       setSavingPlaylists(prev => {

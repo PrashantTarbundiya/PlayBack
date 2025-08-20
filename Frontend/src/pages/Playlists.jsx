@@ -81,7 +81,7 @@ const Playlists = () => {
       
       setPlaylists(allPlaylists)
     } catch (error) {
-      console.error("Error fetching playlists:", error)
+      toast.remove()
       toast.error("Failed to load playlists")
     } finally {
       setLoading(false)
@@ -91,6 +91,7 @@ const Playlists = () => {
   const handleCreatePlaylist = async (e) => {
     e.preventDefault()
     if (!newPlaylistName.trim()) {
+      toast.remove()
       toast.error("Playlist name is required")
       return
     }
@@ -111,10 +112,11 @@ const Playlists = () => {
         setNewPlaylistDescription("")
         setNewPlaylistPrivacy("public")
         setShowCreateForm(false)
+        toast.remove()
         toast.success(`Created "${playlist.name}" playlist!`)
       }
     } catch (error) {
-      console.error("Error creating playlist:", error)
+      toast.remove()
       toast.error(error.response?.data?.message || "Failed to create playlist")
     } finally {
       setCreating(false)
@@ -134,14 +136,16 @@ const Playlists = () => {
     try {
       if (isSaved) {
         await playlistAPI.unsavePlaylist(playlistId)
+        toast.remove()
         toast.success("Playlist removed from saved")
       } else {
         await playlistAPI.deletePlaylist(playlistId)
+        toast.remove()
         toast.success("Playlist deleted successfully")
       }
       setPlaylists(prev => prev.filter(p => p._id !== playlistId))
     } catch (error) {
-      console.error(`Error ${action}ing playlist:`, error)
+      toast.remove()
       toast.error(`Failed to ${action} playlist`)
     }
   }
@@ -151,6 +155,7 @@ const Playlists = () => {
       // Find the playlist to get its current data
       const playlist = playlists.find(p => p._id === playlistId)
       if (!playlist) {
+        toast.remove()
         toast.error("Playlist not found")
         return
       }
@@ -173,9 +178,10 @@ const Playlists = () => {
           : p
       ))
       
+      toast.remove()
       toast.success(`Playlist is now ${newVisibility}`)
     } catch (error) {
-      console.error("Failed to update playlist visibility:", error)
+      toast.remove()
       toast.error("Failed to update playlist visibility")
     }
   }
@@ -190,7 +196,7 @@ const Playlists = () => {
       // Show all videos in playlist (don't filter by published status in playlists)
       setPlaylistVideos(Array.isArray(videos) ? videos : [])
     } catch (error) {
-      console.error("Error fetching playlist videos:", error)
+      toast.remove()
       toast.error("Failed to load playlist videos")
     } finally {
       setLoadingVideos(false)
@@ -204,6 +210,7 @@ const Playlists = () => {
 
   const handleRemoveVideoFromPlaylist = async (videoId, videoTitle) => {
     if (!user || !selectedPlaylist) {
+      toast.remove()
       toast.error("You don't have permission to remove videos")
       return
     }
@@ -214,6 +221,7 @@ const Playlists = () => {
                    selectedPlaylist.isSaved !== true
 
     if (!isOwner) {
+      toast.remove()
       toast.error("You can only remove videos from your own playlists")
       return
     }
@@ -234,9 +242,10 @@ const Playlists = () => {
         totalVideos: (prev.totalVideos || playlistVideos.length) - 1
       }))
       
+      toast.remove()
       toast.success(`Removed "${videoTitle}" from playlist`)
     } catch (error) {
-      console.error("Error removing video from playlist:", error)
+      toast.remove()
       toast.error(error.response?.data?.message || "Failed to remove video")
     } finally {
       setRemovingVideo(null)

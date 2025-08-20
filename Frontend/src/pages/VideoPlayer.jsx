@@ -1,22 +1,39 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { useParams, Link } from "react-router-dom"
+import { useParams, Link, useNavigate } from "react-router-dom"
 import { ThumbsUp, ThumbsDown, Share, Download, Clock, Plus } from "lucide-react"
-import VideoPlayerComponent from "../components/VideoPlayer/VideoPlayer"
+import SyncedVideoPlayer from "../components/VideoPlayer/SyncedVideoPlayer"
 import CommentSection from "../components/CommentSection/CommentSection"
 import VideoCard from "../components/VideoCard/VideoCard"
 import PlaylistModal from "../components/PlaylistModal/PlaylistModal"
 import { videoAPI, likeAPI, subscriptionAPI, authAPI, playlistAPI } from "../services/api"
 import SubscriptionDropdown from "../components/SubscriptionDropdown/SubscriptionDropdown"
 import { useAuth } from "../contexts/AuthContext"
+import { useSyncedVideo } from "../contexts/SyncedVideoContext"
 import { formatDistanceToNow } from "date-fns"
 import toast from "react-hot-toast"
 import { CenteredLoader } from "../components/Skeleton/LoadingScreen"
+import VideoPlayerSkeleton from "../components/Skeleton/VideoPlayerSkeleton"
 
 const VideoPlayer = () => {
   const { id } = useParams()
+  const navigate = useNavigate()
   const { user } = useAuth()
+  const {
+    currentVideo,
+    loadVideo,
+    currentPlaylist,
+    playlistVideos,
+    currentVideoIndex,
+    autoPlayNext,
+    setCurrentPlaylist,
+    setPlaylistVideos,
+    setCurrentVideoIndex,
+    setAutoPlayNext,
+    handleVideoEnd
+  } = useSyncedVideo()
+  
   const videoRef = useRef(null)
   const [video, setVideo] = useState(null)
   const [relatedVideos, setRelatedVideos] = useState([])
@@ -31,14 +48,7 @@ const VideoPlayer = () => {
   const [showPlaylistModal, setShowPlaylistModal] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
   const [savedPlaylists, setSavedPlaylists] = useState([])
-  
-  // Playlist context
-  const [currentPlaylist, setCurrentPlaylist] = useState(null)
-  const [playlistVideos, setPlaylistVideos] = useState([])
-  const [currentVideoIndex, setCurrentVideoIndex] = useState(0)
-  const [autoPlayNext, setAutoPlayNext] = useState(true)
   const [isPlaylistLoading, setIsPlaylistLoading] = useState(false)
-
 
   // Scroll to top when component mounts or video ID changes
   useEffect(() => {
@@ -64,9 +74,8 @@ const VideoPlayer = () => {
       fetchVideo()
       fetchRelatedVideos().catch(() => {})
     }
-  }, [id, user?._id]) // Only depend on user ID, not the entire user object
+  }, [id, user?._id])
 
-  // Clear save status when video changes
   useEffect(() => {
     if (id) {
       setIsSaved(false)
@@ -139,6 +148,9 @@ const VideoPlayer = () => {
       setVideo(videoData)
       setLikesCount(videoData.likesCount || 0)
       
+      // Load video into synced context
+      loadVideo(videoData, currentPlaylist, currentVideoIndex)
+      
       // Set initial states from video data if available
       if (videoData.isLiked !== undefined) {
         setIsLiked(videoData.isLiked)
@@ -190,6 +202,7 @@ const VideoPlayer = () => {
       }
 
       setError(errorMessage)
+      toast.remove()
       toast.error(errorMessage)
     } finally {
       setLoading(false)
@@ -210,6 +223,11 @@ const VideoPlayer = () => {
         // Find current video index
         const currentIndex = videoIndex ? parseInt(videoIndex) : videos.findIndex(v => v._id === id)
         setCurrentVideoIndex(currentIndex >= 0 ? currentIndex : 0)
+        
+        // Update synced context with playlist info
+        if (video) {
+          loadVideo(video, playlistData, currentIndex >= 0 ? currentIndex : 0)
+        }
       }
     } catch (error) {
       // Handle playlist fetch error silently
@@ -291,6 +309,7 @@ const VideoPlayer = () => {
 
   const handleLike = async () => {
     if (!user) {
+      toast.remove()
       toast.error("Please login to like videos")
       return
     }
@@ -316,6 +335,7 @@ const VideoPlayer = () => {
       setIsLiked(newLikeStatus)
       setLikesCount(newLikesCount)
       
+      toast.remove()
       toast.success(newLikeStatus ? "Video liked!" : "Like removed")
       
     } catch (error) {
@@ -327,6 +347,7 @@ const VideoPlayer = () => {
         errorMessage = "Video not found"
       }
       
+      toast.remove()
       toast.error(errorMessage)
     } finally {
       setActionLoading(prev => ({ ...prev, like: false }))
@@ -335,11 +356,13 @@ const VideoPlayer = () => {
 
   const handleSubscribe = async () => {
     if (!user) {
+      toast.remove()
       toast.error("Please login to subscribe")
       return
     }
     
     if (!video?.owner?._id) {
+      toast.remove()
       toast.error("Channel info missing")
       return
     }
@@ -360,6 +383,7 @@ const VideoPlayer = () => {
 
       setIsSubscribed(newSubscriptionStatus)
       
+      toast.remove()
       toast.success(newSubscriptionStatus ? "Subscribed!" : "Unsubscribed")
       
     } catch (error) {
@@ -371,6 +395,7 @@ const VideoPlayer = () => {
         errorMessage = "Channel not found"
       }
       
+      toast.remove()
       toast.error(errorMessage)
     } finally {
       setActionLoading(prev => ({ ...prev, subscribe: false }))
@@ -379,6 +404,7 @@ const VideoPlayer = () => {
 
   const handleWatchLater = async () => {
     if (!user) {
+      toast.remove()
       toast.error("Please login to use Watch Later")
       return
     }
@@ -391,9 +417,11 @@ const VideoPlayer = () => {
     
     try {
       await videoAPI.addToWatchLater(id)
+      toast.remove()
       toast.success("Added to Watch Later!")
     } catch (error) {
       const errorMessage = error.message || "Failed to add to Watch Later"
+      toast.remove()
       toast.error(errorMessage)
     } finally {
       setActionLoading(prev => ({ ...prev, watchLater: false }))
@@ -402,6 +430,7 @@ const VideoPlayer = () => {
 
   const handleSaveToPlaylist = async () => {
     if (!user) {
+      toast.remove()
       toast.error("Please login to save to playlist")
       return
     }
@@ -415,6 +444,7 @@ const VideoPlayer = () => {
     try {
       setShowPlaylistModal(true)
     } catch (error) {
+      toast.remove()
       toast.error("Failed to open playlist modal")
     } finally {
       setActionLoading(prev => ({ ...prev, saveToPlaylist: false }))
@@ -429,8 +459,6 @@ const VideoPlayer = () => {
     }
   }
 
-
-
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
@@ -439,8 +467,14 @@ const VideoPlayer = () => {
       }).catch(() => {})
     } else {
       navigator.clipboard.writeText(window.location.href)
-        .then(() => toast.success("Link copied!"))
-        .catch(() => toast.error("Copy failed"))
+        .then(() => {
+          toast.remove()
+          toast.success("Link copied!")
+        })
+        .catch(() => {
+          toast.remove()
+          toast.error("Copy failed")
+        })
     }
   }
 
@@ -533,12 +567,14 @@ const VideoPlayer = () => {
       // If it's a relative path, you might need to construct the full URL
       // For now, we'll assume it needs to be a complete URL
       if (!videoUrl.includes('cloudinary.com') && !videoUrl.includes('://')) {
+        toast.remove()
         toast.error('Invalid video URL format. Expected a complete URL.')
         return null
       }
     }
     
     if (!videoUrl) {
+      toast.remove()
       toast.error('Video URL could not be resolved. Please check video file configuration.')
     }
 
@@ -554,17 +590,7 @@ const VideoPlayer = () => {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-[#0f0f0f] text-white p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="animate-pulse">
-            <div className="bg-[#1e1e1e] rounded-lg h-96 mb-6"></div>
-            <div className="bg-[#1e1e1e] rounded h-6 w-3/4 mb-4"></div>
-            <div className="bg-[#1e1e1e] rounded h-4 w-1/2"></div>
-          </div>
-        </div>
-      </div>
-    )
+    return <VideoPlayerSkeleton />
   }
 
   if (error || !video) {
@@ -586,30 +612,17 @@ const VideoPlayer = () => {
       {/* Main Video Section */}
       <div className="flex-1 max-w-5xl">
         <div className="rounded-lg overflow-hidden">
-          <VideoPlayerComponent
+          <SyncedVideoPlayer
             ref={videoRef}
             src={getVideoUrl()}
             poster={getThumbnailUrl()}
-            title={video.title}
-            onVideoEnd={() => {
-              // Auto-play next video if in playlist and auto-play is enabled
-              if (autoPlayNext && currentPlaylist && playlistVideos.length > 0) {
-                const nextIndex = currentVideoIndex + 1
-                if (nextIndex < playlistVideos.length) {
-                  const nextVideo = playlistVideos[nextIndex]
-                  const newUrl = `/watch/${nextVideo._id}?playlist=${currentPlaylist._id}&index=${nextIndex}`
-                  setTimeout(() => {
-                    window.location.href = newUrl
-                  }, 1000) // 1 second delay before auto-playing next video
-                }
-              }
-            }}
+            onVideoEnd={handleVideoEnd}
             onError={(e) => {
+              toast.remove()
               toast.error(`Video failed to load: ${getVideoUrl() || 'No video URL found'}. Please check if the video file exists and is accessible.`);
             }}
           />
         </div>
-
 
         <h1 className="text-xl font-semibold mb-2">{video.title}</h1>
 
@@ -774,7 +787,7 @@ const VideoPlayer = () => {
                       key={video._id}
                       onClick={() => {
                         const newUrl = `/watch/${video._id}?playlist=${currentPlaylist._id}&index=${index}`
-                        window.location.href = newUrl
+                        navigate(newUrl)
                       }}
                       className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors duration-200 ${
                         index === currentVideoIndex

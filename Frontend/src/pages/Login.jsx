@@ -52,6 +52,7 @@ const Login = () => {
         })
     } else if (error) {
       if (error === 'oauth_failed') {
+        toast.remove()
         toast.error('OAuth authentication failed. Please try again.')
       }
       // Clean up URL

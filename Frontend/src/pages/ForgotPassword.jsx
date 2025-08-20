@@ -123,6 +123,7 @@ const ForgotPassword = () => {
     e.preventDefault()
 
     if (!validateEmail()) {
+      toast.remove()
       toast.error("Please fix the errors below")
       return
     }
@@ -135,11 +136,13 @@ const ForgotPassword = () => {
       if (data?.remainingAttempts !== undefined) {
         setRemainingAttempts(data.remainingAttempts)
       }
+      toast.remove()
       toast.success(response.data?.message || "OTP sent to your email successfully!")
       setStep(2)
       startOtpTimer()
       startResendTimer()
     } catch (error) {
+      toast.remove()
       toast.error(error.response?.data?.message || "Failed to send OTP")
     } finally {
       setLoading(false)
@@ -150,6 +153,7 @@ const ForgotPassword = () => {
     e.preventDefault()
 
     if (!validateResetForm()) {
+      toast.remove()
       toast.error("Please fix the errors below")
       return
     }
@@ -162,12 +166,14 @@ const ForgotPassword = () => {
         otp: formData.otp,
         newPassword: formData.newPassword
       })
+      toast.remove()
       toast.success("Password reset successfully! You can now login with your new password.")
       // Redirect to login page after a short delay
       setTimeout(() => {
         window.location.href = "/login"
       }, 2000)
     } catch (error) {
+      toast.remove()
       toast.error(error.response?.data?.message || "Failed to reset password")
     } finally {
       setLoading(false)
@@ -184,10 +190,12 @@ const ForgotPassword = () => {
       if (data?.remainingAttempts !== undefined) {
         setRemainingAttempts(data.remainingAttempts)
       }
+      toast.remove()
       toast.success(response.data?.message || "New OTP sent to your email!")
       startOtpTimer()
       startResendTimer()
     } catch (error) {
+      toast.remove()
       toast.error(error.response?.data?.message || "Failed to resend OTP")
     } finally {
       setLoading(false)

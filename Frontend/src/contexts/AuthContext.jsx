@@ -51,6 +51,7 @@ export const AuthProvider = ({ children }) => {
       const response = await authAPI.getCurrentUser();
       setUser(response.data.data);
       setIsAuthenticated(true);
+      toast.remove()
       toast.success(`Welcome back, ${response.data.data.fullName}!`);
       return { success: true, user: response.data.data };
     } catch (error) {
@@ -59,6 +60,7 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       setIsAuthenticated(false);
       const errorMessage = error.response?.data?.message || "OAuth authentication failed";
+      toast.remove()
       toast.error(errorMessage);
       throw new Error(errorMessage);
     }
@@ -75,6 +77,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem("token", accessToken);
       setUser(userData);
       setIsAuthenticated(true);
+      toast.remove()
       toast.success(`Welcome back, ${userData.fullName}!`);
       return { success: true, user: userData };
     } catch (error) {
@@ -82,6 +85,7 @@ export const AuthProvider = ({ children }) => {
         error.response?.data?.message ||
         error.message ||
         "Login failed. Please try again.";
+      toast.remove()
       toast.error(errorMessage);
       throw new Error(errorMessage);
     }
@@ -99,6 +103,7 @@ export const AuthProvider = ({ children }) => {
 
       setUser(newUser);
       setIsAuthenticated(true);
+      toast.remove()
       toast.success(`Welcome to PlayBack, ${newUser.fullName}!`);
       return { success: true, user: newUser };
     } catch (error) {
@@ -106,6 +111,7 @@ export const AuthProvider = ({ children }) => {
         error.response?.data?.message ||
         error.message ||
         "Registration failed. Please try again.";
+      toast.remove()
       toast.error(errorMessage);
       throw new Error(errorMessage);
     }
@@ -120,6 +126,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem("token");
       setUser(null);
       setIsAuthenticated(false);
+      toast.remove()
       toast.success("Logged out successfully");
     }
   }, []);

@@ -62,11 +62,13 @@ const SubscriptionDropdown = ({
 
   const handleSubscriptionToggle = async () => {
     if (!user) {
+      toast.remove()
       toast.error("Please login to subscribe");
       return;
     }
 
     if (!channelId) {
+      toast.remove()
       toast.error("Channel information not available");
       return;
     }
@@ -89,6 +91,7 @@ const SubscriptionDropdown = ({
         setNotificationPreference('all');
       }
 
+      toast.remove()
       toast.success(newSubscriptionStatus ? "Subscribed!" : "Unsubscribed");
       setIsOpen(false);
     } catch (error) {
@@ -99,6 +102,7 @@ const SubscriptionDropdown = ({
       } else if (error.response?.status === 404) {
         errorMessage = "Channel not found";
       }
+      toast.remove()
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -117,6 +121,7 @@ const SubscriptionDropdown = ({
       none: "Notifications turned off for this channel"
     };
     
+    toast.remove()
     toast.success(messages[preference]);
   };
 

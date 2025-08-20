@@ -50,12 +50,10 @@ const WatchLater = () => {
           setWatchLaterPlaylist(newPlaylist.data?.data)
           setVideos([])
         } catch (createError) {
-          console.error("Error creating Watch Later playlist:", createError)
           setVideos([])
         }
       }
     } catch (error) {
-      console.error("Error fetching watch later videos:", error)
       setError("Failed to load watch later videos")
     } finally {
       setLoading(false)
@@ -68,9 +66,10 @@ const WatchLater = () => {
     try {
       await playlistAPI.removeVideoFromPlaylist(videoId, watchLaterPlaylist._id)
       setVideos(prev => prev.filter(video => video._id !== videoId))
+      toast.remove()
       toast.success("Removed from Watch Later")
     } catch (error) {
-      console.error("Error removing from watch later:", error)
+      toast.remove()
       toast.error("Failed to remove from Watch Later")
     }
   }
@@ -88,9 +87,10 @@ const WatchLater = () => {
         await playlistAPI.removeVideoFromPlaylist(video._id, watchLaterPlaylist._id)
       }
       setVideos([])
+      toast.remove()
       toast.success("Watch Later cleared")
     } catch (error) {
-      console.error("Error clearing watch later:", error)
+      toast.remove()
       toast.error("Failed to clear Watch Later")
     }
   }

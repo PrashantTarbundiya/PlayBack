@@ -37,6 +37,7 @@ const ChannelVideos = () => {
       setIsSubscribed(channelData.isSubscribed || false)
     } catch (error) {
       console.error("Failed to fetch channel data:", error)
+      toast.remove()
       toast.error("Failed to load channel")
     }
   }
@@ -55,6 +56,7 @@ const ChannelVideos = () => {
 
   const handleSubscribe = async () => {
     if (!currentUser) {
+      toast.remove()
       toast.error("Please login to subscribe")
       return
     }
@@ -75,6 +77,7 @@ const ChannelVideos = () => {
       toast.success(isSubscribed ? "Unsubscribed" : "Subscribed")
     } catch (error) {
       console.error("Subscription error:", error)
+      toast.remove()
       toast.error("Failed to update subscription")
     } finally {
       setSubscribing(false)

@@ -5,8 +5,10 @@ import { MoreVertical, Clock, ListPlus, Share2, User, Video, Volume2, VolumeX } 
 import { toast } from "react-hot-toast"
 import { videoAPI } from "../../services/api"
 import PlaylistModal from "../PlaylistModal/PlaylistModal"
+import { useVideoNavigation } from "../../hooks/useVideoNavigation"
 
-const VideoCard = memo(({ video, showPlaylistIndex }) => {
+const VideoCard = memo(({ video, showPlaylistIndex, playlist = null, videoIndex = 0 }) => {
+  const { handleVideoCardClick } = useVideoNavigation()
   const [showOptions, setShowOptions] = useState(false)
   const [thumbnailError, setThumbnailError] = useState(false)
   const [avatarError, setAvatarError] = useState(false)
@@ -97,7 +99,6 @@ const VideoCard = memo(({ video, showPlaylistIndex }) => {
         playPromise.catch(error => {
           // Only log AbortError if it's not due to DOM removal
           if (error.name !== 'AbortError') {
-            console.warn("Video autoplay failed:", error)
             setPreviewError(true)
           }
         })
@@ -259,7 +260,6 @@ const VideoCard = memo(({ video, showPlaylistIndex }) => {
       const fixedUrl = fixCloudinaryUrl(videoUrl)
       return fixedUrl
     } catch (error) {
-      console.error("Error getting video URL:", error)
       return null
     }
   }, [video.videoFile, fixCloudinaryUrl])
@@ -338,9 +338,10 @@ const VideoCard = memo(({ video, showPlaylistIndex }) => {
   const handleAddToWatchLater = useCallback(async () => {
     try {
       await videoAPI.addToWatchLater(video._id)
+      toast.remove()
       toast.success("Added to Watch Later")
     } catch (err) {
-      console.error("Error adding to Watch Later:", err)
+      toast.remove()
       toast.error(err.message || "Failed to add to Watch Later")
     }
     setShowOptions(false)
@@ -359,6 +360,7 @@ const VideoCard = memo(({ video, showPlaylistIndex }) => {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(shareUrl)
           .then(() => {
+            toast.remove()
             toast.success("Link copied to clipboard")
           })
           .catch(() => {
@@ -370,7 +372,7 @@ const VideoCard = memo(({ video, showPlaylistIndex }) => {
         fallbackCopyTextToClipboard(shareUrl)
       }
     } catch (error) {
-      console.error("Error sharing:", error)
+      toast.remove()
       toast.error("Failed to copy link")
     }
     setShowOptions(false)
@@ -392,15 +394,23 @@ const VideoCard = memo(({ video, showPlaylistIndex }) => {
       document.body.removeChild(textArea)
       
       if (successful) {
+        toast.remove()
         toast.success("Link copied to clipboard")
       } else {
+        toast.remove()
         toast.error("Failed to copy link")
       }
     } catch (err) {
-      console.error("Fallback copy failed:", err)
+      toast.remove()
       toast.error("Failed to copy link")
     }
   }, [])
+
+  // Handle video card click
+  const handleVideoClick = useCallback((e) => {
+    e.preventDefault()
+    handleVideoCardClick(video, playlist, videoIndex)
+  }, [video, playlist, videoIndex, handleVideoCardClick])
 
   // Safeguard against missing video data
   if (!video || !video._id) {
@@ -413,7 +423,10 @@ const VideoCard = memo(({ video, showPlaylistIndex }) => {
 
   return (
     <div className="bg-[#0f0f0f] text-white w-full max-w-md rounded-lg hover:bg-[#1c1c1c] transition shadow border border-[#222] relative">
-      <Link to={`/watch/${video._id}`} className="block relative">
+      <div
+        className="block relative cursor-pointer"
+        onClick={handleVideoClick}
+      >
         <div
           className="relative aspect-video bg-black overflow-hidden"
           onMouseEnter={handleMouseEnter}
@@ -481,7 +494,7 @@ const VideoCard = memo(({ video, showPlaylistIndex }) => {
             </div>
           )}
         </div>
-      </Link>
+      </div>
 
       <div className="flex p-3 gap-3 relative">
         {/* Show avatar - use effective owner data */}
@@ -506,9 +519,12 @@ const VideoCard = memo(({ video, showPlaylistIndex }) => {
         )}
 
         <div className="flex-1 overflow-hidden">
-          <Link to={`/watch/${video._id}`} className="block font-semibold text-sm truncate hover:underline text-selectable">
+          <div
+            onClick={handleVideoClick}
+            className="block font-semibold text-sm truncate hover:underline text-selectable cursor-pointer"
+          >
             {video.title || "Untitled Video"}
-          </Link>
+          </div>
           {/* Show channel name using effective owner */}
           {effectiveOwner && effectiveOwner.username ? (
             <Link to={`/profile/${effectiveOwner.username}`} className="block text-xs text-gray-400 hover:underline truncate">

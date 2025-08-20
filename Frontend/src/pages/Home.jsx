@@ -11,15 +11,18 @@ const Home = () => {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
 
 
   useEffect(() => {
     fetchCategories();
-    fetchVideos();
+    resetAndLoad();
   }, []);
 
   useEffect(() => {
-    fetchVideos();
+    resetAndLoad();
   }, [selectedCategory]);
 
   const fetchCategories = useCallback(async () => {
@@ -34,63 +37,76 @@ const Home = () => {
       
       setCategories(processedCategories);
     } catch (error) {
-      console.error("Failed to fetch categories:", error);
+      // console.error("Failed to fetch categories:", error);
     } finally {
       setCategoriesLoading(false);
     }
   }, []);
 
-  // Function to get recommended videos from backend based on watch history
-  const fetchRecommendedVideos = async (category = "All") => {
+  // Fetch paginated videos (supports category filter)
+  const fetchRecommendedVideos = async (category = "All", pageNum = 1, limitNum = 10) => {
     try {
       if (category === "All") {
-        // Try to use backend recommendation system for logged-in users
-        try {
-          const response = await videoAPI.getRecommendedVideos(1, 20);
-          return response.data?.data?.videos || response.data?.videos || [];
-        } catch (authError) {
-          // If authentication fails or no recommendations, fallback to all videos
-          console.log("Recommendation API failed, falling back to all videos:", authError.message);
-          const response = await videoAPI.getAllVideosWithOwnerDetails();
-          const data = response.data.data;
-          const allVideos = Array.isArray(data) ? data : Array.isArray(data?.docs) ? data.docs : [];
-          return allVideos.filter(video => video.isPublished === true);
-        }
-      } else {
-        // For specific categories, use category-based fetching
-        console.log("Fetching videos for category:", category);
-        const response = await videoAPI.getVideosByCategory(category);
-        console.log("Category response:", response.data);
-        
-        // Handle the response structure - getAllVideosWithOwnerDetails returns videos directly in data
-        const videos = response.data?.data || response.data || [];
-        const allVideos = Array.isArray(videos) ? videos : [];
-        const publishedVideos = allVideos.filter(video => video.isPublished === true);
-        console.log(`Found ${publishedVideos.length} published videos for category:`, category);
-        return publishedVideos;
+        const response = await videoAPI.getAllVideosWithOwnerDetails(pageNum, limitNum);
+        const data = response.data?.data;
+        return Array.isArray(data) ? data : [];
       }
+
+      // Category-specific
+      const response = await videoAPI.getVideosByCategory(category, pageNum, limitNum);
+      const data = response.data?.data || response.data;
+      const list = Array.isArray(data) ? data : [];
+      return list;
     } catch (error) {
-      console.error("Failed to fetch videos:", error);
-      // Final fallback - return empty array
       return [];
     }
   };
 
-  const fetchVideos = useCallback(async () => {
+  const LIMIT = 10;
+
+  const resetAndLoad = useCallback(async () => {
     try {
       setLoading(true);
-      
-      // Use backend recommendation system for better video suggestions
-      const recommendedVideos = await fetchRecommendedVideos(selectedCategory);
-      
-      setVideos(recommendedVideos);
-    } catch (error) {
-      console.error("Failed to fetch videos:", error);
       setVideos([]);
+      setPage(1);
+      setHasMore(true);
+      const firstBatch = await fetchRecommendedVideos(selectedCategory, 1, LIMIT);
+      setVideos(firstBatch);
+      setHasMore(firstBatch.length === LIMIT);
+      setPage(2);
+    } catch (_) {
+      setVideos([]);
+      setHasMore(false);
     } finally {
       setLoading(false);
     }
-  }, [selectedCategory, setVideos, setLoading]);
+  }, [selectedCategory, setLoading, setVideos]);
+
+  const loadMore = useCallback(async () => {
+    if (!hasMore || isFetchingMore || loading) return;
+    setIsFetchingMore(true);
+    try {
+      const nextBatch = await fetchRecommendedVideos(selectedCategory, page, LIMIT);
+      setVideos(prev => [...prev, ...nextBatch]);
+      setHasMore(nextBatch.length === LIMIT);
+      setPage(prev => prev + 1);
+    } catch (_) {
+      setHasMore(false);
+    } finally {
+      setIsFetchingMore(false);
+    }
+  }, [hasMore, isFetchingMore, loading, selectedCategory, page, setVideos]);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+      if (scrollHeight - scrollTop - clientHeight < 200) {
+        loadMore();
+      }
+    };
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [loadMore]);
 
   const handleCategoryChange = useCallback((category) => {
     if (category !== selectedCategory) {

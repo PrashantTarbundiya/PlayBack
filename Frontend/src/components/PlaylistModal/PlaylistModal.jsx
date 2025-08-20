@@ -26,6 +26,7 @@ const PlaylistModal = ({ isOpen, onClose, videoId, savedPlaylists = [] }) => {
       setPlaylists(userPlaylists)
     } catch (error) {
       console.error("Error fetching playlists:", error)
+      toast.remove()
       toast.error(error.message || "Failed to load playlists")
     } finally {
       setLoading(false)
@@ -38,6 +39,7 @@ const PlaylistModal = ({ isOpen, onClose, videoId, savedPlaylists = [] }) => {
     try {
       setActioningPlaylists(prev => new Set(prev).add(playlistId))
       await playlistAPI.addVideoToPlaylist(videoId, playlistId)
+      toast.remove()
       toast.success("Video added to playlist!")
       onClose()
     } catch (error) {
@@ -45,8 +47,10 @@ const PlaylistModal = ({ isOpen, onClose, videoId, savedPlaylists = [] }) => {
       const errorMessage = error.response?.data?.message || "Failed to add to playlist"
       // Check if it's a duplicate error
       if (errorMessage.toLowerCase().includes('already') || errorMessage.toLowerCase().includes('duplicate')) {
+        toast.remove()
         toast.error("Video is already in this playlist")
       } else {
+        toast.remove()
         toast.error(errorMessage)
       }
     } finally {
@@ -64,10 +68,12 @@ const PlaylistModal = ({ isOpen, onClose, videoId, savedPlaylists = [] }) => {
     try {
       setActioningPlaylists(prev => new Set(prev).add(playlistId))
       await playlistAPI.removeVideoFromPlaylist(videoId, playlistId)
+      toast.remove()
       toast.success("Video removed from playlist!")
       onClose()
     } catch (error) {
       console.error("Error removing from playlist:", error)
+      toast.remove()
       toast.error(error.response?.data?.message || "Failed to remove from playlist")
     } finally {
       setActioningPlaylists(prev => {
@@ -85,6 +91,7 @@ const PlaylistModal = ({ isOpen, onClose, videoId, savedPlaylists = [] }) => {
   const handleCreatePlaylist = async (e) => {
     e.preventDefault()
     if (!newPlaylistName.trim()) {
+      toast.remove()
       toast.error("Playlist name is required")
       return
     }
@@ -100,11 +107,13 @@ const PlaylistModal = ({ isOpen, onClose, videoId, savedPlaylists = [] }) => {
       if (playlist) {
         // Add the video to the newly created playlist
         await playlistAPI.addVideoToPlaylist(videoId, playlist._id)
+        toast.remove()
         toast.success(`Created "${playlist.name}" and added video!`)
         onClose()
       }
     } catch (error) {
       console.error("Error creating playlist:", error)
+      toast.remove()
       toast.error(error.response?.data?.message || "Failed to create playlist")
     } finally {
       setCreating(false)

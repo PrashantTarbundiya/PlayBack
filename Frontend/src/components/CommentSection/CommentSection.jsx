@@ -87,6 +87,7 @@ const CommentSection = ({ videoId }) => {
       
     } catch (error) {
       setError(`Failed to load comments: ${error.message}`)
+      toast.remove()
       toast.error("Failed to load comments")
       setComments([])
     } finally {
@@ -96,7 +97,7 @@ const CommentSection = ({ videoId }) => {
 
   const handleSubmitComment = async (e) => {
     e.preventDefault()
-    if (!user) return toast.error("Please login to comment")
+    if (!user) return toast.remove(), toast.error("Please login to comment")
     if (!newComment.trim()) return
 
     try {
@@ -132,18 +133,20 @@ const CommentSection = ({ videoId }) => {
         
         setComments(prev => [newCommentData, ...prev])
         setNewComment("")
+        toast.remove()
         toast.success("Comment added successfully!")
       } else {
         throw new Error("No comment data received from API")
       }
     } catch (error) {
       console.error("Comment submission error:", error)
+      toast.remove()
       toast.error("Failed to add comment")
     }
   }
 
   const handleLikeComment = async (commentId) => {
-    if (!user) return toast.error("Please login to like comments")
+    if (!user) return toast.remove(), toast.error("Please login to like comments")
 
     try {
       const response = await commentAPI.toggleCommentLike(commentId)
@@ -185,16 +188,19 @@ const CommentSection = ({ videoId }) => {
       // Show success message
       const currentComment = comments.find(c => c._id === commentId)
       const wasLiked = currentComment?.isLiked || false
+      toast.remove()
       toast.success(isLiked !== null
         ? (isLiked ? "Comment liked!" : "Like removed")
         : (wasLiked ? "Like removed" : "Comment liked!"))
     } catch (error) {
+      toast.remove()
       toast.error(error.response?.data?.message || "Failed to like comment")
     }
   }
 
   const handleEditComment = async (commentId) => {
     if (!editContent.trim()) {
+      toast.remove()
       toast.error('Comment content cannot be empty')
       return
     }
@@ -212,8 +218,10 @@ const CommentSection = ({ videoId }) => {
       setEditingComment(null)
       setEditContent('')
       setShowDropdown(null)
+      toast.remove()
       toast.success('Comment updated successfully!')
     } catch (error) {
+      toast.remove()
       toast.error('Failed to update comment')
     }
   }
@@ -229,8 +237,10 @@ const CommentSection = ({ videoId }) => {
       // Remove the comment from local state
       setComments(prev => prev.filter(comment => comment._id !== commentId))
       setShowDropdown(null)
+      toast.remove()
       toast.success('Comment deleted successfully!')
     } catch (error) {
+      toast.remove()
       toast.error('Failed to delete comment')
     }
   }

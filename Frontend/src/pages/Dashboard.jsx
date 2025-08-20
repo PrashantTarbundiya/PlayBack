@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import VideoCard from "../components/VideoCard/VideoCard"
 import { dashboardAPI, videoAPI } from "../services/api"
-import { useAuth } from "../contexts/AuzthContext"
+import { useAuth } from "../contexts/AuthContext"
 import {
   BarChart3, Clock, Eye, Heart, MessageSquare,
   TrendingUp, Users, VideoIcon, PlayCircle, Upload, RefreshCw
@@ -61,6 +61,7 @@ const Dashboard = () => {
     } catch (error) {
       console.error("Dashboard fetch error:", error)
       if (showLoading) {
+        toast.remove()
         toast.error("Failed to load dashboard")
       }
     } finally {
@@ -72,6 +73,7 @@ const Dashboard = () => {
   const handleManualRefresh = useCallback(() => {
     fetchDashboardData(false)
     setLastUpdate(new Date())
+    toast.remove()
     toast.success("Dashboard refreshed")
   }, [])
 
@@ -81,10 +83,12 @@ const Dashboard = () => {
         await videoAPI.deleteVideo(videoId)
         // Optimistically update UI
         setVideos(prev => Array.isArray(prev) ? prev.filter(v => v._id !== videoId) : [])
+        toast.remove()
         toast.success("Video deleted")
         // Update last update time
         setLastUpdate(new Date())
       } catch {
+        toast.remove()
         toast.error("Could not delete video")
         // Refresh data to revert optimistic update
         fetchDashboardData(false)
@@ -101,10 +105,12 @@ const Dashboard = () => {
           ? { ...v, isPublished: !v.isPublished }
           : v
       ) : [])
+      toast.remove()
       toast.success("Video status updated")
       // Update last update time
       setLastUpdate(new Date())
     } catch {
+      toast.remove()
       toast.error("Could not update video status")
       // Refresh data to revert optimistic update
       fetchDashboardData(false)

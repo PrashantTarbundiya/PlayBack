@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import { memo, Suspense, lazy } from "react"
 import { AuthProvider } from "./contexts/AuthContext"
 import { VideoProvider } from "./contexts/VideoContext"
+import { SyncedVideoProvider } from "./contexts/SyncedVideoContext"
 import { NotificationProvider } from "./contexts/NotificationContext"
 import { VideoPreviewProvider } from "./contexts/VideoPreviewContext"
 import ProtectedRoute from "./components/ProtectedRoute"
@@ -40,86 +41,88 @@ const PageLoader = () => <LoadingScreen message="Loading page..." />
 const App = memo(() => {
   return (
     <AuthProvider>
-        <VideoProvider>
-          <NotificationProvider>
-            <VideoPreviewProvider>
-              <Router>
-            <div className="App">
-              <Suspense fallback={<PageLoader />}>
-                <Routes>
-                  {/* Public routes */}
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/forgot-password" element={<ForgotPassword />} />
+      <VideoProvider>
+        <Router>
+          <SyncedVideoProvider>
+            <NotificationProvider>
+              <VideoPreviewProvider>
+                <div className="App">
+                <Suspense fallback={<PageLoader />}>
+                  <Routes>
+                    {/* Public routes */}
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
 
-                  {/* Layout wrapper for authenticated and public pages */}
-                  <Route path="/" element={<Layout />}>
-                    <Route index element={<Home />} />
-                    <Route path="watch/:id" element={<VideoPlayer />} />
-                    <Route path="search" element={<Search />} />
-                    <Route path="trending" element={<Trending />} />
-                    <Route path="tweets" element={<Tweets />} />
-                    <Route path="notifications" element={<Notifications />} />
-                    <Route path="library" element={<Library />} />
-                    <Route path="profile/:username" element={<Profile />} />
-                    <Route path="channel/:username/videos" element={<ChannelVideos />} />
-                    <Route path="dashboard" element={
-                      <ProtectedRoute>
-                        <Dashboard />
-                      </ProtectedRoute>
-                    } />
-                    
-                    {/* These routes show login prompts within layout instead of redirecting */}
-                    <Route path="upload" element={
-                      <ProtectedRoute>
-                        <Upload />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="history" element={<History />} />
-                    <Route path="watch-later" element={<WatchLater />} />
-                    <Route path="liked" element={<LikedVideos />} />
-                    <Route path="playlists" element={<Playlists />} />
-                    <Route path="settings" element={<Settings />} />
-                    <Route path="browse-playlists" element={<BrowsePlaylists />} />
-                    <Route path="playlist/:id" element={<PlaylistDetail />} />
-                    
-                    {/* Fallback route */}
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                  </Route>
-                </Routes>
-              </Suspense>
+                    {/* Layout wrapper for authenticated and public pages */}
+                    <Route path="/" element={<Layout />}>
+                      <Route index element={<Home />} />
+                      <Route path="watch/:id" element={<VideoPlayer />} />
+                      <Route path="search" element={<Search />} />
+                      <Route path="trending" element={<Trending />} />
+                      <Route path="tweets" element={<Tweets />} />
+                      <Route path="notifications" element={<Notifications />} />
+                      <Route path="library" element={<Library />} />
+                      <Route path="profile/:username" element={<Profile />} />
+                      <Route path="channel/:username/videos" element={<ChannelVideos />} />
+                      <Route path="dashboard" element={
+                        <ProtectedRoute>
+                          <Dashboard />
+                        </ProtectedRoute>
+                      } />
+                      
+                      {/* These routes show login prompts within layout instead of redirecting */}
+                      <Route path="upload" element={
+                        <ProtectedRoute>
+                          <Upload />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="history" element={<History />} />
+                      <Route path="watch-later" element={<WatchLater />} />
+                      <Route path="liked" element={<LikedVideos />} />
+                      <Route path="playlists" element={<Playlists />} />
+                      <Route path="settings" element={<Settings />} />
+                      <Route path="browse-playlists" element={<BrowsePlaylists />} />
+                      <Route path="playlist/:id" element={<PlaylistDetail />} />
+                      
+                      {/* Fallback route */}
+                      <Route path="*" element={<Navigate to="/" replace />} />
+                    </Route>
+                  </Routes>
+                </Suspense>
 
-              <Toaster
-                position="top-center"
-                toastOptions={{
-                  duration: 4000,
-                  style: {
-                    background: "#1e1e1e",
-                    color: "#ffffff",
-                    border: "1px solid #404040",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    maxWidth: "500px",
-                  },
-                  success: {
-                    iconTheme: {
-                      primary: "#10b981",
-                      secondary: "#ffffff",
+                <Toaster
+                  position="top-center"
+                  toastOptions={{
+                    duration: 4000,
+                    style: {
+                      background: "#1e1e1e",
+                      color: "#ffffff",
+                      border: "1px solid #404040",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                      maxWidth: "500px",
                     },
-                  },
-                  error: {
-                    iconTheme: {
-                      primary: "#ef4444",
-                      secondary: "#ffffff",
+                    success: {
+                      iconTheme: {
+                        primary: "#10b981",
+                        secondary: "#ffffff",
+                      },
                     },
-                  },
-                }}
-              />
-            </div>
-              </Router>
-            </VideoPreviewProvider>
-          </NotificationProvider>
-        </VideoProvider>
+                    error: {
+                      iconTheme: {
+                        primary: "#ef4444",
+                        secondary: "#ffffff",
+                      },
+                    },
+                  }}
+                />
+                </div>
+              </VideoPreviewProvider>
+            </NotificationProvider>
+          </SyncedVideoProvider>
+        </Router>
+      </VideoProvider>
     </AuthProvider>
   )
 })
