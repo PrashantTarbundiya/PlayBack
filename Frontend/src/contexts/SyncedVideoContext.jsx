@@ -14,7 +14,6 @@ export const useSyncedVideo = () => {
 }
 
 export const SyncedVideoProvider = ({ children }) => {
-  // Core video state
   const [currentVideo, setCurrentVideo] = useState(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -24,55 +23,52 @@ export const SyncedVideoProvider = ({ children }) => {
   const [playbackRate, setPlaybackRate] = useState(1)
   const [isBuffering, setIsBuffering] = useState(false)
   
-  // Mini player state
   const [isMiniPlayerActive, setIsMiniPlayerActive] = useState(false)
   const [miniPlayerPosition, setMiniPlayerPosition] = useState(() => {
     const defaultWidth = 1200
+    const defaultHeight = 800
     const playerWidth = 360
+    const playerHeight = 202
     const margin = 20
     const initialX = (typeof window !== 'undefined' ? window.innerWidth : defaultWidth) - playerWidth - margin
-    return { x: Math.max(margin, initialX), y: margin }
+    const initialY = (typeof window !== 'undefined' ? window.innerHeight : defaultHeight) - playerHeight - margin
+    return { x: Math.max(margin, initialX), y: Math.max(margin, initialY) }
   })
   const [miniPlayerSize, setMiniPlayerSize] = useState({ width: 360, height: 202 })
   const [isDragging, setIsDragging] = useState(false)
   const [isResizing, setIsResizing] = useState(false)
   
-  // Player references
   const mainVideoRef = useRef(null)
   const miniVideoRef = useRef(null)
   const activePlayerRef = useRef(null)
   const syncTimeoutRef = useRef(null)
-  const isSyncingRef = useRef(false) // Prevent sync loops
+  const isSyncingRef = useRef(false)
+  const isLoadingNewVideoRef = useRef(false)
   
-  // Navigation and location
   const location = useLocation()
   const navigate = useNavigate()
   
-  // Playlist context
   const [currentPlaylist, setCurrentPlaylist] = useState(null)
   const [playlistVideos, setPlaylistVideos] = useState([])
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0)
   const [autoPlayNext, setAutoPlayNext] = useState(true)
   
-  // Scroll detection for mini player activation
   const [isMainPlayerVisible, setIsMainPlayerVisible] = useState(true)
   const mainPlayerObserverRef = useRef(null)
   
-  // Check if we're on video player page
   const isOnVideoPlayerPage = useMemo(() => {
     return location.pathname.startsWith('/watch/')
   }, [location.pathname])
   
-  // Enhanced sync function with loop prevention (defined first to avoid circular dependencies)
   const syncBothPlayers = useCallback(() => {
-    if (isSyncingRef.current) return
+    if (isSyncingRef.current || isLoadingNewVideoRef.current) return
     
     if (syncTimeoutRef.current) {
       clearTimeout(syncTimeoutRef.current)
     }
     
     syncTimeoutRef.current = setTimeout(() => {
-      if (isSyncingRef.current) return
+      if (isSyncingRef.current || isLoadingNewVideoRef.current) return
       
       const activePlayer = activePlayerRef.current
       const inactivePlayer = activePlayerRef.current === mainVideoRef.current ? miniVideoRef.current : mainVideoRef.current
@@ -81,13 +77,11 @@ export const SyncedVideoProvider = ({ children }) => {
         isSyncingRef.current = true
         
         try {
-          // Only sync if there's a significant difference to avoid constant micro-adjustments
           const timeDifference = Math.abs(activePlayer.currentTime - inactivePlayer.currentTime)
-          if (timeDifference > 0.5) { // Increased threshold for better stability
+          if (timeDifference > 0.5) {
             inactivePlayer.currentTime = activePlayer.currentTime
           }
           
-          // Sync other properties only if they're different
           if (Math.abs(inactivePlayer.volume - activePlayer.volume) > 0.01) {
             inactivePlayer.volume = activePlayer.volume
           }
@@ -100,7 +94,6 @@ export const SyncedVideoProvider = ({ children }) => {
             inactivePlayer.playbackRate = activePlayer.playbackRate
           }
           
-          // Sync play/pause state with better error handling
           if (!activePlayer.paused && inactivePlayer.paused) {
             inactivePlayer.play().catch((error) => {
             })
@@ -109,7 +102,6 @@ export const SyncedVideoProvider = ({ children }) => {
           }
         } catch (error) {
         } finally {
-          // Reset sync flag after a longer delay to prevent rapid re-syncing
           setTimeout(() => {
             isSyncingRef.current = false
           }, 200)
@@ -117,47 +109,41 @@ export const SyncedVideoProvider = ({ children }) => {
       } else {
         isSyncingRef.current = false
       }
-    }, 250) // Longer delay to reduce sync frequency
+    }, 250)
   }, [])
   
-  // Improved current time update with debouncing
   const updateCurrentTime = useCallback((time) => {
-    // Only update if the difference is significant to avoid unnecessary re-renders
+    if (isLoadingNewVideoRef.current) return
+    
     if (Math.abs(time - currentTime) > 0.1) {
       setCurrentTime(time)
     }
     
-    // Debounced sync to prevent excessive syncing
     if (syncTimeoutRef.current) {
       clearTimeout(syncTimeoutRef.current)
     }
     
     syncTimeoutRef.current = setTimeout(() => {
-      if (!isSyncingRef.current) {
+      if (!isSyncingRef.current && !isLoadingNewVideoRef.current) {
         syncBothPlayers()
       }
     }, 200)
   }, [currentTime, syncBothPlayers])
   
-  // Improved active player switching
   const setActivePlayer = useCallback((playerType) => {
     const newActiveRef = playerType === 'main' ? mainVideoRef : miniVideoRef
     
     if (newActiveRef.current && activePlayerRef.current !== newActiveRef.current) {
       const oldActiveRef = activePlayerRef.current
       
-      // Update active player reference
       activePlayerRef.current = newActiveRef.current
       
-      // Wait for the new player to be ready before syncing
       const syncWhenReady = () => {
         if (newActiveRef.current && newActiveRef.current.readyState >= 2) {
-          // Sync state from old active player to new active player
-          if (oldActiveRef && oldActiveRef !== newActiveRef.current && oldActiveRef.readyState >= 2) {
+          if (oldActiveRef && oldActiveRef !== newActiveRef.current && oldActiveRef.readyState >= 2 && !isLoadingNewVideoRef.current) {
             isSyncingRef.current = true
             
             try {
-              // More precise time sync during player switch
               const timeDifference = Math.abs(oldActiveRef.currentTime - newActiveRef.current.currentTime)
               if (timeDifference > 0.2) {
                 newActiveRef.current.currentTime = oldActiveRef.currentTime
@@ -167,7 +153,6 @@ export const SyncedVideoProvider = ({ children }) => {
               newActiveRef.current.muted = oldActiveRef.muted
               newActiveRef.current.playbackRate = oldActiveRef.playbackRate
               
-              // Sync play state
               if (!oldActiveRef.paused && newActiveRef.current.paused) {
                 newActiveRef.current.play().catch((error) => {
                 })
@@ -182,14 +167,12 @@ export const SyncedVideoProvider = ({ children }) => {
             }
           }
           
-          // Trigger sync after switching
           setTimeout(() => {
-            if (!isSyncingRef.current) {
+            if (!isSyncingRef.current && !isLoadingNewVideoRef.current) {
               syncBothPlayers()
             }
           }, 300)
         } else {
-          // Retry if player isn't ready
           setTimeout(syncWhenReady, 100)
         }
       }
@@ -198,16 +181,14 @@ export const SyncedVideoProvider = ({ children }) => {
     }
   }, [syncBothPlayers])
   
-  // Video control functions with better error handling
   const play = useCallback(async () => {
     if (activePlayerRef.current && activePlayerRef.current.readyState >= 2) {
       try {
         await activePlayerRef.current.play()
         setIsPlaying(true)
         
-        // Delayed sync to ensure play state is properly set
         setTimeout(() => {
-          if (!isSyncingRef.current) {
+          if (!isSyncingRef.current && !isLoadingNewVideoRef.current) {
             syncBothPlayers()
           }
         }, 100)
@@ -222,9 +203,8 @@ export const SyncedVideoProvider = ({ children }) => {
       activePlayerRef.current.pause()
       setIsPlaying(false)
       
-      // Immediate sync for pause to ensure both players stop
       setTimeout(() => {
-        if (!isSyncingRef.current) {
+        if (!isSyncingRef.current && !isLoadingNewVideoRef.current) {
           syncBothPlayers()
         }
       }, 50)
@@ -249,10 +229,11 @@ export const SyncedVideoProvider = ({ children }) => {
         activePlayerRef.current.currentTime = clampedTime
         setCurrentTime(clampedTime)
         
-        // Immediate sync for seek operations
         setTimeout(() => {
           isSyncingRef.current = false
-          syncBothPlayers()
+          if (!isLoadingNewVideoRef.current) {
+            syncBothPlayers()
+          }
         }, 100)
       } catch (error) {
         isSyncingRef.current = false
@@ -265,7 +246,6 @@ export const SyncedVideoProvider = ({ children }) => {
     setVolume(clampedVolume)
     setIsMuted(clampedVolume === 0)
     
-    // Apply to both players immediately
     if (mainVideoRef.current) {
       mainVideoRef.current.volume = clampedVolume
       mainVideoRef.current.muted = clampedVolume === 0
@@ -280,7 +260,6 @@ export const SyncedVideoProvider = ({ children }) => {
     const newMutedState = !isMuted
     setIsMuted(newMutedState)
     
-    // Apply to both players immediately
     if (mainVideoRef.current) {
       mainVideoRef.current.muted = newMutedState
     }
@@ -293,7 +272,6 @@ export const SyncedVideoProvider = ({ children }) => {
     const clampedSpeed = Math.max(0.25, Math.min(2, speed))
     setPlaybackRate(clampedSpeed)
     
-    // Apply to both players immediately
     if (mainVideoRef.current) {
       mainVideoRef.current.playbackRate = clampedSpeed
     }
@@ -302,13 +280,25 @@ export const SyncedVideoProvider = ({ children }) => {
     }
   }, [])
   
-  // Mini player functions with improved switching
   const activateMiniPlayer = useCallback(() => {
     if (!currentVideo) return
     
     setIsMiniPlayerActive(true)
     
-    // Wait a bit for the mini player to render before switching
+    const resetToBottomRight = () => {
+      const playerWidth = 360
+      const playerHeight = 202
+      const margin = 20
+      const newX = (typeof window !== 'undefined' ? window.innerWidth : 1200) - playerWidth - margin
+      const newY = (typeof window !== 'undefined' ? window.innerHeight : 800) - playerHeight - margin
+      setMiniPlayerPosition({ 
+        x: Math.max(margin, newX), 
+        y: Math.max(margin, newY) 
+      })
+    }
+    
+    resetToBottomRight()
+    
     setTimeout(() => {
       setActivePlayer('mini')
     }, 200)
@@ -317,7 +307,6 @@ export const SyncedVideoProvider = ({ children }) => {
   const deactivateMiniPlayer = useCallback(() => {
     setIsMiniPlayerActive(false)
     
-    // Wait a bit before switching to main player
     setTimeout(() => {
       setActivePlayer('main')
     }, 200)
@@ -330,15 +319,11 @@ export const SyncedVideoProvider = ({ children }) => {
   
   const returnToMainPlayer = useCallback(() => {
     if (currentVideo) {
-      
-      // First, deactivate mini player and switch to main player
       deactivateMiniPlayer()
       
-      // Then navigate to the video page if not already there
       const videoPath = `/watch/${currentVideo._id}`
       const currentPath = location.pathname
       
-      // Preserve playlist parameters if they exist
       const urlParams = new URLSearchParams(window.location.search)
       const playlistId = urlParams.get('playlist')
       const videoIndex = urlParams.get('index')
@@ -351,26 +336,22 @@ export const SyncedVideoProvider = ({ children }) => {
         }
       }
       
-      
-      // Only navigate if we're not already on the video page
       if (currentPath !== videoPath) {
         navigate(targetPath)
-      } else {
       }
       
-      // Scroll to main player if on the same page
       setTimeout(() => {
         const mainPlayerElement = document.querySelector('[data-main-video-player]')
         if (mainPlayerElement) {
           mainPlayerElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
         }
-      }, 500) // Increased delay to ensure navigation completes
+      }, 500)
     }
   }, [currentVideo, location.pathname, navigate, deactivateMiniPlayer])
   
-  // Load new video with better initialization
   const loadVideo = useCallback((video, playlist = null, videoIndex = 0) => {
-    // Reset sync state
+    isLoadingNewVideoRef.current = true
+    
     isSyncingRef.current = false
     if (syncTimeoutRef.current) {
       clearTimeout(syncTimeoutRef.current)
@@ -381,19 +362,31 @@ export const SyncedVideoProvider = ({ children }) => {
     setCurrentVideoIndex(videoIndex)
     setCurrentTime(0)
     setDuration(0)
+    setIsPlaying(false)
     setIsBuffering(true)
     
-    // Set active player based on mini player state with delay
+    if (mainVideoRef.current) {
+      mainVideoRef.current.pause()
+      mainVideoRef.current.currentTime = 0
+    }
+    if (miniVideoRef.current) {
+      miniVideoRef.current.pause()
+      miniVideoRef.current.currentTime = 0
+    }
+    
     setTimeout(() => {
       if (isMiniPlayerActive) {
         setActivePlayer('mini')
       } else {
         setActivePlayer('main')
       }
+      
+      setTimeout(() => {
+        isLoadingNewVideoRef.current = false
+      }, 500)
     }, 200)
   }, [isMiniPlayerActive, setActivePlayer])
   
-  // Handle video end
   const handleVideoEnd = useCallback(() => {
     if (autoPlayNext && currentPlaylist && playlistVideos.length > 0) {
       const nextIndex = currentVideoIndex + 1
@@ -409,39 +402,44 @@ export const SyncedVideoProvider = ({ children }) => {
     }
   }, [autoPlayNext, currentPlaylist, playlistVideos, currentVideoIndex, navigate])
   
-  // Update mini player position
   const updateMiniPlayerPosition = useCallback((position) => {
     setMiniPlayerPosition(position)
   }, [])
   
-  // Update mini player size
   const updateMiniPlayerSize = useCallback((size) => {
     setMiniPlayerSize(size)
   }, [])
+
+  const resetMiniPlayerPosition = useCallback(() => {
+    const playerWidth = 360
+    const playerHeight = 202
+    const margin = 20
+    const newX = (typeof window !== 'undefined' ? window.innerWidth : 1200) - playerWidth - margin
+    const newY = (typeof window !== 'undefined' ? window.innerHeight : 800) - playerHeight - margin
+    setMiniPlayerPosition({ 
+      x: Math.max(margin, newX), 
+      y: Math.max(margin, newY) 
+    })
+  }, [])
   
-  // Register main player for visibility tracking
   const registerMainPlayer = useCallback((element) => {
     if (mainPlayerObserverRef.current && element) {
       mainPlayerObserverRef.current.observe(element)
     }
   }, [])
   
-  // Unregister main player
   const unregisterMainPlayer = useCallback((element) => {
     if (mainPlayerObserverRef.current && element) {
       mainPlayerObserverRef.current.unobserve(element)
     }
   }, [])
   
-  // Initialize intersection observer for main player visibility
   useEffect(() => {
     const observerCallback = (entries) => {
       entries.forEach((entry) => {
         const isVisible = entry.isIntersecting && entry.intersectionRatio > 0.5
         setIsMainPlayerVisible(isVisible)
         
-        // Auto-activate mini player when main player is not visible and video is playing
-        // But only if we're not already on the video player page
         if (!isVisible && isPlaying && currentVideo && !isMiniPlayerActive && !isOnVideoPlayerPage) {
           activateMiniPlayer()
         }
@@ -460,19 +458,66 @@ export const SyncedVideoProvider = ({ children }) => {
     }
   }, [isPlaying, currentVideo, isMiniPlayerActive, isOnVideoPlayerPage, activateMiniPlayer])
   
-  // Cleanup timeouts on unmount
+  useEffect(() => {
+    if (currentVideo) {
+      isLoadingNewVideoRef.current = true
+      
+      const resetVideoPosition = (videoElement) => {
+        if (videoElement) {
+          videoElement.pause()
+          videoElement.currentTime = 0
+          videoElement.volume = volume
+          videoElement.muted = isMuted
+          videoElement.playbackRate = playbackRate
+        }
+      }
+      
+      resetVideoPosition(mainVideoRef.current)
+      resetVideoPosition(miniVideoRef.current)
+      
+      setCurrentTime(0)
+      setIsPlaying(false)
+      
+      const timer = setTimeout(() => {
+        isLoadingNewVideoRef.current = false
+      }, 1000)
+      
+      return () => {
+        clearTimeout(timer)
+      }
+    }
+  }, [currentVideo, volume, isMuted, playbackRate])
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (isMiniPlayerActive) {
+        const playerWidth = 360
+        const playerHeight = 202
+        const margin = 20
+        const newX = window.innerWidth - playerWidth - margin
+        const newY = window.innerHeight - playerHeight - margin
+        setMiniPlayerPosition({ 
+          x: Math.max(margin, newX), 
+          y: Math.max(margin, newY) 
+        })
+      }
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [isMiniPlayerActive])
+  
   useEffect(() => {
     return () => {
       if (syncTimeoutRef.current) {
         clearTimeout(syncTimeoutRef.current)
       }
       isSyncingRef.current = false
+      isLoadingNewVideoRef.current = false
     }
   }, [])
   
-  // Memoized context value
   const contextValue = useMemo(() => ({
-    // Video state
     currentVideo,
     isPlaying,
     currentTime,
@@ -482,7 +527,6 @@ export const SyncedVideoProvider = ({ children }) => {
     playbackRate,
     isBuffering,
     
-    // Mini player state
     isMiniPlayerActive,
     miniPlayerPosition,
     miniPlayerSize,
@@ -490,18 +534,15 @@ export const SyncedVideoProvider = ({ children }) => {
     isResizing,
     isMainPlayerVisible,
     
-    // Player refs
     mainVideoRef,
     miniVideoRef,
     activePlayerRef,
     
-    // Playlist state
     currentPlaylist,
     playlistVideos,
     currentVideoIndex,
     autoPlayNext,
     
-    // Control functions
     play,
     pause,
     togglePlay,
@@ -510,26 +551,23 @@ export const SyncedVideoProvider = ({ children }) => {
     toggleMute,
     setPlaybackSpeed,
     
-    // Mini player functions
     activateMiniPlayer,
     deactivateMiniPlayer,
     closeMiniPlayer,
     returnToMainPlayer,
     updateMiniPlayerPosition,
     updateMiniPlayerSize,
+    resetMiniPlayerPosition,
     
-    // Video management
     loadVideo,
     handleVideoEnd,
     
-    // Player management
     setActivePlayer,
     registerMainPlayer,
     unregisterMainPlayer,
     syncBothPlayers,
     updateCurrentTime,
     
-    // State setters (for video player components)
     setCurrentTime,
     setDuration,
     setIsPlaying,
@@ -541,7 +579,6 @@ export const SyncedVideoProvider = ({ children }) => {
     setIsDragging,
     setIsResizing,
     
-    // Utility
     isOnVideoPlayerPage
   }), [
     currentVideo, isPlaying, currentTime, duration, volume, isMuted, playbackRate, isBuffering,
@@ -549,7 +586,7 @@ export const SyncedVideoProvider = ({ children }) => {
     currentPlaylist, playlistVideos, currentVideoIndex, autoPlayNext,
     play, pause, togglePlay, seekTo, setVolumeLevel, toggleMute, setPlaybackSpeed,
     activateMiniPlayer, deactivateMiniPlayer, closeMiniPlayer, returnToMainPlayer,
-    updateMiniPlayerPosition, updateMiniPlayerSize, loadVideo, handleVideoEnd,
+    updateMiniPlayerPosition, updateMiniPlayerSize, resetMiniPlayerPosition, loadVideo, handleVideoEnd,
     setActivePlayer, registerMainPlayer, unregisterMainPlayer, syncBothPlayers, updateCurrentTime, isOnVideoPlayerPage
   ])
   
