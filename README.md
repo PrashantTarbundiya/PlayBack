@@ -1,367 +1,478 @@
-## PlayBack — Video Streaming Platform
+# 🎬 PlayBack
+### *Video Streaming Platform*
 
-Modern YouTube‑like app with authentication (email/password + OAuth), video upload/streaming, playlists (including Watch Later), likes, comments, subscriptions, notifications, dashboard analytics, and more. Monorepo includes an Express + MongoDB backend and a React + Vite + Tailwind frontend.
+<div align="center">
 
-### Contents
-- Features
-- Tech Stack
-- Requirements
-- Project Structure
-- Quick Start
-- Environment Variables
-  - Backend .env
-  - Frontend .env
-- Running the Apps
-- Scripts
-- OAuth Setup (Google, Facebook, GitHub)
-- API Overview
-- Frontend Notes
-- Deployment Notes
-- License
+[![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=flat-square&logo=node.js)](https://nodejs.org/)
+[![React](https://img.shields.io/badge/React-18+-61DAFB?style=flat-square&logo=react)](https://reactjs.org/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=flat-square&logo=mongodb)](https://mongodb.com/)
+[![License](https://img.shields.io/badge/License-ISC-blue?style=flat-square)](LICENSE)
 
-## Features
-- Authentication: email/password, JWT, refresh tokens, secure sessions for OAuth
-- Social login: Google, Facebook, GitHub
-- User profiles: avatar, cover image, account updates, password change, watch history
-- Videos: upload (video + thumbnail), categories, recommendations, watch next, publish toggle, views
-- Playlists: create/update/delete, add/remove videos, public/private visibility, saved playlists, Watch Later
-- Social: likes (videos, comments), comments (CRUD), subscriptions, notifications
-- Dashboard: channel stats and video management
+**A feature-rich YouTube-like application with modern authentication, video streaming, and social features**
 
-## Tech Stack
-- Backend: Node.js, Express, Mongoose, Passport (JWT + OAuth), Multer, Cloudinary, Nodemailer, CORS, Cookie/Session
-- Frontend: React, Vite, React Router, Tailwind CSS , Axios, react-hot-toast, lucide-react
-- DB/Storage: MongoDB (local/Atlas), Cloudinary for media
+[🚀 Quick Start](#-quick-start) • [📋 Features](#-features) • [🛠️ Tech Stack](#️-tech-stack) • [📖 API Docs](#-api-overview)
 
-## Requirements
-- Node.js 18+
-- npm 9+
-- MongoDB instance (local or Atlas)
-- Cloudinary account (for media storage)
+</div>
 
-## Project Structure
-```text
-PlayBack/
-  Backend/
-    package-lock.json
-    package.json
-    public/
-      temp/
-    src/
-      app.js
-      config/
-        passport.js
-      constants.js
-      controllers/
-        commentController.js
-        dashboardController.js
-        healthcheckController.js
-        likeController.js
-        notificationController.js
-        playlistController.js
-        subscriptionController.js
-        tweetController.js
-        userController.js
-        videoController.js
-      db/
-        db.js
-      index.js
-      middlewares/
-        authMiddleware.js
-        multer.js
-      models/
-        commentModel.js
-        likeModel.js
-        notificationModel.js
-        playlistModel.js
-        subscriptionModel.js
-        tweetModel.js
-        userModel.js
-        videoModel.js
-      routes/
-        commentRoute.js
-        dashboardRoute.js
-        healthcheckRoute.js
-        likeRoute.js
-        notificationRoute.js
-        playlistRoute.js
-        subscriptionRoute.js
-        tweetRoute.js
-        userRoute.js
-        videoRoute.js
-      utils/
-        apiErrors.js
-        apiResponse.js
-        asyncHandler.js
-        cloudinary.js
-        defaultImages.js
-        emailService.js
-  Frontend/
-    eslint.config.js
-    index.html
-    package-lock.json
-    package.json
-    postcss.config.js
-    public/
-      vite.svg
-    README.md
-    src/
-      App.css
-      App.jsx
-      assets/
-        PlayBack.png
-      components/
-        CommentSection/
-          CommentSection.jsx
-        FormInput.jsx
-        Layout/
-          Header.jsx
-          Layout.jsx
-          MobileSearch.jsx
-          Sidebar.jsx
-        LoadingButton.jsx
-        MiniPlayer/
-          MiniPlayer.jsx
-        Notifications/
-          NotificationDropdown.jsx
-        OAuthButtons.jsx
-        OTPInput.jsx
-        PlaylistModal/
-          PlaylistModal.jsx
-        ProtectedRoute.jsx
-        Settings/
-          VideoPreviewSettings.jsx
-        Skeleton/
-          LoadingScreen.jsx
-          Skeleton.jsx
-          VideoPlayerSkeleton.jsx
-        SubscriptionDropdown/
-          SubscriptionDropdown.jsx
-        VideoCard/
-          VideoCard.jsx
-        VideoPlayer/
-          SyncedVideoPlayer.jsx
-          VideoPlayer.jsx
-        VideoPreview/
-          VideoPreview.css
-          VideoPreview.jsx
-      contexts/
-        AuthContext.jsx
-        NotificationContext.jsx
-        SyncedVideoContext.jsx
-        VideoContext.jsx
-        VideoPreviewContext.jsx
-      hooks/
-        useAuthRedirect.js
-        useResponsive.js
-        useVideoNavigation.js
-        useVideoPreview.js
-      index.css
-      main.jsx
-      pages/
-        BrowsePlaylists.jsx
-        Categories.jsx
-        ChannelVideos.jsx
-        Dashboard.jsx
-        ForgotPassword.jsx
-        History.jsx
-        Home.jsx
-        Library.jsx
-        LikedVideos.jsx
-        Login.jsx
-        Notifications.jsx
-        PlaylistDetail.jsx
-        Playlists.jsx
-        Profile.jsx
-        Register.jsx
-        Search.jsx
-        Settings.jsx
-        Trending.jsx
-        Tweets.jsx
-        Upload.jsx
-        VideoPlayer.jsx
-        WatchLater.jsx
-      services/
-        api.js
-      utils/
-        performance.js
-        validation.js
-    tailwind.config.js
-    vite.config.js
+---
+
+## ✨ Features
+
+<table>
+<tr>
+<td width="50%">
+
+### 🔐 **Authentication & Security**
+- 📧 Email/Password authentication
+- 🔑 JWT with refresh tokens
+- 🌐 OAuth (Google, Facebook, GitHub)
+- 🛡️ Secure session management
+
+### 👤 **User Experience**
+- 🖼️ Customizable profiles (avatar, cover)
+- 📱 Responsive design
+- 🎵 Mini-player functionality
+- 📈 Watch history tracking
+
+</td>
+<td width="50%">
+
+### 🎥 **Video Management**
+- ⬆️ Video & thumbnail upload
+- 📂 Category organization
+- 👀 View tracking
+- 🎯 Smart recommendations
+
+### 🎭 **Social Features**
+- 👍 Likes & comments system
+- 📋 Custom playlists
+- 🔔 Real-time notifications
+- 📊 Creator dashboard
+
+</td>
+</tr>
+</table>
+
+---
+
+## 🛠️ Tech Stack
+
+### Backend Architecture
+```
+Express.js → MongoDB
+         → Passport.js → JWT Auth
+                      → OAuth
+         → Cloudinary
 ```
 
-## Quick Start
+**Backend Technologies:**
+- Node.js & Express.js
+- MongoDB & Mongoose
+- Passport.js (JWT + OAuth)
+- Multer & Cloudinary
+- Nodemailer
+
+**Frontend Technologies:**
+- React & Vite
+- Tailwind CSS
+- Axios & React Router
+- React Hot Toast
+- Lucide React Icons
+
+**Database & Storage:**
+- MongoDB (Local/Atlas)
+- Cloudinary Media Storage
+
+---
+
+## 📋 Requirements
+
+> **Prerequisites:** Ensure you have the following installed on your system
+
+- 📦 **Node.js** `18+`
+- 🔧 **npm** `9+`
+- 🗄️ **MongoDB** (local or Atlas)
+- ☁️ **Cloudinary Account** (for media storage)
+
+---
+
+## 🚀 Quick Start
+
+### 1️⃣ **Clone the Repository**
 ```bash
-# 1) Clone
 git clone https://github.com/PrashantTarbundiya/PlayBack.git
 cd PlayBack
-
-# 2) Install deps
-cd Backend && npm install
-cd ../Frontend && npm install
-
-# 3) Configure env files
-#   - Create Backend/.env (see below)
-#   - Create Frontend/.env (see below)
-
-# 4) Run (two terminals)
-cd Backend && npm run dev
-cd Frontend && npm run dev
 ```
 
-## Environment Variables
+### 2️⃣ **Install Dependencies**
+```bash
+# Backend dependencies
+cd Backend && npm install
 
-### Backend/.env
+# Frontend dependencies
+cd ../Frontend && npm install
+```
+
+### 3️⃣ **Environment Setup**
+Create the following environment files:
+
+#### 📂 `Backend/.env`
 ```env
-# Server
+# 🔧 Server Configuration
 PORT=8000
 NODE_ENV=development
 BACKEND_URL=http://localhost:8000
 FRONTEND_URL=http://localhost:5173
 CORS_ORIGIN=http://localhost:5173
-SESSION_SECRET=replace-with-strong-random-string
+SESSION_SECRET=your-super-secret-session-key
 
-# MongoDB
-# Provide connection WITHOUT database name; DB name is appended internally
+# 🗄️ Database
 MONGODB_URI=mongodb://localhost:27017
 
-# JWT
-ACCESS_TOKEN_SECRET=replace-with-strong-secret
-REFRESH_TOKEN_SECRET=replace-with-strong-secret
+# 🔐 JWT Configuration  
+ACCESS_TOKEN_SECRET=your-access-token-secret
+REFRESH_TOKEN_SECRET=your-refresh-token-secret
 ACCESS_TOKEN_EXPIRY=15m
 REFRESH_TOKEN_EXPIRY=7d
 
-# Cloudinary
+# ☁️ Cloudinary
 CLOUDINARY_CLOUD_NAME=your-cloud-name
 CLOUDINARY_API_KEY=your-api-key
 CLOUDINARY_API_SECRET=your-api-secret
 
-# Email (Nodemailer - Gmail example uses App Password)
+# 📧 Email Service
 EMAIL_USER=your@gmail.com
 EMAIL_PASS=your-gmail-app-password
 
-# OAuth (enable providers you want)
+# 🌐 OAuth Providers
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
-
 FACEBOOK_APP_ID=your_facebook_client_id
 FACEBOOK_APP_SECRET=your_facebook_client_secret
-
 GITHUB_CLIENT_ID=your_github_client_id
 GITHUB_CLIENT_SECRET=your_github_client_secret
 ```
 
-Notes
-- `MONGODB_URI` must not include the DB name; the code appends `/Youtube` via `DB_NAME` (database name: `Youtube`).
-- `CORS_ORIGIN` should match your frontend URL exactly.
-- When `NODE_ENV=production`, cookies are sent as `secure` and sessions adjust accordingly.
-
-### Frontend/.env
+#### 📂 `Frontend/.env`
 ```env
-# Point to backend API base (include /api/v1)
+# 🔗 API Configuration
 VITE_API_BASE_URL=http://localhost:8000/api/v1
 ```
 
-## Running the Apps
-- Backend
-  - Directory: `Backend`
-  - Script: `npm run dev`
-  - Default: `http://localhost:8000`
+### 4️⃣ **Launch the Applications**
 
-- Frontend
-  - Directory: `Frontend`
-  - Script: `npm run dev`
-  - Default: `http://localhost:5173`
+Open **two terminal windows**:
 
-## Scripts
-- Backend (`Backend/package.json`)
-  - `npm run dev`: start dev server with nodemon and dotenv (`./src/index.js`)
-  - `npm test`: placeholder
+**Terminal 1 - Backend:**
+```bash
+cd Backend && npm run dev
+```
 
-- Frontend (`Frontend/package.json`)
-  - `npm run dev`: start Vite dev server
-  - `npm run build`: build for production
-  - `npm run preview`: preview production build
-  - `npm run lint`: run ESLint
+**Terminal 2 - Frontend:**
+```bash
+cd Frontend && npm run dev
+```
 
-## OAuth Setup (Google, Facebook, GitHub)
-Set the providers’ Callback URLs to the following (replace host for production):
-- Google: `{BACKEND_URL}/api/v1/users/auth/google/callback`
-- Facebook: `{BACKEND_URL}/api/v1/users/auth/facebook/callback`
-- GitHub: `{BACKEND_URL}/api/v1/users/auth/github/callback`
+🎉 **Success!** Visit `http://localhost:5173` to see your application running!
 
-On success, backend redirects to `{FRONTEND_URL}/login?oauth=success&token=<jwt>`.
-On failure, it redirects to `{FRONTEND_URL}/login?error=oauth_failed`.
+---
 
-## API Overview
-Base URL: `http://localhost:8000/api/v1`
+## 📁 Project Structure
 
-### Auth and Users (`/users`)
-- `POST /register` multipart fields: `avatar`, `coverImage`
-- `POST /login`, `POST /logout`
-- `POST /refresh-token`
-- `POST /change-password`
-- `GET /current-user`
-- `PATCH /update-account`
-- `PATCH /avatar` multipart `avatar`
-- `PATCH /cover-image` multipart `coverImage`
-- `GET /channel/:username`
-- History: `GET /history`, `PATCH /history/:videoId`
-- Password reset & OTP: `POST /forgot-password`, `POST /reset-password`, `POST /resend-otp`, `POST /send-otp`, `POST /verify-otp`
-- OAuth: `/auth/google`, `/auth/facebook`, `/auth/github` (+ `/callback` for each)
-- Link/unlink OAuth: `POST /link/:provider`, `DELETE /unlink/:provider`
+<details>
+<summary><strong>📂 View Complete Project Structure</strong></summary>
 
-### Videos (`/videos`)
-- `GET /` list (with owner details); `GET /all` basic list
-- `GET /search` search
-- `GET /categories` categories
-- `GET /recommendations` (auth)
-- `GET /watch-next/:videoId`
-- `POST /` upload (auth, multipart fields: `videoFile`, `thumbnail`)
-- `GET /:videoId`, `PATCH /:videoId` (auth, multipart `thumbnail`), `DELETE /:videoId` (auth)
-- `GET /user/:username` user videos
-- `PATCH /toggle/publish/:videoId` (auth)
-- `PATCH /views/:videoId` increment views
+```
+📁 PlayBack/
+  📁 Backend/
+    📄 package-lock.json
+    📄 package.json
+    📁 public/
+      📁 temp/
+    📁 src/
+      📄 app.js
+      📁 config/
+        📄 passport.js
+      📄 constants.js
+      📁 controllers/
+        📄 commentController.js
+        📄 dashboardController.js
+        📄 healthcheckController.js
+        📄 likeController.js
+        📄 notificationController.js
+        📄 playlistController.js
+        📄 subscriptionController.js
+        📄 tweetController.js
+        📄 userController.js
+        📄 videoController.js
+      📁 db/
+        📄 db.js
+      📄 index.js
+      📁 middlewares/
+        📄 authMiddleware.js
+        📄 multer.js
+      📁 models/
+        📄 commentModel.js
+        📄 likeModel.js
+        📄 notificationModel.js
+        📄 playlistModel.js
+        📄 subscriptionModel.js
+        📄 tweetModel.js
+        📄 userModel.js
+        📄 videoModel.js
+      📁 routes/
+        📄 commentRoute.js
+        📄 dashboardRoute.js
+        📄 healthcheckRoute.js
+        📄 likeRoute.js
+        📄 notificationRoute.js
+        📄 playlistRoute.js
+        📄 subscriptionRoute.js
+        📄 tweetRoute.js
+        📄 userRoute.js
+        📄 videoRoute.js
+      📁 utils/
+        📄 apiErrors.js
+        📄 apiResponse.js
+        📄 asyncHandler.js
+        📄 cloudinary.js
+        📄 defaultImages.js
+        📄 emailService.js
+  📁 Frontend/
+    📄 eslint.config.js
+    📄 index.html
+    📄 package-lock.json
+    📄 package.json
+    📄 postcss.config.js
+    📁 public/
+      📄 vite.svg
+    📄 README.md
+    📁 src/
+      📄 App.css
+      📄 App.jsx
+      📁 assets/
+        🖼️ PlayBack.png
+      📁 components/
+        📁 CommentSection/
+          📄 CommentSection.jsx
+        📄 FormInput.jsx
+        📁 Layout/
+          📄 Header.jsx
+          📄 Layout.jsx
+          📄 MobileSearch.jsx
+          📄 Sidebar.jsx
+        📄 LoadingButton.jsx
+        📁 MiniPlayer/
+          📄 MiniPlayer.jsx
+        📁 Notifications/
+          📄 NotificationDropdown.jsx
+        📄 OAuthButtons.jsx
+        📄 OTPInput.jsx
+        📁 PlaylistModal/
+          📄 PlaylistModal.jsx
+        📄 ProtectedRoute.jsx
+        📁 Settings/
+          📄 VideoPreviewSettings.jsx
+        📁 Skeleton/
+          📄 LoadingScreen.jsx
+          📄 Skeleton.jsx
+          📄 VideoPlayerSkeleton.jsx
+        📁 SubscriptionDropdown/
+          📄 SubscriptionDropdown.jsx
+        📁 VideoCard/
+          📄 VideoCard.jsx
+        📁 VideoPlayer/
+          📄 SyncedVideoPlayer.jsx
+          📄 VideoPlayer.jsx
+        📁 VideoPreview/
+          🎨 VideoPreview.css
+          📄 VideoPreview.jsx
+      📁 contexts/
+        📄 AuthContext.jsx
+        📄 NotificationContext.jsx
+        📄 SyncedVideoContext.jsx
+        📄 VideoContext.jsx
+        📄 VideoPreviewContext.jsx
+      📁 hooks/
+        📄 useAuthRedirect.js
+        📄 useResponsive.js
+        📄 useVideoNavigation.js
+        📄 useVideoPreview.js
+      🎨 index.css
+      📄 main.jsx
+      📁 pages/
+        📄 BrowsePlaylists.jsx
+        📄 Categories.jsx
+        📄 ChannelVideos.jsx
+        📄 Dashboard.jsx
+        📄 ForgotPassword.jsx
+        📄 History.jsx
+        📄 Home.jsx
+        📄 Library.jsx
+        📄 LikedVideos.jsx
+        📄 Login.jsx
+        📄 Notifications.jsx
+        📄 PlaylistDetail.jsx
+        📄 Playlists.jsx
+        📄 Profile.jsx
+        📄 Register.jsx
+        📄 Search.jsx
+        📄 Settings.jsx
+        📄 Trending.jsx
+        📄 Tweets.jsx
+        📄 Upload.jsx
+        📄 VideoPlayer.jsx
+        📄 WatchLater.jsx
+      📁 services/
+        📄 api.js
+      📁 utils/
+        📄 performance.js
+        📄 validation.js
+    📄 tailwind.config.js
+    📄 vite.config.js
+```
 
-### Playlists (`/playlist`)
-- `POST /` create, `GET /:id`, `PATCH /:id`, `DELETE /:id`
-- `PATCH /add/:videoId/:playlistId`, `PATCH /remove/:videoId/:playlistId`
-- `GET /user/:userId`
-- `POST /save/:playlistId`, `POST /unsave/:playlistId`, `GET /saved`
-- `GET /public` paginated public playlists
-- `GET /check/:videoId` check video membership
+</details>
 
-### Likes (`/likes`) and Comments (`/comments`)
-- Likes: `POST /toggle/v/:videoId`, `POST /toggle/c/:commentId`, `POST /toggle/t/:tweetId`, `GET /videos`
-- Comments: `GET /:videoId`, `POST /:videoId`, `PATCH /c/:commentId`, `DELETE /c/:commentId`
+---
 
-### Subscriptions (`/subscriptions`) and Notifications (`/notifications`)
-- Subscriptions: `POST /c/:channelId`, `GET /s/:subscriberId`, `GET /u/:channelId`
-- Notifications (all require auth):
-  - `GET /` get notifications
-  - `GET /unread-count` unread count
-  - `PATCH /mark-all-read` mark all as read
-  - `DELETE /clear-all` clear all notifications
-  - `PATCH /:notificationId/read` mark one as read
-  - `DELETE /:notificationId` delete one
+## 🔐 OAuth Setup
 
-### Dashboard (`/dashboard`) and Tweets (`/tweets`)
-- Dashboard: `GET /stats`, `GET /videos` (auth)
-- Tweets: `GET /`, `POST /` (auth), `PATCH /:tweetId` (auth), `DELETE /:tweetId` (auth), `GET /user/:userId`
+Configure OAuth providers with these callback URLs:
 
-## Frontend Notes
-- API client: `src/services/api.js` with Axios, base URL `VITE_API_BASE_URL`
-- Auth: JWT stored in `localStorage` and attached as `Authorization: Bearer <token>`
-- Toasts: unified error handling via Axios interceptor + `react-hot-toast`
-- UI: Tailwind CSS, responsive layout, mini‑player, skeletons, playlists modal, notification dropdown
+| Provider | Callback URL |
+|----------|-------------|
+| 🔍 **Google** | `{BACKEND_URL}/api/v1/users/auth/google/callback` |
+| 👤 **Facebook** | `{BACKEND_URL}/api/v1/users/auth/facebook/callback` |
+| 🐙 **GitHub** | `{BACKEND_URL}/api/v1/users/auth/github/callback` |
 
-## Deployment Notes
-- Set `NODE_ENV=production`, secure secrets, and correct `FRONTEND_URL`/`BACKEND_URL`
-- CORS: set `CORS_ORIGIN` to your deployed frontend URL
-- Sessions: ensure `SESSION_SECRET` is strong; cookies are `secure` in production
-- OAuth: update provider callback URLs to your production backend host
-- Emails: prefer provider SMTP creds or app passwords; avoid plain user passwords
+### Success/Error Redirects:
+- ✅ **Success**: `{FRONTEND_URL}/login?oauth=success&token=<jwt>`
+- ❌ **Error**: `{FRONTEND_URL}/login?error=oauth_failed`
 
+---
 
-## License
-ISC — © Prashant
+## 📖 API Overview
+
+> **Base URL:** `http://localhost:8000/api/v1`
+
+### 🔐 Authentication & Users (`/users`)
+
+<details>
+<summary><strong>Authentication Endpoints</strong></summary>
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/register` | User registration |
+| `POST` | `/login` | User login |
+| `POST` | `/logout` | User logout |
+| `POST` | `/refresh-token` | Refresh JWT token |
+| `GET` | `/current-user` | Get current user |
+| `POST` | `/forgot-password` | Password reset |
+
+</details>
+
+### 🎥 Videos (`/videos`)
+
+<details>
+<summary><strong>Video Management Endpoints</strong></summary>
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/` | List videos with owner details |
+| `POST` | `/` | Upload video (auth required) |
+| `GET` | `/:videoId` | Get video by ID |
+| `PATCH` | `/:videoId` | Update video (auth) |
+| `DELETE` | `/:videoId` | Delete video (auth) |
+| `GET` | `/search` | Search videos |
+
+</details>
+
+### 📋 Playlists (`/playlist`)
+
+<details>
+<summary><strong>Playlist Management</strong></summary>
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/` | Create playlist |
+| `GET` | `/:id` | Get playlist |
+| `PATCH` | `/add/:videoId/:playlistId` | Add video to playlist |
+| `PATCH` | `/remove/:videoId/:playlistId` | Remove video from playlist |
+
+</details>
+
+---
+
+## 🚀 Scripts
+
+### Backend Commands
+```bash
+npm run dev    # 🔥 Start development server
+npm test       # 🧪 Run tests
+```
+
+### Frontend Commands
+```bash
+npm run dev      # 🔥 Start development server  
+npm run build    # 📦 Build for production
+npm run preview  # 👀 Preview production build
+npm run lint     # 🔍 Run ESLint
+```
+
+---
+
+## 🌐 Deployment
+
+### Production Checklist
+
+- [ ] Set `NODE_ENV=production`
+- [ ] Configure secure secrets
+- [ ] Update `FRONTEND_URL` and `BACKEND_URL`
+- [ ] Set `CORS_ORIGIN` to production frontend URL
+- [ ] Update OAuth callback URLs
+- [ ] Configure email service with app passwords
+
+### Environment Variables
+```env
+NODE_ENV=production
+BACKEND_URL=https://your-api-domain.com
+FRONTEND_URL=https://your-app-domain.com
+CORS_ORIGIN=https://your-app-domain.com
+```
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Please follow these steps:
+
+1. 🍴 Fork the repository
+2. 🌿 Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. 💻 Commit your changes (`git commit -m 'Add amazing feature'`)
+4. 📤 Push to the branch (`git push origin feature/amazing-feature`)
+5. 🎯 Open a Pull Request
+
+---
+
+## 📝 License
+
+This project is licensed under the **ISC License**.
+
+---
+
+<div align="center">
+
+### 🌟 **Built with ❤️ by Prashant**
+
+[![GitHub](https://img.shields.io/badge/GitHub-PrashantTarbundiya-black?style=flat-square&logo=github)](https://github.com/PrashantTarbundiya)
+
+**Give this project a ⭐ if you found it helpful!**
+
+</div>
+
+---
+
+<div align="center">
+<sub>Made with 💻 and ☕ | © 2025 PlayBack Platform</sub>
+</div>
