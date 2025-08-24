@@ -83,6 +83,23 @@ const VideoPlayer = () => {
     }
   }, [id])
 
+  // Auto-play video when it's loaded
+  useEffect(() => {
+    if (video && videoRef.current && !loading) {
+      // Small delay to ensure video is ready
+      const timer = setTimeout(() => {
+        if (videoRef.current && videoRef.current.paused) {
+          videoRef.current.play().catch((error) => {
+            // Silently handle autoplay restrictions
+            console.log("Autoplay prevented:", error.message)
+          })
+        }
+      }, 500)
+      
+      return () => clearTimeout(timer)
+    }
+  }, [video, loading])
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (
@@ -631,11 +648,11 @@ const VideoPlayer = () => {
             {formatViews(video.views)} • {formatDistanceToNow(new Date(video.createdAt))} ago
           </span>
 
-          <div className="flex gap-2 text-sm">
+          <div className="flex gap-2 sm:gap-3 text-sm">
             <button
               onClick={handleLike}
               disabled={actionLoading.like}
-              className={`flex items-center gap-1 px-3 py-1 rounded-full transition-all duration-300 transform hover:scale-105 active:scale-95 ${
+              className={`flex items-center gap-2 px-4 sm:px-5 py-2 rounded-full transition-all duration-300 transform hover:scale-105 active:scale-95 ${
                 actionLoading.like
                   ? "bg-gray-600 text-gray-400 cursor-not-allowed"
                   : isLiked
@@ -647,44 +664,42 @@ const VideoPlayer = () => {
               }}
             >
               <ThumbsUp
-                size={16}
+                size={18}
                 className={`transition-all duration-300 ${isLiked ? "fill-current transform scale-110" : "hover:scale-110"}`}
               />
-              <span className="transition-all duration-200">{actionLoading.like ? "..." : likesCount}</span>
+              <span className="transition-all duration-200 hidden sm:inline">{actionLoading.like ? "..." : likesCount}</span>
             </button>
-            <button className="flex items-center gap-1 px-3 py-1 rounded-full bg-gray-800 text-gray-300 hover:bg-gray-700">
-              <ThumbsDown size={16} />
+            <button className="flex items-center gap-2 px-4 sm:px-5 py-2 rounded-full bg-gray-800 text-gray-300 hover:bg-gray-700">
+              <ThumbsDown size={18} />
             </button>
-            <button onClick={handleShare} className="flex items-center gap-1 px-3 py-1 rounded-full bg-gray-800 text-gray-300 hover:bg-gray-700">
-              <Share size={16} />
-              <span>Share</span>
+            <button onClick={handleShare} className="flex items-center gap-2 px-4 sm:px-5 py-2 rounded-full bg-gray-800 text-gray-300 hover:bg-gray-700">
+              <Share size={18} />
+              <span className="hidden sm:inline">Share</span>
             </button>
             <button
               onClick={handleWatchLater}
               disabled={actionLoading.watchLater}
-              className={`flex items-center gap-1 px-3 py-1 rounded-full transition-colors ${
+              className={`flex items-center gap-2 px-4 sm:px-5 py-2 rounded-full transition-colors ${
                 actionLoading.watchLater
                   ? "bg-gray-600 text-gray-400 cursor-not-allowed"
                   : "bg-gray-800 text-gray-300 hover:bg-gray-700"
               }`}
             >
-              <Clock size={16} />
-              <span>{actionLoading.watchLater ? "..." : "Watch Later"}</span>
+              <Clock size={18} />
+              <span className="hidden sm:inline">{actionLoading.watchLater ? "..." : "Watch Later"}</span>
             </button>
             <button
               onClick={handleSaveToPlaylist}
               disabled={actionLoading.saveToPlaylist}
-              className={`flex items-center gap-1 px-3 py-1 rounded-full transition-colors ${
+              className={`flex items-center gap-2 px-4 sm:px-5 py-2 rounded-full transition-colors ${
                 actionLoading.saveToPlaylist
                   ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-                  : isSaved
-                    ? "bg-green-600 text-white"
-                    : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                  : "bg-gray-800 text-gray-300 hover:bg-gray-700"
               }`}
               title={isSaved ? `Saved in ${savedPlaylists.length} playlist${savedPlaylists.length === 1 ? '' : 's'}` : 'Save to playlist'}
             >
-              <Plus size={16} className={isSaved ? "fill-current" : ""} />
-              <span>
+              <Plus size={18} className={isSaved ? "fill-current" : ""} />
+              <span className="hidden sm:inline">
                 {actionLoading.saveToPlaylist
                   ? "..."
                   : isSaved
@@ -693,9 +708,9 @@ const VideoPlayer = () => {
                 }
               </span>
             </button>
-            <button className="flex items-center gap-1 px-3 py-1 rounded-full bg-gray-800 text-gray-300 hover:bg-gray-700">
-              <Download size={16} />
-              <span>Download</span>
+            <button className="flex items-center gap-2 px-4 sm:px-5 py-2 rounded-full bg-gray-800 text-gray-300 hover:bg-gray-700">
+              <Download size={18} />
+              <span className="hidden sm:inline">Download</span>
             </button>
           </div>
         </div>

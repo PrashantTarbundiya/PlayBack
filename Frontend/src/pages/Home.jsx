@@ -119,7 +119,7 @@ const Home = () => {
     if (videos.length === 0) return null;
     
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6 w-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-5 xl:gap-6 w-full">
         {videos.map((video) => <VideoCard key={video._id} video={video} />)}
       </div>
     );
@@ -128,24 +128,24 @@ const Home = () => {
   // Memoize category buttons to prevent unnecessary re-renders
   const categoryButtons = useMemo(() => {
     if (categoriesLoading) {
-      return (
-        <div className="flex gap-3 overflow-x-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-[#404040] hover:scrollbar-thumb-[#555] pb-2">
-          {Array.from({ length: 8 }).map((_, index) => (
-            <div
-              key={index}
-              className="px-4 py-2 rounded-full bg-[#1e1e1e] animate-pulse flex-shrink-0"
-              style={{ width: `${Math.random() * 40 + 60}px`, height: '32px' }}
-            />
-          ))}
-        </div>
-      );
+          return (
+      <div className="flex gap-2 sm:gap-3 overflow-x-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-[#404040] hover:scrollbar-thumb-[#555] pb-2">
+        {Array.from({ length: 8 }).map((_, index) => (
+          <div
+            key={index}
+            className="px-3 sm:px-4 py-2 rounded-full bg-[#1e1e1e] animate-pulse flex-shrink-0"
+            style={{ width: `${Math.random() * 40 + 60}px`, height: '32px' }}
+          />
+        ))}
+      </div>
+    );
     }
 
     return categories.map((category) => (
       <button
         key={category.name}
         onClick={() => handleCategoryChange(category.name)}
-        className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
+        className={`px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
           selectedCategory === category.name
             ? 'bg-white text-black'
             : 'bg-[#1e1e1e] text-white hover:bg-[#2a2a2a]'
@@ -159,16 +159,16 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-[#0f0f0f] text-white">
       {/* Category Filter Bar */}
-      <div className="sticky top-14 bg-[#0f0f0f] border-b border-[#222] z-40 px-6 py-3">
+      <div className="sticky top-14 bg-[#0f0f0f] border-b border-[#222] z-40 px-4 sm:px-6 py-3">
         <div className="max-w-[1400px] mx-auto">
-          <div className="flex gap-3 overflow-x-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-[#404040] hover:scrollbar-thumb-[#555] pb-2">
+          <div className="flex gap-2 sm:gap-3 overflow-x-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-[#404040] hover:scrollbar-thumb-[#555] pb-2 -mx-1 px-1">
             {categoryButtons}
           </div>
         </div>
       </div>
 
       {/* Videos Content */}
-      <div className="p-6 w-full">
+      <div className="p-4 sm:p-6 w-full">
         {loading ? (
           <VideoGridSkeleton count={12} />
         ) : videos.length > 0 ? (

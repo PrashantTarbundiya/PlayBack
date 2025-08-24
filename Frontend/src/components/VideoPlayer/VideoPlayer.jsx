@@ -39,12 +39,14 @@ const VideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc }, ref) 
     if (controlsTimeoutRef.current) {
       clearTimeout(controlsTimeoutRef.current)
     }
+    // Different timeout for fullscreen (1.5s) vs normal mode (3s)
+    const timeout = isFullscreen ? 1500 : 3000
     controlsTimeoutRef.current = setTimeout(() => {
       if (isPlaying) {
         setShowControls(false)
       }
-    }, 3000)
-  }, [isPlaying])
+    }, timeout)
+  }, [isPlaying, isFullscreen])
 
   // Helper functions
   const togglePlay = useCallback(() => {
@@ -546,283 +548,283 @@ const VideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc }, ref) 
         </div>
       </div>
 
-      {/* Controls */}
-      <div className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent transition-opacity duration-300 ${showControls ? "opacity-100" : "opacity-0"} ${isFullscreen ? 'pt-12 px-8 pb-8' : 'pt-8 px-4 pb-4'}`}>
-        {/* Progress bar */}
-        <div className={`w-full bg-white/20 rounded-sm cursor-pointer group ${isFullscreen ? 'h-2 mb-6' : 'h-1.5 mb-4'}`} onClick={handleSeek}>
-          <div
-            className="h-full bg-red-500 rounded-sm transition-all duration-100 relative"
-            style={{ width: duration ? `${(currentTime / duration) * 100}%` : "0%" }}
-          >
-            <div className={`absolute right-0 top-1/2 transform -translate-y-1/2 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity ${isFullscreen ? 'w-4 h-4' : 'w-3 h-3'}`}></div>
+      {/* Mobile Controls Layout (YouTube Style) */}
+      <div className={`absolute inset-0 transition-opacity duration-300 ${showControls ? "opacity-100" : "opacity-0"}`}>
+        {/* Top Controls */}
+        <div className="absolute top-0 left-0 right-0 flex items-center justify-between p-4 bg-gradient-to-b from-black/60 to-transparent">
+          {/* Top Left - Miniplayer Button */}
+          <button className="rounded-full text-white transition-colors hover:bg-white/20 p-2" aria-label="Miniplayer">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="text-white">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+          </button>
+          
+          {/* Top Right - Settings Button */}
+          <div className="relative">
+            <button
+              onClick={() => setShowSettingsMenu(!showSettingsMenu)}
+              className="rounded-full text-white transition-colors hover:bg-white/20 p-2"
+              aria-label="Settings"
+            >
+              <Settings size={20} />
+            </button>
+            {showSettingsMenu && (
+              <div className={`absolute ${isFullscreen ? 'bottom-full right-0 mb-2' : 'bottom-0 left-0 right-0'} bg-gray-900/95 backdrop-blur-sm rounded-lg py-1 overflow-y-auto z-20 border border-gray-700/50 shadow-2xl transition-all duration-300 ${isFullscreen ? 'min-w-[220px] max-w-[280px] max-h-64' : 'min-w-full max-h-48 rounded-t-lg transform translate-y-0'} sm:min-w-[180px] sm:max-w-[220px] sm:bottom-full sm:right-0 sm:mb-2 sm:min-w-[160px] sm:max-w-[200px] sm:transform-none`}>
+                {settingsView === 'main' && (
+                  <>
+                    {/* Playback Speed */}
+                    <div className={`flex items-center justify-between hover:bg-white/10 transition-colors cursor-pointer ${isFullscreen ? 'px-3 py-2' : 'px-2 py-1.5'}`}
+                         onClick={() => openSettingsSubmenu('speed')}>
+                      <div className={`flex items-center ${isFullscreen ? 'gap-2' : 'gap-1.5'}`}>
+                        <Gauge size={isFullscreen ? 16 : 12} className="text-white" />
+                        <span className={`text-white ${isFullscreen ? 'text-sm' : 'text-xs'}`}>Playback speed</span>
+                      </div>
+                      <div className={`flex items-center ${isFullscreen ? 'gap-1.5' : 'gap-1'}`}>
+                        <span className={`text-white/70 ${isFullscreen ? 'text-sm' : 'text-xs'}`}>
+                          {playbackRate === 1 ? 'Normal' : `${playbackRate}x`}
+                        </span>
+                        <svg width={isFullscreen ? "6" : "5"} height={isFullscreen ? "10" : "8"} viewBox="0 0 6 10" fill="currentColor" className="text-white/70">
+                          <path d="M1 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </div>
+                    </div>
+
+                    {/* Quality */}
+                    <div className={`flex items-center justify-between hover:bg-white/10 transition-colors cursor-pointer ${isFullscreen ? 'px-3 py-2' : 'px-2 py-1.5'}`}
+                         onClick={() => openSettingsSubmenu('quality')}>
+                      <div className={`flex items-center ${isFullscreen ? 'gap-2' : 'gap-1.5'}`}>
+                        <div className={`bg-white/60 rounded-sm ${isFullscreen ? 'w-4 h-3' : 'w-3 h-2'}`}></div>
+                        <span className={`text-white ${isFullscreen ? 'text-sm' : 'text-xs'}`}>Quality</span>
+                      </div>
+                      <div className={`flex items-center ${isFullscreen ? 'gap-1.5' : 'gap-1'}`}>
+                        <span className={`text-white/70 ${isFullscreen ? 'text-sm' : 'text-xs'}`}>{selectedQuality.split(' ')[0]}</span>
+                        <svg width={isFullscreen ? "6" : "5"} height={isFullscreen ? "10" : "8"} viewBox="0 0 6 10" fill="currentColor" className="text-white/70">
+                          <path d="M1 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </div>
+                    </div>
+
+                    {/* Subtitles/CC */}
+                    <div className={`flex items-center justify-between hover:bg-white/10 transition-colors cursor-pointer ${isFullscreen ? 'px-3 py-2' : 'px-2 py-1.5'}`}
+                         onClick={() => openSettingsSubmenu('subtitles')}>
+                      <div className={`flex items-center ${isFullscreen ? 'gap-2' : 'gap-1.5'}`}>
+                        <div className={`border border-white/60 rounded-sm ${isFullscreen ? 'w-4 h-3' : 'w-3 h-2'}`}></div>
+                        <span className={`text-white ${isFullscreen ? 'text-sm' : 'text-xs'}`}>Subtitles/CC</span>
+                      </div>
+                      <div className={`flex items-center ${isFullscreen ? 'gap-1.5' : 'gap-1'}`}>
+                        <span className={`text-white/70 ${isFullscreen ? 'text-sm' : 'text-xs'}`}>{selectedSubtitle}</span>
+                        <svg width={isFullscreen ? "6" : "5"} height={isFullscreen ? "10" : "8"} viewBox="0 0 6 10" fill="currentColor" className="text-white/70">
+                          <path d="M1 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </div>
+                    </div>
+
+                    {/* Autoplay Next */}
+                    <div className="border-t border-gray-700/50 pt-1">
+                      <div className={`flex items-center justify-between hover:bg-white/10 transition-colors ${isFullscreen ? 'px-3 py-2' : 'px-2 py-1.5'}`}>
+                        <div className={`flex items-center ${isFullscreen ? 'gap-2' : 'gap-1.5'}`}>
+                          <PlayCircle size={isFullscreen ? 16 : 12} className="text-white" />
+                          <span className={`text-white ${isFullscreen ? 'text-sm' : 'text-xs'}`}>Autoplay next</span>
+                        </div>
+                        <div className="flex items-center">
+                          <div className={`rounded-full transition-colors ${autoplayNext ? 'bg-red-500' : 'bg-gray-600'} relative cursor-pointer ${isFullscreen ? 'w-8 h-4' : 'w-6 h-3'}`}
+                               onClick={toggleAutoplayNext}>
+                            <div className={`rounded-full bg-white absolute top-0.5 transition-transform ${autoplayNext ? (isFullscreen ? 'translate-x-4' : 'translate-x-3') : 'translate-x-0.5'} ${isFullscreen ? 'w-3 h-3' : 'w-2 h-2'}`}></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Loop Option */}
+                    <div className={`flex items-center justify-between hover:bg-white/10 transition-colors ${isFullscreen ? 'px-3 py-2' : 'px-2 py-1.5'}`}>
+                      <div className={`flex items-center ${isFullscreen ? 'gap-2' : 'gap-1.5'}`}>
+                        <RotateCcw size={isFullscreen ? 16 : 12} className="text-white" />
+                        <span className={`text-white ${isFullscreen ? 'text-sm' : 'text-xs'}`}>Loop</span>
+                      </div>
+                      <div className="flex items-center">
+                        <div className={`rounded-full transition-colors ${isLoop ? 'bg-red-500' : 'bg-gray-600'} relative cursor-pointer ${isFullscreen ? 'w-8 h-4' : 'w-6 h-3'}`}
+                             onClick={toggleLoop}>
+                          <div className={`rounded-full bg-white absolute top-0.5 transition-transform ${isLoop ? (isFullscreen ? 'translate-x-4' : 'translate-x-3') : 'translate-x-0.5'} ${isFullscreen ? 'w-3 h-3' : 'w-2 h-2'}`}></div>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Speed Settings Submenu */}
+                {settingsView === 'speed' && (
+                  <>
+                    <div className="flex items-center px-2 py-1.5 border-b border-gray-700/50">
+                      <button onClick={backToMainSettings} className="p-0.5 hover:bg-white/10 rounded mr-1">
+                        <svg width="5" height="8" viewBox="0 0 6 10" fill="currentColor" className="text-white rotate-180">
+                          <path d="M1 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                      <span className="text-white text-xs font-medium">Playback speed</span>
+                    </div>
+                    
+                    <div className="px-2 py-1.5">
+                      <div className="mb-2">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-white text-xs font-medium">Custom</span>
+                          <span className="text-white/70 text-xs">{playbackRate}x</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0.25"
+                          max="2"
+                          step="0.01"
+                          value={playbackRate}
+                          onChange={handleSpeedSliderChange}
+                          className="w-full h-1 bg-gray-600 rounded-full outline-none cursor-pointer appearance-none slider"
+                          style={{
+                            background: `linear-gradient(to right, #fff 0%, #fff ${((playbackRate - 0.25) / 1.75) * 100}%, #4a5568 ${((playbackRate - 0.25) / 1.75) * 100}%, #4a5568 100%)`
+                          }}
+                        />
+                      </div>
+                      
+                      <div className="space-y-0.5">
+                        {speedOptions.map((speed) => (
+                          <button
+                            key={speed}
+                            onClick={() => setSpeed(speed)}
+                            className={`block w-full px-1.5 py-1 text-xs text-left rounded transition-colors ${
+                              speed === playbackRate
+                                ? 'bg-white/20 text-white'
+                                : 'text-white/70 hover:bg-white/10 hover:text-white'
+                            }`}
+                          >
+                            {speed}x {speed === 1 ? '(Normal)' : ''}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Quality Settings Submenu */}
+                {settingsView === 'quality' && (
+                  <>
+                    <div className="flex items-center px-2 py-1.5 border-b border-gray-700/50">
+                      <button onClick={backToMainSettings} className="p-0.5 hover:bg-white/10 rounded mr-1">
+                        <svg width="5" height="8" viewBox="0 0 6 10" fill="currentColor" className="text-white rotate-180">
+                          <path d="M1 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                      <span className="text-white text-xs font-medium">Quality</span>
+                    </div>
+                    
+                    <div className="px-2 py-1.5">
+                      <div className="space-y-0.5">
+                        {['Auto (1080p)', '1080p60 HD', '1080p HD', '720p60', '720p', '480p', '360p', '240p', '144p'].map((quality) => (
+                          <button
+                            key={quality}
+                            onClick={() => setQuality(quality)}
+                            className={`block w-full px-1.5 py-1 text-xs text-left rounded transition-colors ${
+                              quality === selectedQuality
+                                ? 'bg-white/20 text-white'
+                                : 'text-white/70 hover:bg-white/10 hover:text-white'
+                            }`}
+                          >
+                            {quality}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Subtitles Settings Submenu */}
+                {settingsView === 'subtitles' && (
+                  <>
+                    <div className="flex items-center px-2 py-1.5 border-b border-gray-700/50">
+                      <button onClick={backToMainSettings} className="p-0.5 hover:bg-white/10 rounded mr-1">
+                        <svg width="5" height="8" viewBox="0 0 6 10" fill="currentColor" className="text-white rotate-180">
+                          <path d="M1 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                      <span className="text-white text-xs font-medium">Subtitles/CC</span>
+                    </div>
+                    
+                    <div className="px-2 py-1.5">
+                      <div className="space-y-0.5">
+                        {['Off', 'English (auto-generated)', 'English', 'Spanish', 'French', 'German'].map((subtitle) => (
+                          <button
+                            key={subtitle}
+                            onClick={() => setSubtitle(subtitle)}
+                            className={`block w-full px-1.5 py-1 text-xs text-left rounded transition-colors ${
+                              subtitle === selectedSubtitle
+                                ? 'bg-white/20 text-white'
+                                : 'text-white/70 hover:bg-white/10 hover:text-white'
+                            }`}
+                          >
+                            {subtitle}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center justify-between">
-          {/* Left controls */}
-          <div className={`flex items-center ${isFullscreen ? 'gap-2' : 'gap-1'}`}>
-            <button onClick={togglePlay} className={`rounded-full text-white transition-colors hover:bg-white/20 ${isFullscreen ? 'p-3' : 'p-2'}`} aria-label="Play/Pause">
-              {isPlaying ? <Pause size={isFullscreen ? 28 : 20} /> : <Play size={isFullscreen ? 28 : 20} />}
-            </button>
-            <button onClick={() => skip(-10)} className={`rounded-full text-white transition-colors hover:bg-white/20 ${isFullscreen ? 'p-2.5' : 'p-1.5'}`} aria-label="Rewind 10s">
-              <SkipBack size={isFullscreen ? 24 : 18} />
-            </button>
-            <button onClick={() => skip(10)} className={`rounded-full text-white transition-colors hover:bg-white/20 ${isFullscreen ? 'p-2.5' : 'p-1.5'}`} aria-label="Forward 10s">
-              <SkipForward size={isFullscreen ? 24 : 18} />
-            </button>
-            
-            {/* Volume controls */}
-            <div className={`flex items-center group ${isFullscreen ? 'gap-3' : 'gap-2'}`}>
-              <button
-                onClick={toggleMute}
-                onMouseEnter={() => setShowVolumeSlider(true)}
-                className={`rounded-full text-white transition-colors hover:bg-white/20 ${isFullscreen ? 'p-2.5' : 'p-1.5'}`}
-                aria-label="Mute/Unmute"
-              >
-                {isMuted ? <VolumeX size={isFullscreen ? 24 : 18} /> : <Volume2 size={isFullscreen ? 24 : 18} />}
-              </button>
-              <div
-                className={`transition-all duration-200 ${showVolumeSlider ? (isFullscreen ? 'w-32 opacity-100' : 'w-20 opacity-100') : 'w-0 opacity-0'} overflow-hidden`}
-                onMouseEnter={() => setShowVolumeSlider(true)}
-                onMouseLeave={() => setShowVolumeSlider(false)}
-              >
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.05"
-                  value={isMuted ? 0 : volume}
-                  onChange={handleVolumeChange}
-                  className={`w-full bg-white/30 rounded-sm outline-none cursor-pointer appearance-none slider ${isFullscreen ? 'h-1.5' : 'h-1'}`}
-                  style={{
-                    background: `linear-gradient(to right, #ef4444 0%, #ef4444 ${(isMuted ? 0 : volume) * 100}%, rgba(255,255,255,0.3) ${(isMuted ? 0 : volume) * 100}%, rgba(255,255,255,0.3) 100%)`
-                  }}
-                  aria-label="Volume"
-                />
-              </div>
-            </div>
+        {/* Center Play/Pause Button */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <button 
+            onClick={togglePlay} 
+            className="rounded-full text-white transition-colors hover:bg-white/20 p-4 bg-black/30 backdrop-blur-sm" 
+            aria-label="Play/Pause"
+          >
+            {isPlaying ? <Pause size={48} /> : <Play size={48} />}
+          </button>
+        </div>
 
-            {/* Time display */}
-            <span className={`text-white font-medium ${isFullscreen ? 'text-lg ml-4' : 'text-sm ml-2'}`}>
-              {formatTime(currentTime)} / {formatTime(duration)}
-            </span>
+        {/* Left/Right Skip Buttons */}
+        <div className="absolute inset-0 flex items-center justify-between px-4">
+          <button 
+            onClick={() => skip(-10)} 
+            className="rounded-full text-white transition-colors hover:bg-white/20 p-3 bg-black/30 backdrop-blur-sm" 
+            aria-label="Rewind 10s"
+          >
+            <SkipBack size={24} />
+          </button>
+          <button 
+            onClick={() => skip(10)} 
+            className="rounded-full text-white transition-colors hover:bg-white/20 p-3 bg-black/30 backdrop-blur-sm" 
+            aria-label="Forward 10s"
+          >
+            <SkipForward size={24} />
+          </button>
+        </div>
+
+        {/* Bottom Controls */}
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+          {/* Progress Bar */}
+          <div className="w-full bg-white/20 rounded-sm cursor-pointer group h-1.5 mb-4" onClick={handleSeek}>
+            <div
+              className="h-full bg-red-500 rounded-sm transition-all duration-100 relative"
+              style={{ width: duration ? `${(currentTime / duration) * 100}%` : "0%" }}
+            >
+              <div className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity w-3 h-3"></div>
+            </div>
           </div>
 
-          {/* Right controls */}
-          <div className={`flex items-center ${isFullscreen ? 'gap-2' : 'gap-1'}`}>
-            {/* Settings button */}
-            <div className="relative">
-              <button
-                onClick={() => setShowSettingsMenu(!showSettingsMenu)}
-                className={`rounded-full text-white transition-colors hover:bg-white/20 ${isFullscreen ? 'p-2.5' : 'p-1.5'}`}
-                aria-label="Settings"
-              >
-                <Settings size={isFullscreen ? 24 : 18} />
-              </button>
-              {showSettingsMenu && (
-               <div className={`absolute bottom-full right-0 mb-2 bg-gray-900/95 backdrop-blur-sm rounded-lg py-1 overflow-y-auto z-20 border border-gray-700/50 shadow-2xl ${isFullscreen ? 'min-w-[220px] max-w-[280px] max-h-64' : 'min-w-[180px] max-w-[220px] max-h-56'}`}>
-                  {settingsView === 'main' && (
-                    <>
-                      {/* Playback Speed */}
-                      <div className={`flex items-center justify-between hover:bg-white/10 transition-colors cursor-pointer ${isFullscreen ? 'px-3 py-2' : 'px-2 py-1.5'}`}
-                           onClick={() => openSettingsSubmenu('speed')}>
-                        <div className={`flex items-center ${isFullscreen ? 'gap-2' : 'gap-1.5'}`}>
-                          <Gauge size={isFullscreen ? 16 : 12} className="text-white" />
-                          <span className={`text-white ${isFullscreen ? 'text-sm' : 'text-xs'}`}>Playback speed</span>
-                        </div>
-                        <div className={`flex items-center ${isFullscreen ? 'gap-1.5' : 'gap-1'}`}>
-                          <span className={`text-white/70 ${isFullscreen ? 'text-sm' : 'text-xs'}`}>
-                            {playbackRate === 1 ? 'Normal' : `${playbackRate}x`}
-                          </span>
-                          <svg width={isFullscreen ? "6" : "5"} height={isFullscreen ? "10" : "8"} viewBox="0 0 6 10" fill="currentColor" className="text-white/70">
-                            <path d="M1 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        </div>
-                      </div>
+          {/* Bottom Row - Timer and Fullscreen */}
+          <div className="flex items-center justify-between">
+            {/* Bottom Left - Timer */}
+            <span className="text-white font-medium text-sm">
+              {formatTime(currentTime)} / {formatTime(duration)}
+            </span>
 
-                      {/* Quality */}
-                      <div className={`flex items-center justify-between hover:bg-white/10 transition-colors cursor-pointer ${isFullscreen ? 'px-3 py-2' : 'px-2 py-1.5'}`}
-                           onClick={() => openSettingsSubmenu('quality')}>
-                        <div className={`flex items-center ${isFullscreen ? 'gap-2' : 'gap-1.5'}`}>
-                          <div className={`bg-white/60 rounded-sm ${isFullscreen ? 'w-4 h-3' : 'w-3 h-2'}`}></div>
-                          <span className={`text-white ${isFullscreen ? 'text-sm' : 'text-xs'}`}>Quality</span>
-                        </div>
-                        <div className={`flex items-center ${isFullscreen ? 'gap-1.5' : 'gap-1'}`}>
-                          <span className={`text-white/70 ${isFullscreen ? 'text-sm' : 'text-xs'}`}>{selectedQuality.split(' ')[0]}</span>
-                          <svg width={isFullscreen ? "6" : "5"} height={isFullscreen ? "10" : "8"} viewBox="0 0 6 10" fill="currentColor" className="text-white/70">
-                            <path d="M1 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        </div>
-                      </div>
-
-                      {/* Subtitles/CC */}
-                      <div className={`flex items-center justify-between hover:bg-white/10 transition-colors cursor-pointer ${isFullscreen ? 'px-3 py-2' : 'px-2 py-1.5'}`}
-                           onClick={() => openSettingsSubmenu('subtitles')}>
-                        <div className={`flex items-center ${isFullscreen ? 'gap-2' : 'gap-1.5'}`}>
-                          <div className={`border border-white/60 rounded-sm ${isFullscreen ? 'w-4 h-3' : 'w-3 h-2'}`}></div>
-                          <span className={`text-white ${isFullscreen ? 'text-sm' : 'text-xs'}`}>Subtitles/CC</span>
-                        </div>
-                        <div className={`flex items-center ${isFullscreen ? 'gap-1.5' : 'gap-1'}`}>
-                          <span className={`text-white/70 ${isFullscreen ? 'text-sm' : 'text-xs'}`}>{selectedSubtitle}</span>
-                          <svg width={isFullscreen ? "6" : "5"} height={isFullscreen ? "10" : "8"} viewBox="0 0 6 10" fill="currentColor" className="text-white/70">
-                            <path d="M1 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        </div>
-                      </div>
-
-                      {/* Autoplay Next */}
-                      <div className="border-t border-gray-700/50 pt-1">
-                        <div className={`flex items-center justify-between hover:bg-white/10 transition-colors ${isFullscreen ? 'px-3 py-2' : 'px-2 py-1.5'}`}>
-                          <div className={`flex items-center ${isFullscreen ? 'gap-2' : 'gap-1.5'}`}>
-                            <PlayCircle size={isFullscreen ? 16 : 12} className="text-white" />
-                            <span className={`text-white ${isFullscreen ? 'text-sm' : 'text-xs'}`}>Autoplay next</span>
-                          </div>
-                          <div className="flex items-center">
-                            <div className={`rounded-full transition-colors ${autoplayNext ? 'bg-red-500' : 'bg-gray-600'} relative cursor-pointer ${isFullscreen ? 'w-8 h-4' : 'w-6 h-3'}`}
-                                 onClick={toggleAutoplayNext}>
-                              <div className={`rounded-full bg-white absolute top-0.5 transition-transform ${autoplayNext ? (isFullscreen ? 'translate-x-4' : 'translate-x-3') : 'translate-x-0.5'} ${isFullscreen ? 'w-3 h-3' : 'w-2 h-2'}`}></div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Loop Option */}
-                      <div className={`flex items-center justify-between hover:bg-white/10 transition-colors ${isFullscreen ? 'px-3 py-2' : 'px-2 py-1.5'}`}>
-                        <div className={`flex items-center ${isFullscreen ? 'gap-2' : 'gap-1.5'}`}>
-                          <RotateCcw size={isFullscreen ? 16 : 12} className="text-white" />
-                          <span className={`text-white ${isFullscreen ? 'text-sm' : 'text-xs'}`}>Loop</span>
-                        </div>
-                        <div className="flex items-center">
-                          <div className={`rounded-full transition-colors ${isLoop ? 'bg-red-500' : 'bg-gray-600'} relative cursor-pointer ${isFullscreen ? 'w-8 h-4' : 'w-6 h-3'}`}
-                               onClick={toggleLoop}>
-                            <div className={`rounded-full bg-white absolute top-0.5 transition-transform ${isLoop ? (isFullscreen ? 'translate-x-4' : 'translate-x-3') : 'translate-x-0.5'} ${isFullscreen ? 'w-3 h-3' : 'w-2 h-2'}`}></div>
-                          </div>
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {/* Speed Settings Submenu */}
-                  {settingsView === 'speed' && (
-                    <>
-                      <div className="flex items-center px-2 py-1.5 border-b border-gray-700/50">
-                        <button onClick={backToMainSettings} className="p-0.5 hover:bg-white/10 rounded mr-1">
-                          <svg width="5" height="8" viewBox="0 0 6 10" fill="currentColor" className="text-white rotate-180">
-                            <path d="M1 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        </button>
-                        <span className="text-white text-xs font-medium">Playback speed</span>
-                      </div>
-                      
-                      <div className="px-2 py-1.5">
-                        <div className="mb-2">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-white text-xs font-medium">Custom</span>
-                            <span className="text-white/70 text-xs">{playbackRate}x</span>
-                          </div>
-                          <input
-                            type="range"
-                            min="0.25"
-                            max="2"
-                            step="0.01"
-                            value={playbackRate}
-                            onChange={handleSpeedSliderChange}
-                            className="w-full h-1 bg-gray-600 rounded-full outline-none cursor-pointer appearance-none slider"
-                            style={{
-                              background: `linear-gradient(to right, #fff 0%, #fff ${((playbackRate - 0.25) / 1.75) * 100}%, #4a5568 ${((playbackRate - 0.25) / 1.75) * 100}%, #4a5568 100%)`
-                            }}
-                          />
-                        </div>
-                        
-                        <div className="space-y-0.5">
-                          {speedOptions.map((speed) => (
-                            <button
-                              key={speed}
-                              onClick={() => setSpeed(speed)}
-                              className={`block w-full px-1.5 py-1 text-xs text-left rounded transition-colors ${
-                                speed === playbackRate
-                                  ? 'bg-white/20 text-white'
-                                  : 'text-white/70 hover:bg-white/10 hover:text-white'
-                              }`}
-                            >
-                              {speed}x {speed === 1 ? '(Normal)' : ''}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {/* Quality Settings Submenu */}
-                  {settingsView === 'quality' && (
-                    <>
-                      <div className="flex items-center px-2 py-1.5 border-b border-gray-700/50">
-                        <button onClick={backToMainSettings} className="p-0.5 hover:bg-white/10 rounded mr-1">
-                          <svg width="5" height="8" viewBox="0 0 6 10" fill="currentColor" className="text-white rotate-180">
-                            <path d="M1 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        </button>
-                        <span className="text-white text-xs font-medium">Quality</span>
-                      </div>
-                      
-                      <div className="px-2 py-1.5">
-                        <div className="space-y-0.5">
-                          {['Auto (1080p)', '1080p60 HD', '1080p HD', '720p60', '720p', '480p', '360p', '240p', '144p'].map((quality) => (
-                            <button
-                              key={quality}
-                              onClick={() => setQuality(quality)}
-                              className={`block w-full px-1.5 py-1 text-xs text-left rounded transition-colors ${
-                                quality === selectedQuality
-                                  ? 'bg-white/20 text-white'
-                                  : 'text-white/70 hover:bg-white/10 hover:text-white'
-                              }`}
-                            >
-                              {quality}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {/* Subtitles Settings Submenu */}
-                  {settingsView === 'subtitles' && (
-                    <>
-                      <div className="flex items-center px-2 py-1.5 border-b border-gray-700/50">
-                        <button onClick={backToMainSettings} className="p-0.5 hover:bg-white/10 rounded mr-1">
-                          <svg width="5" height="8" viewBox="0 0 6 10" fill="currentColor" className="text-white rotate-180">
-                            <path d="M1 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        </button>
-                        <span className="text-white text-xs font-medium">Subtitles/CC</span>
-                      </div>
-                      
-                      <div className="px-2 py-1.5">
-                        <div className="space-y-0.5">
-                          {['Off', 'English (auto-generated)', 'English', 'Spanish', 'French', 'German'].map((subtitle) => (
-                            <button
-                              key={subtitle}
-                              onClick={() => setSubtitle(subtitle)}
-                              className={`block w-full px-1.5 py-1 text-xs text-left rounded transition-colors ${
-                                subtitle === selectedSubtitle
-                                  ? 'bg-white/20 text-white'
-                                  : 'text-white/70 hover:bg-white/10 hover:text-white'
-                              }`}
-                            >
-                              {subtitle}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Fullscreen button */}
-            <button onClick={toggleFullscreen} className={`rounded-full text-white transition-colors hover:bg-white/20 ${isFullscreen ? 'p-2.5' : 'p-1.5'}`} aria-label="Fullscreen">
-              {isFullscreen ? <Minimize size={isFullscreen ? 24 : 18} /> : <Maximize size={isFullscreen ? 24 : 18} />}
+            {/* Bottom Right - Fullscreen Button */}
+            <button 
+              onClick={toggleFullscreen} 
+              className="rounded-full text-white transition-colors hover:bg-white/20 p-2" 
+              aria-label="Fullscreen"
+            >
+              {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
             </button>
           </div>
         </div>
@@ -831,7 +833,7 @@ const VideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc }, ref) 
       {/* Click outside to close menus */}
       {(showSpeedMenu || showSettingsMenu) && (
         <div
-          className="fixed inset-0 z-10"
+          className="fixed inset-0 z-10 bg-black/50 sm:bg-transparent"
           onClick={closeAllMenus}
         />
       )}
