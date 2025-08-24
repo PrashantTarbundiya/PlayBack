@@ -1,14 +1,24 @@
 import dotenv from "dotenv";
-import connectDB from "./db/db.js";
-import {app} from "./app.js"
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load environment variables first
 dotenv.config({
-    path: './.env'
-})
+    path: join(__dirname, '..', '.env')
+});
+
+
+// Import other modules dynamically after dotenv is loaded
+const { default: connectDB } = await import("./db/db.js");
+const { app } = await import("./app.js");
 
 connectDB()
     .then(() => {
-        app.on("errror", (error) => {
-            console.log("ERRR: ", error);
+        app.on("Error", (error) => {
+            console.log("Error: ", error);
             throw error
         })
         app.listen(process.env.PORT || 8000, () => {
