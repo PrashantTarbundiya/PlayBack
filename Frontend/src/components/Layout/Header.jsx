@@ -8,6 +8,7 @@ import { useResponsive } from "../../hooks/useResponsive"
 import MobileSearch from "./MobileSearch"
 import NotificationDropdown from "../Notifications/NotificationDropdown"
 import { Search, Menu, Upload, Bell, User } from "lucide-react"
+import playbackLogo from "../../assets/PlayBack.png"
 
 const Header = ({ onMenuClick }) => {
   const [searchQuery, setSearchQuery] = useState("")
@@ -61,7 +62,7 @@ const Header = ({ onMenuClick }) => {
           </button>
           <Link to="/" className="flex items-center gap-2 text-xl font-bold text-red-500 whitespace-nowrap">
             <img
-              src="/src/assets/PlayBack.png"
+              src={playbackLogo}
               alt="PlayBack Logo"
               className="h-8 w-auto"
             />
