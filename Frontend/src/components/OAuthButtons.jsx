@@ -5,9 +5,9 @@ const OAuthButtons = ({ loading = false, className = "" }) => {
   const handleOAuthLogin = (provider) => {
     if (loading) return;
     
-    // Get the API URL from environment or use default
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-    const oauthUrl = `${apiUrl}/api/v1/users/auth/${provider}`;
+    // Get the API URL from environment or use default (same as api.js)
+    const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+    const oauthUrl = `${apiUrl}/users/auth/${provider}`;
     
     // Direct redirect to backend OAuth endpoint
     window.location.href = oauthUrl;
