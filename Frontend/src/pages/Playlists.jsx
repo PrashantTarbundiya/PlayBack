@@ -369,47 +369,50 @@ const Playlists = () => {
   })
 
   return (
-    <div className="min-h-screen bg-[#0f0f0f] text-white p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Playlists</h1>
+    <div className="min-h-screen bg-[#0f0f0f] text-white p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold">Playlists</h1>
         <button
           onClick={() => setShowCreateForm(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base"
         >
-          <Plus size={20} />
-          Create Playlist
+          <Plus size={18} className="sm:w-5 sm:h-5" />
+          <span className="hidden sm:inline">Create Playlist</span>
+          <span className="sm:hidden">Create</span>
         </button>
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex gap-1 mb-6 bg-[#1f1f1f] p-1 rounded-lg w-fit">
+      <div className="flex gap-1 mb-6 bg-[#1f1f1f] p-1 rounded-lg w-full sm:w-fit">
         <button
           onClick={() => setActiveFilter("your")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors ${
+          className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-md font-medium transition-colors text-sm sm:text-base flex-1 sm:flex-none ${
             activeFilter === "your"
               ? "bg-blue-600 text-white"
               : "text-gray-400 hover:text-white hover:bg-[#2a2a2a]"
           }`}
         >
-          <Users size={16} />
-          Your Playlists
+          <Users size={14} className="sm:w-4 sm:h-4" />
+          <span className="hidden sm:inline">Your Playlists</span>
+          <span className="sm:hidden">Your</span>
         </button>
         <button
           onClick={() => setActiveFilter("saved")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors ${
+          className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-md font-medium transition-colors text-sm sm:text-base flex-1 sm:flex-none ${
             activeFilter === "saved"
               ? "bg-blue-600 text-white"
               : "text-gray-400 hover:text-white hover:bg-[#2a2a2a]"
           }`}
         >
-          <Bookmark size={16} />
-          Saved Playlists
+          <Bookmark size={14} className="sm:w-4 sm:h-4" />
+          <span className="hidden sm:inline">Saved Playlists</span>
+          <span className="sm:hidden">Saved</span>
         </button>
       </div>
 
       {/* Create Playlist Form */}
       {showCreateForm && (
-        <div className="mb-6 p-6 bg-[#1f1f1f] rounded-lg border border-[#333]">
+        <div className="mb-6 p-4 sm:p-6 bg-[#1f1f1f] rounded-lg border border-[#333]">
           <h3 className="text-lg font-semibold mb-4">Create New Playlist</h3>
           <form onSubmit={handleCreatePlaylist} className="space-y-4">
             <div>
@@ -433,7 +436,7 @@ const Playlists = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">Privacy</label>
-              <div className="flex gap-4">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                 <label className="flex items-center">
                   <input
                     type="radio"
@@ -488,17 +491,17 @@ const Playlists = () => {
 
       {/* Playlists Grid */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {Array.from({ length: 8 }).map((_, index) => (
-            <div key={index} className="bg-[#1e1e1e] rounded-lg p-4 animate-pulse">
-              <div className="bg-[#2a2a2a] rounded h-32 mb-4"></div>
-              <div className="bg-[#2a2a2a] rounded h-4 w-3/4 mb-2"></div>
-              <div className="bg-[#2a2a2a] rounded h-3 w-1/2"></div>
+            <div key={index} className="bg-[#1e1e1e] rounded-lg p-3 sm:p-4 animate-pulse">
+              <div className="bg-[#2a2a2a] rounded h-24 sm:h-32 mb-3 sm:mb-4"></div>
+              <div className="bg-[#2a2a2a] rounded h-3 sm:h-4 w-3/4 mb-2"></div>
+              <div className="bg-[#2a2a2a] rounded h-2 sm:h-3 w-1/2"></div>
             </div>
           ))}
         </div>
       ) : filteredPlaylists.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {filteredPlaylists.map((playlist) => (
             <div
               key={playlist._id}
@@ -519,9 +522,9 @@ const Playlists = () => {
                 </div>
               </div>
               
-              <div className="p-4 overflow-visible">
+              <div className="p-3 sm:p-4 overflow-visible">
                 <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-semibold text-white truncate flex-1">
+                  <h3 className="font-semibold text-white truncate flex-1 text-sm sm:text-base">
                     {playlist.name}
                   </h3>
                   <div
@@ -529,16 +532,16 @@ const Playlists = () => {
                     ref={(el) => dropdownRefs.current[playlist._id] = el}
                   >
                     <button
-                      className="p-1 rounded-full hover:bg-[#333] transition-colors"
+                      className="p-1 rounded-full hover:bg-[#333] transition-colors touch-manipulation"
                       onClick={(e) => {
                         e.stopPropagation()
                         setShowDropdown(showDropdown === playlist._id ? null : playlist._id)
                       }}
                     >
-                      <MoreVertical size={16} className="text-gray-400" />
+                      <MoreVertical size={14} className="text-gray-400 sm:w-4 sm:h-4" />
                     </button>
                     {showDropdown === playlist._id && (
-                      <div className="absolute right-0 top-full mt-1 bg-[#1f1f1f] border border-[#333] rounded shadow-xl text-sm w-48 z-[100] min-w-max transform-gpu">
+                      <div className="absolute right-0 top-full mt-1 bg-[#1f1f1f] border border-[#333] rounded shadow-xl text-sm w-40 sm:w-48 z-[100] min-w-max transform-gpu">
                         {playlist.isSaved ? (
                           // Options for saved playlists
                           <button
@@ -597,7 +600,7 @@ const Playlists = () => {
                 </div>
                 
                 {playlist.description && (
-                  <p className="text-gray-400 text-sm mb-3 line-clamp-2">
+                  <p className="text-gray-400 text-xs sm:text-sm mb-3 line-clamp-2">
                     {playlist.description}
                   </p>
                 )}
@@ -607,13 +610,15 @@ const Playlists = () => {
                   <div className="flex items-center gap-1">
                     {playlist.isPublic !== false ? (
                       <>
-                        <Globe size={12} />
-                        <span>Public</span>
+                        <Globe size={10} className="sm:w-3 sm:h-3" />
+                        <span className="hidden sm:inline">Public</span>
+                        <span className="sm:hidden">Pub</span>
                       </>
                     ) : (
                       <>
-                        <Lock size={12} />
-                        <span>Private</span>
+                        <Lock size={10} className="sm:w-3 sm:h-3" />
+                        <span className="hidden sm:inline">Private</span>
+                        <span className="sm:hidden">Priv</span>
                       </>
                     )}
                   </div>

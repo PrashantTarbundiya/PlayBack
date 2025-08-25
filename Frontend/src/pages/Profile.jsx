@@ -463,15 +463,21 @@ const Profile = () => {
     <div className="min-h-screen bg-[#0f0f0f] text-white">
       {/* Cover Image Section */}
       <div className="relative h-48 md:h-64 bg-gradient-to-r from-purple-900 to-blue-900">
-        {user.coverImage ? (
-          <img
-            src={user.coverImage}
-            alt="Cover"
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-r from-purple-900 to-blue-900" />
-        )}
+        {(() => {
+          const coverUrl = user?.coverImage?.url || user?.coverImage || "";
+          return coverUrl ? (
+            <img
+              src={coverUrl}
+              alt="Cover"
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-r from-purple-900 to-blue-900" />
+          );
+        })()}
       </div>
 
       {/* Profile Info Section */}

@@ -182,32 +182,33 @@ const PlaylistDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0f0f0f] text-white p-6">
+    <div className="min-h-screen bg-[#0f0f0f] text-white p-4 sm:p-6">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
         <button
           onClick={() => window.history.back()}
-          className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+          className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm sm:text-base"
         >
-          <ArrowLeft size={20} />
+          <ArrowLeft size={18} className="sm:w-5 sm:h-5" />
           Back
         </button>
         <div className="flex-1">
-          <h1 className="text-3xl font-bold">{playlist.name}</h1>
-          <p className="text-gray-400">
+          <h1 className="text-2xl sm:text-3xl font-bold">{playlist.name}</h1>
+          <p className="text-gray-400 text-sm sm:text-base">
             {playlist.totalVideos || playlist.videos?.length || 0} video{(playlist.totalVideos || playlist.videos?.length || 0) !== 1 ? 's' : ''}
           </p>
         </div>
         
         {/* Action Buttons */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
           {playlist.videos && playlist.videos.length > 0 && (
             <button
               onClick={handlePlayAll}
-              className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              className="flex items-center gap-1 sm:gap-2 px-3 sm:px-6 py-2 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm sm:text-base"
             >
-              <Play size={20} />
-              Play All
+              <Play size={16} className="sm:w-5 sm:h-5" />
+              <span className="hidden sm:inline">Play All</span>
+              <span className="sm:hidden">Play</span>
             </button>
           )}
           
@@ -215,7 +216,7 @@ const PlaylistDetail = () => {
             <button
               onClick={handleSavePlaylist}
               disabled={saving || checkingSaveStatus}
-              className={`flex items-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors ${
+              className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 rounded-lg font-medium transition-colors text-sm sm:text-base ${
                 saving || checkingSaveStatus
                   ? "bg-gray-600 text-gray-400 cursor-not-allowed"
                   : isSaved
@@ -223,52 +224,65 @@ const PlaylistDetail = () => {
                     : "bg-green-600 text-white hover:bg-green-700"
               }`}
             >
-              <Bookmark size={20} className={isSaved ? "fill-current" : ""} />
-              {saving
-                ? "Saving..."
-                : checkingSaveStatus
-                  ? "Checking..."
-                  : isSaved
-                    ? "Remove from Library"
-                    : "Save Playlist"
-              }
+              <Bookmark size={16} className={`sm:w-5 sm:h-5 ${isSaved ? "fill-current" : ""}`} />
+              <span className="hidden sm:inline">
+                {saving
+                  ? "Saving..."
+                  : checkingSaveStatus
+                    ? "Checking..."
+                    : isSaved
+                      ? "Remove from Library"
+                      : "Save Playlist"
+                }
+              </span>
+              <span className="sm:hidden">
+                {saving
+                  ? "Saving..."
+                  : checkingSaveStatus
+                    ? "Checking..."
+                    : isSaved
+                      ? "Remove"
+                      : "Save"
+                }
+              </span>
             </button>
           )}
           
           <button
             onClick={handleShare}
-            className="flex items-center gap-2 px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+            className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm sm:text-base"
           >
-            <Share2 size={20} />
-            Share
+            <Share2 size={16} className="sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline">Share</span>
+            <span className="sm:hidden">Share</span>
           </button>
         </div>
       </div>
 
       {/* Playlist Info Card */}
-      <div className="bg-[#1f1f1f] rounded-lg p-6 mb-6 border border-[#333]">
-        <div className="flex items-start gap-6">
+      <div className="bg-[#1f1f1f] rounded-lg p-4 sm:p-6 mb-6 border border-[#333]">
+        <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
           {/* Playlist Thumbnail */}
-          <div className="w-48 h-32 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 relative">
-            <Play size={48} className="text-white opacity-80" />
+          <div className="w-full sm:w-48 h-32 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 relative">
+            <Play size={40} className="text-white opacity-80 sm:w-12 sm:h-12" />
             <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded">
               {playlist.totalVideos || playlist.videos?.length || 0} videos
             </div>
             <div className="absolute top-2 left-2">
               {playlist.isPublic !== false ? (
-                <Globe size={16} className="text-white opacity-80" />
+                <Globe size={14} className="text-white opacity-80 sm:w-4 sm:h-4" />
               ) : (
-                <Lock size={16} className="text-white opacity-80" />
+                <Lock size={14} className="text-white opacity-80 sm:w-4 sm:h-4" />
               )}
             </div>
           </div>
 
           {/* Playlist Details */}
-          <div className="flex-1">
-            <h2 className="text-2xl font-bold mb-2">{playlist.name}</h2>
+          <div className="flex-1 w-full">
+            <h2 className="text-xl sm:text-2xl font-bold mb-2">{playlist.name}</h2>
             
             {playlist.description && (
-              <p className="text-gray-300 mb-4">{playlist.description}</p>
+              <p className="text-gray-300 mb-4 text-sm sm:text-base">{playlist.description}</p>
             )}
 
             {/* Owner Info */}
@@ -331,7 +345,7 @@ const PlaylistDetail = () => {
 
       {/* Videos */}
       {playlist.videos && playlist.videos.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {playlist.videos.map((video, index) => (
             <div key={video._id} className="relative group">
               <VideoCard

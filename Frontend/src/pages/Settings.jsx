@@ -179,13 +179,17 @@ const Settings = () => {
           <div className="bg-[#1c1c1c] rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4">Cover Image</h2>
             <div className="space-y-4">
-              {currentUser.coverImage && (
-                <img
-                  src={currentUser.coverImage}
-                  alt="Cover"
-                  className="w-full h-32 object-cover rounded-lg"
-                />
-              )}
+              {(() => {
+                const coverUrl = currentUser?.coverImage?.url || currentUser?.coverImage || "";
+                return coverUrl ? (
+                  <img
+                    src={coverUrl}
+                    alt="Cover"
+                    className="w-full h-32 object-cover rounded-lg"
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  />
+                ) : null;
+              })()}
               <label className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg cursor-pointer transition w-fit">
                 <Camera size={16} />
                 Change Cover Image

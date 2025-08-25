@@ -476,7 +476,7 @@ const VideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc }, ref) 
   return (
     <div
       ref={containerRef}
-      className="relative w-full bg-black rounded-xl overflow-hidden focus:outline-none"
+      className="relative w-full bg-black rounded-xl overflow-hidden focus:outline-none aspect-video"
       onMouseMove={handleMouseMove}
       onMouseLeave={() => !isPlaying || setShowControls(false)}
       onClick={handleContainerClick}
@@ -548,13 +548,13 @@ const VideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc }, ref) 
         </div>
       </div>
 
-      {/* Mobile Controls Layout (YouTube Style) */}
+
       <div className={`absolute inset-0 transition-opacity duration-300 ${showControls ? "opacity-100" : "opacity-0"}`}>
         {/* Top Controls */}
-        <div className="absolute top-0 left-0 right-0 flex items-center justify-between p-4 bg-gradient-to-b from-black/60 to-transparent">
+        <div className="absolute top-0 left-0 right-0 flex items-center justify-between p-2 sm:p-4 bg-gradient-to-b from-black/60 to-transparent">
           {/* Top Left - Miniplayer Button */}
-          <button className="rounded-full text-white transition-colors hover:bg-white/20 p-2" aria-label="Miniplayer">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="text-white">
+          <button className="rounded-full text-white transition-colors hover:bg-white/20 p-1.5 sm:p-2 touch-manipulation" aria-label="Miniplayer">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="text-white sm:w-5 sm:h-5">
               <path d="M8 5v14l11-7z"/>
             </svg>
           </button>
@@ -563,20 +563,24 @@ const VideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc }, ref) 
           <div className="relative">
             <button
               onClick={() => setShowSettingsMenu(!showSettingsMenu)}
-              className="rounded-full text-white transition-colors hover:bg-white/20 p-2"
+              className="rounded-full text-white transition-colors hover:bg-white/20 p-1.5 sm:p-2 touch-manipulation"
               aria-label="Settings"
             >
-              <Settings size={20} />
+              <Settings size={18} className="sm:w-5 sm:h-5" />
             </button>
             {showSettingsMenu && (
-              <div className={`absolute ${isFullscreen ? 'bottom-full right-0 mb-2' : 'bottom-0 left-0 right-0'} bg-gray-900/95 backdrop-blur-sm rounded-lg py-1 overflow-y-auto z-20 border border-gray-700/50 shadow-2xl transition-all duration-300 ${isFullscreen ? 'min-w-[220px] max-w-[280px] max-h-64' : 'min-w-full max-h-48 rounded-t-lg transform translate-y-0'} sm:min-w-[180px] sm:max-w-[220px] sm:bottom-full sm:right-0 sm:mb-2 sm:min-w-[160px] sm:max-w-[200px] sm:transform-none`}>
+              <div className={`absolute bg-gray-900/95 backdrop-blur-sm rounded-lg py-1 overflow-y-auto z-20 border border-gray-700/50 shadow-2xl transition-all duration-300 ${
+                isFullscreen 
+                  ? 'bottom-full right-0 mb-2 min-w-[220px] max-w-[280px] max-h-64' 
+                  : 'bottom-0 left-0 right-0 min-w-full max-h-64 rounded-t-lg'
+              } sm:bottom-full sm:right-0 sm:mb-2 sm:min-w-[180px] sm:max-w-[220px]`}>
                 {settingsView === 'main' && (
                   <>
                     {/* Playback Speed */}
-                    <div className={`flex items-center justify-between hover:bg-white/10 transition-colors cursor-pointer ${isFullscreen ? 'px-3 py-2' : 'px-2 py-1.5'}`}
+                    <div className={`flex items-center justify-between hover:bg-white/10 transition-colors cursor-pointer touch-manipulation ${isFullscreen ? 'px-3 py-2' : 'px-2 py-2'}`}
                          onClick={() => openSettingsSubmenu('speed')}>
                       <div className={`flex items-center ${isFullscreen ? 'gap-2' : 'gap-1.5'}`}>
-                        <Gauge size={isFullscreen ? 16 : 12} className="text-white" />
+                        <Gauge size={isFullscreen ? 16 : 14} className="text-white" />
                         <span className={`text-white ${isFullscreen ? 'text-sm' : 'text-xs'}`}>Playback speed</span>
                       </div>
                       <div className={`flex items-center ${isFullscreen ? 'gap-1.5' : 'gap-1'}`}>
@@ -590,7 +594,7 @@ const VideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc }, ref) 
                     </div>
 
                     {/* Quality */}
-                    <div className={`flex items-center justify-between hover:bg-white/10 transition-colors cursor-pointer ${isFullscreen ? 'px-3 py-2' : 'px-2 py-1.5'}`}
+                    <div className={`flex items-center justify-between hover:bg-white/10 transition-colors cursor-pointer touch-manipulation ${isFullscreen ? 'px-3 py-2' : 'px-2 py-2'}`}
                          onClick={() => openSettingsSubmenu('quality')}>
                       <div className={`flex items-center ${isFullscreen ? 'gap-2' : 'gap-1.5'}`}>
                         <div className={`bg-white/60 rounded-sm ${isFullscreen ? 'w-4 h-3' : 'w-3 h-2'}`}></div>
@@ -605,7 +609,7 @@ const VideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc }, ref) 
                     </div>
 
                     {/* Subtitles/CC */}
-                    <div className={`flex items-center justify-between hover:bg-white/10 transition-colors cursor-pointer ${isFullscreen ? 'px-3 py-2' : 'px-2 py-1.5'}`}
+                    <div className={`flex items-center justify-between hover:bg-white/10 transition-colors cursor-pointer touch-manipulation ${isFullscreen ? 'px-3 py-2' : 'px-2 py-2'}`}
                          onClick={() => openSettingsSubmenu('subtitles')}>
                       <div className={`flex items-center ${isFullscreen ? 'gap-2' : 'gap-1.5'}`}>
                         <div className={`border border-white/60 rounded-sm ${isFullscreen ? 'w-4 h-3' : 'w-3 h-2'}`}></div>
@@ -621,30 +625,30 @@ const VideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc }, ref) 
 
                     {/* Autoplay Next */}
                     <div className="border-t border-gray-700/50 pt-1">
-                      <div className={`flex items-center justify-between hover:bg-white/10 transition-colors ${isFullscreen ? 'px-3 py-2' : 'px-2 py-1.5'}`}>
+                      <div className={`flex items-center justify-between hover:bg-white/10 transition-colors touch-manipulation ${isFullscreen ? 'px-3 py-2' : 'px-2 py-2'}`}>
                         <div className={`flex items-center ${isFullscreen ? 'gap-2' : 'gap-1.5'}`}>
-                          <PlayCircle size={isFullscreen ? 16 : 12} className="text-white" />
+                          <PlayCircle size={isFullscreen ? 16 : 14} className="text-white" />
                           <span className={`text-white ${isFullscreen ? 'text-sm' : 'text-xs'}`}>Autoplay next</span>
                         </div>
                         <div className="flex items-center">
-                          <div className={`rounded-full transition-colors ${autoplayNext ? 'bg-red-500' : 'bg-gray-600'} relative cursor-pointer ${isFullscreen ? 'w-8 h-4' : 'w-6 h-3'}`}
+                          <div className={`rounded-full transition-colors ${autoplayNext ? 'bg-red-500' : 'bg-gray-600'} relative cursor-pointer touch-manipulation ${isFullscreen ? 'w-8 h-4' : 'w-7 h-4'}`}
                                onClick={toggleAutoplayNext}>
-                            <div className={`rounded-full bg-white absolute top-0.5 transition-transform ${autoplayNext ? (isFullscreen ? 'translate-x-4' : 'translate-x-3') : 'translate-x-0.5'} ${isFullscreen ? 'w-3 h-3' : 'w-2 h-2'}`}></div>
+                            <div className={`rounded-full bg-white absolute top-0.5 transition-transform ${autoplayNext ? (isFullscreen ? 'translate-x-4' : 'translate-x-3') : 'translate-x-0.5'} ${isFullscreen ? 'w-3 h-3' : 'w-3 h-3'}`}></div>
                           </div>
                         </div>
                       </div>
                     </div>
 
                     {/* Loop Option */}
-                    <div className={`flex items-center justify-between hover:bg-white/10 transition-colors ${isFullscreen ? 'px-3 py-2' : 'px-2 py-1.5'}`}>
+                    <div className={`flex items-center justify-between hover:bg-white/10 transition-colors touch-manipulation ${isFullscreen ? 'px-3 py-2' : 'px-2 py-2'}`}>
                       <div className={`flex items-center ${isFullscreen ? 'gap-2' : 'gap-1.5'}`}>
-                        <RotateCcw size={isFullscreen ? 16 : 12} className="text-white" />
+                        <RotateCcw size={isFullscreen ? 16 : 14} className="text-white" />
                         <span className={`text-white ${isFullscreen ? 'text-sm' : 'text-xs'}`}>Loop</span>
                       </div>
                       <div className="flex items-center">
-                        <div className={`rounded-full transition-colors ${isLoop ? 'bg-red-500' : 'bg-gray-600'} relative cursor-pointer ${isFullscreen ? 'w-8 h-4' : 'w-6 h-3'}`}
+                        <div className={`rounded-full transition-colors ${isLoop ? 'bg-red-500' : 'bg-gray-600'} relative cursor-pointer touch-manipulation ${isFullscreen ? 'w-8 h-4' : 'w-7 h-4'}`}
                              onClick={toggleLoop}>
-                          <div className={`rounded-full bg-white absolute top-0.5 transition-transform ${isLoop ? (isFullscreen ? 'translate-x-4' : 'translate-x-3') : 'translate-x-0.5'} ${isFullscreen ? 'w-3 h-3' : 'w-2 h-2'}`}></div>
+                          <div className={`rounded-full bg-white absolute top-0.5 transition-transform ${isLoop ? (isFullscreen ? 'translate-x-4' : 'translate-x-3') : 'translate-x-0.5'} ${isFullscreen ? 'w-3 h-3' : 'w-3 h-3'}`}></div>
                         </div>
                       </div>
                     </div>
@@ -688,7 +692,7 @@ const VideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc }, ref) 
                           <button
                             key={speed}
                             onClick={() => setSpeed(speed)}
-                            className={`block w-full px-1.5 py-1 text-xs text-left rounded transition-colors ${
+                            className={`block w-full px-2 py-2 text-xs text-left rounded transition-colors touch-manipulation ${
                               speed === playbackRate
                                 ? 'bg-white/20 text-white'
                                 : 'text-white/70 hover:bg-white/10 hover:text-white'
@@ -720,7 +724,7 @@ const VideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc }, ref) 
                           <button
                             key={quality}
                             onClick={() => setQuality(quality)}
-                            className={`block w-full px-1.5 py-1 text-xs text-left rounded transition-colors ${
+                            className={`block w-full px-2 py-2 text-xs text-left rounded transition-colors touch-manipulation ${
                               quality === selectedQuality
                                 ? 'bg-white/20 text-white'
                                 : 'text-white/70 hover:bg-white/10 hover:text-white'
@@ -752,7 +756,7 @@ const VideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc }, ref) 
                           <button
                             key={subtitle}
                             onClick={() => setSubtitle(subtitle)}
-                            className={`block w-full px-1.5 py-1 text-xs text-left rounded transition-colors ${
+                            className={`block w-full px-2 py-2 text-xs text-left rounded transition-colors touch-manipulation ${
                               subtitle === selectedSubtitle
                                 ? 'bg-white/20 text-white'
                                 : 'text-white/70 hover:bg-white/10 hover:text-white'
@@ -774,57 +778,66 @@ const VideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc }, ref) 
         <div className="absolute inset-0 flex items-center justify-center">
           <button 
             onClick={togglePlay} 
-            className="rounded-full text-white transition-colors hover:bg-white/20 p-4 bg-black/30 backdrop-blur-sm" 
+            className="rounded-full text-white transition-colors hover:bg-white/20 p-3 sm:p-4 bg-black/30 backdrop-blur-sm touch-manipulation" 
             aria-label="Play/Pause"
           >
-            {isPlaying ? <Pause size={48} /> : <Play size={48} />}
+            {isPlaying ? <Pause size={40} className="sm:w-12 sm:h-12" /> : <Play size={40} className="sm:w-12 sm:h-12" />}
           </button>
         </div>
 
         {/* Left/Right Skip Buttons */}
-        <div className="absolute inset-0 flex items-center justify-between px-4">
+        <div className="absolute inset-0 flex items-center justify-between px-2 sm:px-4">
           <button 
             onClick={() => skip(-10)} 
-            className="rounded-full text-white transition-colors hover:bg-white/20 p-3 bg-black/30 backdrop-blur-sm" 
+            className="rounded-full text-white transition-colors hover:bg-white/20 p-2 sm:p-3 bg-black/30 backdrop-blur-sm touch-manipulation" 
             aria-label="Rewind 10s"
           >
-            <SkipBack size={24} />
+            <SkipBack size={20} className="sm:w-6 sm:h-6" />
           </button>
           <button 
             onClick={() => skip(10)} 
-            className="rounded-full text-white transition-colors hover:bg-white/20 p-3 bg-black/30 backdrop-blur-sm" 
+            className="rounded-full text-white transition-colors hover:bg-white/20 p-2 sm:p-3 bg-black/30 backdrop-blur-sm touch-manipulation" 
             aria-label="Forward 10s"
           >
-            <SkipForward size={24} />
+            <SkipForward size={20} className="sm:w-6 sm:h-6" />
           </button>
         </div>
 
         {/* Bottom Controls */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 sm:p-4">
           {/* Progress Bar */}
-          <div className="w-full bg-white/20 rounded-sm cursor-pointer group h-1.5 mb-4" onClick={handleSeek}>
+          <div className="w-full bg-white/20 rounded-sm cursor-pointer group h-1.5 mb-3 sm:mb-4 touch-manipulation" onClick={handleSeek}>
             <div
               className="h-full bg-red-500 rounded-sm transition-all duration-100 relative"
               style={{ width: duration ? `${(currentTime / duration) * 100}%` : "0%" }}
             >
-              <div className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity w-3 h-3"></div>
+              <div className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity w-2.5 h-2.5 sm:w-3 sm:h-3"></div>
             </div>
           </div>
 
-          {/* Bottom Row - Timer and Fullscreen */}
+          {/* Bottom Row - Timer, Volume and Fullscreen */}
           <div className="flex items-center justify-between">
-            {/* Bottom Left - Timer */}
-            <span className="text-white font-medium text-sm">
-              {formatTime(currentTime)} / {formatTime(duration)}
-            </span>
+            {/* Bottom Left - Timer + Volume */}
+            <div className="flex items-center gap-3">
+              <span className="text-white font-medium text-xs sm:text-sm">
+                {formatTime(currentTime)} / {formatTime(duration)}
+              </span>
+              <button 
+                onClick={toggleMute}
+                className="rounded-full text-white transition-colors hover:bg-white/20 p-1.5 sm:p-2 touch-manipulation" 
+                aria-label="Mute/Unmute"
+              >
+                {isMuted ? <VolumeX size={18} className="sm:w-5 sm:h-5" /> : <Volume2 size={18} className="sm:w-5 sm:h-5" />}
+              </button>
+            </div>
 
             {/* Bottom Right - Fullscreen Button */}
             <button 
               onClick={toggleFullscreen} 
-              className="rounded-full text-white transition-colors hover:bg-white/20 p-2" 
+              className="rounded-full text-white transition-colors hover:bg-white/20 p-1.5 sm:p-2 touch-manipulation" 
               aria-label="Fullscreen"
             >
-              {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
+              {isFullscreen ? <Minimize size={18} className="sm:w-5 sm:h-5" /> : <Maximize size={18} className="sm:w-5 sm:h-5" />}
             </button>
           </div>
         </div>
@@ -838,7 +851,7 @@ const VideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc }, ref) 
         />
       )}
 
-      {/* Global styles for slider */}
+      {/* Global styles for slider and mobile optimization */}
       <style dangerouslySetInnerHTML={{
         __html: `
           .slider::-webkit-slider-thumb {
@@ -859,6 +872,21 @@ const VideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc }, ref) 
             cursor: pointer;
             border: none;
             box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+          }
+          
+          /* Prevent zoom on mobile */
+          @media (max-width: 768px) {
+            video {
+              touch-action: manipulation;
+            }
+          }
+          
+          /* Ensure proper touch targets on mobile */
+          @media (max-width: 640px) {
+            button {
+              min-height: 44px;
+              min-width: 44px;
+            }
           }
         `
       }} />

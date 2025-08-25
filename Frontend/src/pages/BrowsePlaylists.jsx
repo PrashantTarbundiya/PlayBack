@@ -95,25 +95,25 @@ const BrowsePlaylists = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0f0f0f] text-white p-6">
+    <div className="min-h-screen bg-[#0f0f0f] text-white p-4 sm:p-6">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Browse Public Playlists</h1>
-        <p className="text-gray-400">Discover and save playlists created by the community</p>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2">Browse Public Playlists</h1>
+        <p className="text-gray-400 text-sm sm:text-base">Discover and save playlists created by the community</p>
       </div>
 
       {loading && page === 1 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {Array.from({ length: 8 }).map((_, index) => (
-            <div key={index} className="bg-[#1e1e1e] rounded-lg p-4 animate-pulse">
-              <div className="bg-[#2a2a2a] rounded h-32 mb-4"></div>
-              <div className="bg-[#2a2a2a] rounded h-4 w-3/4 mb-2"></div>
-              <div className="bg-[#2a2a2a] rounded h-3 w-1/2"></div>
+            <div key={index} className="bg-[#1e1e1e] rounded-lg p-3 sm:p-4 animate-pulse">
+              <div className="bg-[#2a2a2a] rounded h-24 sm:h-32 mb-3 sm:mb-4"></div>
+              <div className="bg-[#2a2a2a] rounded h-3 sm:h-4 w-3/4 mb-2"></div>
+              <div className="bg-[#2a2a2a] rounded h-2 sm:h-3 w-1/2"></div>
             </div>
           ))}
         </div>
       ) : playlists.length > 0 ? (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {playlists.map((playlist) => (
               <div
                 key={playlist._id}

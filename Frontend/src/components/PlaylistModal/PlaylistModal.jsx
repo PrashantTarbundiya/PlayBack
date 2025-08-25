@@ -123,15 +123,15 @@ const PlaylistModal = ({ isOpen, onClose, videoId, savedPlaylists = [] }) => {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-[#1f1f1f] rounded-lg p-6 w-full max-w-md mx-4 max-h-[80vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-[#1f1f1f] rounded-lg p-4 sm:p-6 w-full max-w-md max-h-[80vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold text-white">Save to Playlist</h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
+            className="text-gray-400 hover:text-white transition-colors touch-manipulation"
           >
-            <X size={20} />
+            <X size={18} className="sm:w-5 sm:h-5" />
           </button>
         </div>
 
@@ -142,22 +142,22 @@ const PlaylistModal = ({ isOpen, onClose, videoId, savedPlaylists = [] }) => {
             {/* Create New Playlist Button */}
             <button
               onClick={() => setShowCreateForm(!showCreateForm)}
-              className="w-full flex items-center gap-3 p-3 rounded-lg bg-[#2a2a2a] hover:bg-[#333] transition-colors text-white mb-4"
+              className="w-full flex items-center gap-2 sm:gap-3 p-3 rounded-lg bg-[#2a2a2a] hover:bg-[#333] transition-colors text-white mb-4 touch-manipulation"
             >
-              <Plus size={20} />
-              <span>Create New Playlist</span>
+              <Plus size={18} className="sm:w-5 sm:h-5" />
+              <span className="text-sm sm:text-base">Create New Playlist</span>
             </button>
 
             {/* Create Playlist Form */}
             {showCreateForm && (
-              <form onSubmit={handleCreatePlaylist} className="mb-4 p-4 bg-[#2a2a2a] rounded-lg">
+              <form onSubmit={handleCreatePlaylist} className="mb-4 p-3 sm:p-4 bg-[#2a2a2a] rounded-lg">
                 <div className="mb-3">
                   <input
                     type="text"
                     placeholder="Playlist name"
                     value={newPlaylistName}
                     onChange={(e) => setNewPlaylistName(e.target.value)}
-                    className="w-full bg-[#121212] text-white border border-[#333] rounded-lg p-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full bg-[#121212] text-white border border-[#333] rounded-lg p-2 sm:p-3 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm sm:text-base"
                     required
                   />
                 </div>
@@ -167,21 +167,21 @@ const PlaylistModal = ({ isOpen, onClose, videoId, savedPlaylists = [] }) => {
                     value={newPlaylistDescription}
                     onChange={(e) => setNewPlaylistDescription(e.target.value)}
                     rows="2"
-                    className="w-full bg-[#121212] text-white border border-[#333] rounded-lg p-3 resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full bg-[#121212] text-white border border-[#333] rounded-lg p-2 sm:p-3 resize-none focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm sm:text-base"
                   />
                 </div>
                 <div className="flex gap-2">
                   <button
                     type="button"
                     onClick={() => setShowCreateForm(false)}
-                    className="flex-1 px-4 py-2 text-gray-400 bg-gray-700 rounded hover:bg-gray-600 transition-colors"
+                    className="flex-1 px-3 sm:px-4 py-2 text-gray-400 bg-gray-700 rounded hover:bg-gray-600 transition-colors text-sm sm:text-base"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={creating}
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                    className="flex-1 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 transition-colors text-sm sm:text-base"
                   >
                     {creating ? "Creating..." : "Create & Add"}
                   </button>
@@ -199,16 +199,16 @@ const PlaylistModal = ({ isOpen, onClose, videoId, savedPlaylists = [] }) => {
                   return (
                     <div
                       key={playlist._id}
-                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                      className={`w-full flex items-center gap-2 sm:gap-3 p-3 rounded-lg transition-colors touch-manipulation ${
                         isInPlaylist ? 'bg-green-900/30 border border-green-600/50' : 'bg-[#2a2a2a]'
                       }`}
                     >
-                      <List size={20} className={isInPlaylist ? "text-green-400" : "text-gray-400"} />
+                      <List size={18} className={`${isInPlaylist ? "text-green-400" : "text-gray-400"} sm:w-5 sm:h-5`} />
                       <div className="flex-1">
-                        <div className={`font-medium ${isInPlaylist ? 'text-green-300' : 'text-white'}`}>
+                        <div className={`font-medium text-sm sm:text-base ${isInPlaylist ? 'text-green-300' : 'text-white'}`}>
                           {playlist.name}
                         </div>
-                        <div className="text-gray-400 text-sm">
+                        <div className="text-gray-400 text-xs sm:text-sm">
                           {playlist.totalVideos || 0} videos
                         </div>
                       </div>
