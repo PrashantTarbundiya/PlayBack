@@ -44,6 +44,7 @@ export const SyncedVideoProvider = ({ children }) => {
   const syncTimeoutRef = useRef(null)
   const isSyncingRef = useRef(false)
   const isLoadingNewVideoRef = useRef(false)
+  const currentVideoIdRef = useRef(null)
   
   const location = useLocation()
   const navigate = useNavigate()
@@ -350,6 +351,12 @@ export const SyncedVideoProvider = ({ children }) => {
   }, [currentVideo, location.pathname, navigate, deactivateMiniPlayer])
   
   const loadVideo = useCallback((video, playlist = null, videoIndex = 0) => {
+    // Only reset if it's actually a different video
+    if (!video || video._id === currentVideoIdRef.current) {
+      return
+    }
+    
+    currentVideoIdRef.current = video._id
     isLoadingNewVideoRef.current = true
     
     isSyncingRef.current = false
@@ -459,7 +466,9 @@ export const SyncedVideoProvider = ({ children }) => {
   }, [isPlaying, currentVideo, isMiniPlayerActive, isOnVideoPlayerPage, activateMiniPlayer])
   
   useEffect(() => {
-    if (currentVideo) {
+    if (currentVideo && currentVideo._id !== currentVideoIdRef.current) {
+      // Only reset when it's actually a new video, not just settings change
+      currentVideoIdRef.current = currentVideo._id
       isLoadingNewVideoRef.current = true
       
       const resetVideoPosition = (videoElement) => {
@@ -485,6 +494,18 @@ export const SyncedVideoProvider = ({ children }) => {
       return () => {
         clearTimeout(timer)
       }
+    } else if (currentVideo) {
+      // Just update video properties without resetting time for settings changes
+      const updateVideoProperties = (videoElement) => {
+        if (videoElement) {
+          videoElement.volume = volume
+          videoElement.muted = isMuted
+          videoElement.playbackRate = playbackRate
+        }
+      }
+      
+      updateVideoProperties(mainVideoRef.current)
+      updateVideoProperties(miniVideoRef.current)
     }
   }, [currentVideo, volume, isMuted, playbackRate])
 

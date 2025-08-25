@@ -762,7 +762,7 @@ const VideoPlayer = () => {
         {currentPlaylist ? (
           <div className="space-y-4">
             {/* Playlist Header */}
-            <div className="bg-[#1a1a1a] rounded-lg p-4">
+            <div className="bg-[#1a1a1a] rounded-lg p-4 max-w-[350px]">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-lg font-semibold text-white">{currentPlaylist.name}</h3>
                 <div className="flex items-center gap-2">
@@ -793,7 +793,7 @@ const VideoPlayer = () => {
             {/* Playlist Videos */}
             <div className="space-y-2">
               <h4 className="text-md font-medium text-gray-300">Playlist Videos</h4>
-              <div className="max-h-[600px] overflow-y-auto space-y-2">
+              <div className="max-h-[600px] max-w-[350px] overflow-y-auto space-y-2">
                 {isPlaylistLoading ? (
                   <CenteredLoader message="Loading playlist..." />
                 ) : (

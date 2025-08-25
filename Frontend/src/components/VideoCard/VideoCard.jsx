@@ -422,7 +422,7 @@ const VideoCard = memo(({ video, showPlaylistIndex, playlist = null, videoIndex 
   }
 
   return (
-    <div className="bg-[#0f0f0f] text-white w-full max-w-md rounded-lg hover:bg-[#1c1c1c] transition shadow border border-[#222] relative">
+    <div className="bg-[#0f0f0f] text-white w-full max-w-[350px] rounded-lg hover:bg-[#1c1c1c] transition shadow border border-[#222] relative">
       <div
         className="block relative cursor-pointer"
         onClick={handleVideoClick}

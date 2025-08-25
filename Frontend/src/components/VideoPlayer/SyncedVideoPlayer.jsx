@@ -52,6 +52,7 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, c
   const [selectedSubtitle, setSelectedSubtitle] = useState('Off')
   const [autoplayNext, setAutoplayNext] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
+  const [isSeeking, setIsSeeking] = useState(false)
 
   // Detect mobile screen size
   useEffect(() => {
@@ -76,12 +77,13 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, c
     if (controlsTimeoutRef.current) {
       clearTimeout(controlsTimeoutRef.current)
     }
+    const timeout = isFullscreen || isMobile ? 2000 : 3000
     controlsTimeoutRef.current = setTimeout(() => {
       if (isPlaying) {
         setShowControls(false)
       }
-    }, 3000)
-  }, [isPlaying])
+    }, timeout)
+  }, [isPlaying, isFullscreen, isMobile])
 
   // Register/unregister main player for visibility tracking
   useEffect(() => {
@@ -452,25 +454,58 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, c
     }
   }, [isMouseHolding, originalSpeed, setPlaybackSpeed])
 
-  // Event listeners
-  useEffect(() => {
-    document.addEventListener("keydown", handleKeyDown)
-    document.addEventListener("mouseup", handleMouseUp)
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown)
-      document.removeEventListener("mouseup", handleMouseUp)
-    }
-  }, [handleKeyDown, handleMouseUp])
-
-  const handleSeek = (e) => {
+  // Seek handlers
+  const handleSeek = useCallback((e) => {
     const rect = e.currentTarget.getBoundingClientRect()
     const pos = (e.clientX - rect.left) / rect.width
     const newTime = pos * duration
     seekTo(newTime)
     setShowControls(true)
     resetControlsTimeout()
-  }
+  }, [duration, seekTo, resetControlsTimeout])
+
+  const handleSeekStart = useCallback((e) => {
+    e.preventDefault()
+    setIsSeeking(true)
+    handleSeek(e)
+  }, [handleSeek])
+
+  const handleSeekMove = useCallback((e) => {
+    if (isSeeking) {
+      e.preventDefault()
+      const progressBar = document.querySelector('.progress-bar')
+      if (progressBar) {
+        const rect = progressBar.getBoundingClientRect()
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX
+        const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
+        const newTime = pos * duration
+        seekTo(newTime)
+      }
+    }
+  }, [isSeeking, duration, seekTo])
+
+  const handleSeekEnd = useCallback(() => {
+    setIsSeeking(false)
+  }, [])
+
+  // Event listeners
+  useEffect(() => {
+    document.addEventListener("keydown", handleKeyDown)
+    document.addEventListener("mouseup", handleMouseUp)
+    document.addEventListener("mousemove", handleSeekMove)
+    document.addEventListener("mouseup", handleSeekEnd)
+    document.addEventListener("touchmove", handleSeekMove)
+    document.addEventListener("touchend", handleSeekEnd)
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown)
+      document.removeEventListener("mouseup", handleMouseUp)
+      document.removeEventListener("mousemove", handleSeekMove)
+      document.removeEventListener("mouseup", handleSeekEnd)
+      document.removeEventListener("touchmove", handleSeekMove)
+      document.removeEventListener("touchend", handleSeekEnd)
+    }
+  }, [handleKeyDown, handleMouseUp, handleSeekMove, handleSeekEnd])
 
   const handleVolumeChange = (e) => {
     const newVolume = parseFloat(e.target.value)
@@ -798,68 +833,70 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, c
 
           {/* Center - Main Playback Controls */}
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-4">
               <button 
                 onClick={() => skip(-10)} 
-                className="p-3 rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
+                className="p-2 rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
                 aria-label="Rewind 10s"
               >
-                <SkipBack size={24} />
+                <SkipBack size={20} />
               </button>
               
               <button 
                 onClick={togglePlay} 
-                className="p-4 rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
+                className="p-3 rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
                 aria-label="Play/Pause"
               >
-                {isPlaying ? <Pause size={32} /> : <Play size={32} />}
+                {isPlaying ? <Pause size={28} /> : <Play size={28} />}
               </button>
               
               <button 
                 onClick={() => skip(10)} 
-                className="p-3 rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
+                className="p-2 rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
                 aria-label="Forward 10s"
               >
-                <SkipForward size={24} />
+                <SkipForward size={20} />
               </button>
             </div>
           </div>
 
           {/* Bottom - Progress Bar and Time */}
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent pt-6 px-4 pb-4">
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent pt-4 px-2 pb-2">
             {/* Progress bar */}
-            <div className="w-full bg-white/20 rounded-sm cursor-pointer group h-1.5 mb-3" onClick={handleSeek}>
+            <div className="w-full bg-white/20 cursor-pointer group h-1 mb-2 progress-bar" 
+                 onMouseDown={handleSeekStart}
+                 onTouchStart={handleSeekStart}>
               <div
-                className="h-full bg-red-500 rounded-sm transition-all duration-100 relative"
+                className="h-full bg-red-500 transition-all duration-100 relative"
                 style={{ width: duration ? `${(currentTime / duration) * 100}%` : "0%" }}
               >
-                <div className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity w-3 h-3"></div>
+                <div className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity w-2.5 h-2.5"></div>
               </div>
             </div>
 
             {/* Bottom Controls */}
             <div className="flex items-center justify-between">
               {/* Bottom Left - Time Display + Volume */}
-              <div className="flex items-center gap-3">
-                <span className="text-white font-medium text-sm">
+              <div className="flex items-center gap-2">
+                <span className="text-white font-medium text-xs">
                   {formatTime(currentTime)} / {formatTime(duration)}
                 </span>
                 <button 
                   onClick={toggleMute}
-                  className="p-1.5 rounded-full text-white transition-colors hover:bg-white/20"
+                  className="p-1 rounded-full text-white transition-colors hover:bg-white/20"
                   aria-label="Mute/Unmute"
                 >
-                  {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+                  {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
                 </button>
               </div>
 
               {/* Bottom Right - Fullscreen Toggle */}
               <button 
                 onClick={toggleFullscreen} 
-                className="p-1.5 rounded-full text-white transition-colors hover:bg-white/20"
+                className="p-1 rounded-full text-white transition-colors hover:bg-white/20"
                 aria-label="Fullscreen"
               >
-                {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
+                {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
               </button>
             </div>
           </div>
@@ -868,9 +905,11 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, c
         // Desktop Controls Layout (Original)
       <div className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent transition-opacity duration-300 ${showControls ? "opacity-100" : "opacity-0"} ${isFullscreen ? 'pt-12 px-8 pb-8' : 'pt-8 px-4 pb-4'}`}>
         {/* Progress bar */}
-        <div className={`w-full bg-white/20 rounded-sm cursor-pointer group ${isFullscreen ? 'h-2 mb-6' : 'h-1.5 mb-4'}`} onClick={handleSeek}>
+        <div className={`w-full bg-white/20 cursor-pointer group progress-bar ${isFullscreen ? 'h-2 mb-6' : 'h-1.5 mb-4'}`} 
+             onMouseDown={handleSeekStart}
+             onTouchStart={handleSeekStart}>
           <div
-            className="h-full bg-red-500 rounded-sm transition-all duration-100 relative"
+            className="h-full bg-red-500 transition-all duration-100 relative"
             style={{ width: duration ? `${(currentTime / duration) * 100}%` : "0%" }}
           >
             <div className={`absolute right-0 top-1/2 transform -translate-y-1/2 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity ${isFullscreen ? 'w-4 h-4' : 'w-3 h-3'}`}></div>

@@ -1,7 +1,6 @@
 import React from 'react'
 import { Volume2, VolumeX, Play, Pause } from 'lucide-react'
 import useVideoPreview from '../../hooks/useVideoPreview'
-import './VideoPreview.css'
 
 const VideoPreview = ({ 
   videoUrl, 
@@ -66,7 +65,7 @@ const VideoPreview = ({
 
   return (
     <div 
-      className={`video-preview-container ${className}`}
+      className={`relative w-full h-full overflow-hidden rounded-lg bg-black group ${className}`}
       onMouseEnter={enablePreview ? handleMouseEnter : undefined}
       onMouseLeave={enablePreview ? handleMouseLeave : undefined}
     >
@@ -74,7 +73,7 @@ const VideoPreview = ({
       <img
         src={thumbnailUrl}
         alt={alt}
-        className={`video-preview-thumbnail ${
+        className={`absolute top-0 left-0 w-full h-full object-cover z-[1] transition-opacity duration-300 ease-in-out ${
           showPreview && previewLoaded ? 'opacity-0' : 'opacity-100'
         }`}
         loading="lazy"
@@ -85,7 +84,7 @@ const VideoPreview = ({
         <video
           ref={videoRef}
           src={videoUrl}
-          className={`video-preview-video ${
+          className={`absolute top-0 left-0 w-full h-full object-cover z-[2] transition-opacity duration-300 ease-in-out ${
             previewLoaded ? 'opacity-100' : 'opacity-0'
           }`}
           muted={previewMuted}
@@ -100,17 +99,17 @@ const VideoPreview = ({
       
       {/* Controls */}
       {enablePreview && showPreview && previewLoaded && showControls && (
-        <div className="video-preview-controls">
+        <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-0 hover:opacity-100 transition-opacity duration-200 ease-in-out group-hover:opacity-100">
           <button
             onClick={togglePlayPause}
-            className="video-preview-control-btn"
+            className="p-1.5 bg-black/70 hover:bg-black/90 border-none rounded-full text-white cursor-pointer transition-all duration-200 ease-in-out flex items-center justify-center backdrop-blur-sm hover:scale-110 focus:outline-2 focus:outline-blue-500 focus:outline-offset-2"
             title={isPlaying ? "Pause preview" : "Play preview"}
           >
             {isPlaying ? <Pause size={14} /> : <Play size={14} />}
           </button>
           <button
             onClick={togglePreviewMute}
-            className="video-preview-control-btn"
+            className="p-1.5 bg-black/70 hover:bg-black/90 border-none rounded-full text-white cursor-pointer transition-all duration-200 ease-in-out flex items-center justify-center backdrop-blur-sm hover:scale-110 focus:outline-2 focus:outline-blue-500 focus:outline-offset-2"
             title={previewMuted ? "Unmute preview" : "Mute preview"}
           >
             {previewMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
@@ -120,8 +119,8 @@ const VideoPreview = ({
       
       {/* Hover indicator */}
       {enablePreview && isHovering && !showPreview && !previewError && videoUrl && (
-        <div className="video-preview-hover-indicator">
-          <div className="video-preview-hover-text">
+        <div className="absolute top-0 left-0 w-full h-full bg-black/30 flex items-center justify-center z-[5]">
+          <div className="bg-black/70 text-white text-xs px-3 py-1.5 rounded-md animate-pulse backdrop-blur-sm">
             Hover for preview...
           </div>
         </div>
@@ -129,15 +128,15 @@ const VideoPreview = ({
       
       {/* Loading indicator */}
       {enablePreview && showPreview && !previewLoaded && !previewError && (
-        <div className="video-preview-loading">
-          <div className="video-preview-spinner"></div>
+        <div className="absolute top-0 left-0 w-full h-full bg-black/50 flex items-center justify-center z-[5]">
+          <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
         </div>
       )}
       
       {/* Error indicator */}
       {enablePreview && previewError && (
-        <div className="video-preview-error">
-          <div className="video-preview-error-text">
+        <div className="absolute top-0 left-0 w-full h-full bg-black/60 flex items-center justify-center z-[5]">
+          <div className="bg-red-600/80 text-white text-xs px-3 py-1.5 rounded-md backdrop-blur-sm">
             Preview unavailable
           </div>
         </div>

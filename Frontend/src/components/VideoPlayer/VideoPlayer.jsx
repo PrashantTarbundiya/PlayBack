@@ -27,6 +27,7 @@ const VideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc }, ref) 
   const [selectedQuality, setSelectedQuality] = useState('Auto (1080p)')
   const [selectedSubtitle, setSelectedSubtitle] = useState('Off')
   const [autoplayNext, setAutoplayNext] = useState(true)
+  const [isSeeking, setIsSeeking] = useState(false)
 
   // Expose the video element to parent component
   useImperativeHandle(ref, () => videoRef.current, [])
@@ -39,8 +40,7 @@ const VideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc }, ref) 
     if (controlsTimeoutRef.current) {
       clearTimeout(controlsTimeoutRef.current)
     }
-    // Different timeout for fullscreen (1.5s) vs normal mode (3s)
-    const timeout = isFullscreen ? 1500 : 3000
+    const timeout = isFullscreen ? 2000 : 3000
     controlsTimeoutRef.current = setTimeout(() => {
       if (isPlaying) {
         setShowControls(false)
@@ -373,6 +373,47 @@ const VideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc }, ref) 
     setShowControls(true)
     resetControlsTimeout()
   }
+
+  const handleSeekStart = useCallback((e) => {
+    e.preventDefault()
+    setIsSeeking(true)
+    handleSeek(e)
+  }, [handleSeek])
+
+  const handleSeekMove = useCallback((e) => {
+    if (isSeeking) {
+      e.preventDefault()
+      const progressBar = document.querySelector('.progress-bar')
+      if (progressBar) {
+        const rect = progressBar.getBoundingClientRect()
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX
+        const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
+        const video = videoRef.current
+        if (video) {
+          video.currentTime = pos * duration
+        }
+      }
+    }
+  }, [isSeeking, duration])
+
+  const handleSeekEnd = useCallback(() => {
+    setIsSeeking(false)
+  }, [])
+
+  // Event listeners for seeking
+  useEffect(() => {
+    document.addEventListener("mousemove", handleSeekMove)
+    document.addEventListener("mouseup", handleSeekEnd)
+    document.addEventListener("touchmove", handleSeekMove)
+    document.addEventListener("touchend", handleSeekEnd)
+
+    return () => {
+      document.removeEventListener("mousemove", handleSeekMove)
+      document.removeEventListener("mouseup", handleSeekEnd)
+      document.removeEventListener("touchmove", handleSeekMove)
+      document.removeEventListener("touchend", handleSeekEnd)
+    }
+  }, [handleSeekMove, handleSeekEnd])
 
   const handleVolumeChange = (e) => {
     const newVolume = parseFloat(e.target.value)
@@ -778,10 +819,10 @@ const VideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc }, ref) 
         <div className="absolute inset-0 flex items-center justify-center">
           <button 
             onClick={togglePlay} 
-            className="rounded-full text-white transition-colors hover:bg-white/20 p-3 sm:p-4 bg-black/30 backdrop-blur-sm touch-manipulation" 
+            className="rounded-full text-white transition-colors hover:bg-white/20 p-2 sm:p-4 bg-black/30 backdrop-blur-sm touch-manipulation" 
             aria-label="Play/Pause"
           >
-            {isPlaying ? <Pause size={40} className="sm:w-12 sm:h-12" /> : <Play size={40} className="sm:w-12 sm:h-12" />}
+            {isPlaying ? <Pause size={28} className="sm:w-12 sm:h-12" /> : <Play size={28} className="sm:w-12 sm:h-12" />}
           </button>
         </div>
 
@@ -789,26 +830,28 @@ const VideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc }, ref) 
         <div className="absolute inset-0 flex items-center justify-between px-2 sm:px-4">
           <button 
             onClick={() => skip(-10)} 
-            className="rounded-full text-white transition-colors hover:bg-white/20 p-2 sm:p-3 bg-black/30 backdrop-blur-sm touch-manipulation" 
+            className="rounded-full text-white transition-colors hover:bg-white/20 p-1.5 sm:p-3 bg-black/30 backdrop-blur-sm touch-manipulation" 
             aria-label="Rewind 10s"
           >
-            <SkipBack size={20} className="sm:w-6 sm:h-6" />
+            <SkipBack size={18} className="sm:w-6 sm:h-6" />
           </button>
           <button 
             onClick={() => skip(10)} 
-            className="rounded-full text-white transition-colors hover:bg-white/20 p-2 sm:p-3 bg-black/30 backdrop-blur-sm touch-manipulation" 
+            className="rounded-full text-white transition-colors hover:bg-white/20 p-1.5 sm:p-3 bg-black/30 backdrop-blur-sm touch-manipulation" 
             aria-label="Forward 10s"
           >
-            <SkipForward size={20} className="sm:w-6 sm:h-6" />
+            <SkipForward size={18} className="sm:w-6 sm:h-6" />
           </button>
         </div>
 
         {/* Bottom Controls */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 sm:p-4">
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-1 sm:p-4">
           {/* Progress Bar */}
-          <div className="w-full bg-white/20 rounded-sm cursor-pointer group h-1.5 mb-3 sm:mb-4 touch-manipulation" onClick={handleSeek}>
+          <div className="w-full bg-white/20 cursor-pointer group h-1 sm:h-1.5 mb-2 sm:mb-4 touch-manipulation progress-bar" 
+               onMouseDown={handleSeekStart}
+               onTouchStart={handleSeekStart}>
             <div
-              className="h-full bg-red-500 rounded-sm transition-all duration-100 relative"
+              className="h-full bg-red-500 transition-all duration-100 relative"
               style={{ width: duration ? `${(currentTime / duration) * 100}%` : "0%" }}
             >
               <div className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity w-2.5 h-2.5 sm:w-3 sm:h-3"></div>
@@ -818,26 +861,26 @@ const VideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc }, ref) 
           {/* Bottom Row - Timer, Volume and Fullscreen */}
           <div className="flex items-center justify-between">
             {/* Bottom Left - Timer + Volume */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <span className="text-white font-medium text-xs sm:text-sm">
                 {formatTime(currentTime)} / {formatTime(duration)}
               </span>
               <button 
                 onClick={toggleMute}
-                className="rounded-full text-white transition-colors hover:bg-white/20 p-1.5 sm:p-2 touch-manipulation" 
+                className="rounded-full text-white transition-colors hover:bg-white/20 p-1 sm:p-2 touch-manipulation" 
                 aria-label="Mute/Unmute"
               >
-                {isMuted ? <VolumeX size={18} className="sm:w-5 sm:h-5" /> : <Volume2 size={18} className="sm:w-5 sm:h-5" />}
+                {isMuted ? <VolumeX size={16} className="sm:w-5 sm:h-5" /> : <Volume2 size={16} className="sm:w-5 sm:h-5" />}
               </button>
             </div>
 
             {/* Bottom Right - Fullscreen Button */}
             <button 
               onClick={toggleFullscreen} 
-              className="rounded-full text-white transition-colors hover:bg-white/20 p-1.5 sm:p-2 touch-manipulation" 
+              className="rounded-full text-white transition-colors hover:bg-white/20 p-1 sm:p-2 touch-manipulation" 
               aria-label="Fullscreen"
             >
-              {isFullscreen ? <Minimize size={18} className="sm:w-5 sm:h-5" /> : <Maximize size={18} className="sm:w-5 sm:h-5" />}
+              {isFullscreen ? <Minimize size={16} className="sm:w-5 sm:h-5" /> : <Maximize size={16} className="sm:w-5 sm:h-5" />}
             </button>
           </div>
         </div>
