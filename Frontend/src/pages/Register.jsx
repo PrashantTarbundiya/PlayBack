@@ -165,21 +165,8 @@ const Register = () => {
       setOtpSent(true)
       setCooldownTime(150) // Set 2.5 minutes (150 seconds) cooldown
       
-      // Check if there's a development OTP
-      if (response.data?.data?.developmentOTP) {
-        toast.remove()
-        toast.success(`Development OTP: ${response.data.data.developmentOTP}`, {
-          duration: 10000,
-          style: {
-            background: '#fef3cd',
-            color: '#856404',
-            border: '1px solid #ffeaa7'
-          }
-        })
-      } else {
-        toast.remove()
-        toast.success('OTP sent to your email!')
-      }
+      toast.remove()
+      toast.success('OTP sent to your email!')
     } catch (error) {
       toast.remove()
       toast.error(error.response?.data?.message || 'Failed to send OTP')
