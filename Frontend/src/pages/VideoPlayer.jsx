@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useParams, Link, useNavigate } from "react-router-dom"
 import { ThumbsUp, ThumbsDown, Share, Download, Clock, Plus } from "lucide-react"
+import LikeButton from "../components/LikeButton/LikeButton"
 import SyncedVideoPlayer from "../components/VideoPlayer/SyncedVideoPlayer"
 import CommentSection from "../components/CommentSection/CommentSection"
 import VideoCard from "../components/VideoCard/VideoCard"
@@ -649,56 +650,42 @@ const VideoPlayer = () => {
           </span>
 
           <div className="flex gap-2 sm:gap-3 text-sm">
-            <button
-              onClick={handleLike}
+            <LikeButton
+              isLiked={isLiked}
+              likesCount={actionLoading.like ? "..." : likesCount}
+              onLike={handleLike}
               disabled={actionLoading.like}
-              className={`flex items-center gap-2 px-4 sm:px-5 py-2 rounded-full transition-all duration-300 transform hover:scale-105 active:scale-95 ${
-                actionLoading.like
-                  ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-                  : isLiked
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30"
-                    : "bg-gray-800 text-gray-300 hover:bg-gray-700 hover:shadow-md"
-              }`}
-              style={{
-                animation: isLiked ? "heartBeat 0.6s ease-in-out" : ""
-              }}
-            >
-              <ThumbsUp
-                size={18}
-                className={`transition-all duration-300 ${isLiked ? "fill-current transform scale-110" : "hover:scale-110"}`}
-              />
-              <span className="transition-all duration-200 hidden sm:inline">{actionLoading.like ? "..." : likesCount}</span>
+            />
+            <button className="flex items-center gap-2 px-4 py-2 h-[37px] rounded-full bg-gray-800 text-gray-300 hover:bg-gray-700">
+              <ThumbsDown size={20} />
             </button>
-            <button className="flex items-center gap-2 px-4 sm:px-5 py-2 rounded-full bg-gray-800 text-gray-300 hover:bg-gray-700">
-              <ThumbsDown size={18} />
-            </button>
-            <button onClick={handleShare} className="flex items-center gap-2 px-4 sm:px-5 py-2 rounded-full bg-gray-800 text-gray-300 hover:bg-gray-700">
-              <Share size={18} />
+            <button onClick={handleShare} className="flex items-center gap-2 px-4 py-2 h-[36px] rounded-full bg-gray-800 text-gray-300 hover:bg-gray-700">
+              <Share size={20} />
               <span className="hidden sm:inline">Share</span>
             </button>
             <button
               onClick={handleWatchLater}
               disabled={actionLoading.watchLater}
-              className={`flex items-center gap-2 px-4 sm:px-5 py-2 rounded-full transition-colors ${
+              className={`flex items-center gap-2 px-4 py-2 h-[36px] rounded-full transition-colors ${
                 actionLoading.watchLater
                   ? "bg-gray-600 text-gray-400 cursor-not-allowed"
                   : "bg-gray-800 text-gray-300 hover:bg-gray-700"
               }`}
             >
-              <Clock size={18} />
+              <Clock size={20} />
               <span className="hidden sm:inline">{actionLoading.watchLater ? "..." : "Watch Later"}</span>
             </button>
             <button
               onClick={handleSaveToPlaylist}
               disabled={actionLoading.saveToPlaylist}
-              className={`flex items-center gap-2 px-4 sm:px-5 py-2 rounded-full transition-colors ${
+              className={`flex items-center gap-2 px-4 py-2 h-[36px] rounded-full transition-colors ${
                 actionLoading.saveToPlaylist
                   ? "bg-gray-600 text-gray-400 cursor-not-allowed"
                   : "bg-gray-800 text-gray-300 hover:bg-gray-700"
               }`}
               title={isSaved ? `Saved in ${savedPlaylists.length} playlist${savedPlaylists.length === 1 ? '' : 's'}` : 'Save to playlist'}
             >
-              <Plus size={18} className={isSaved ? "fill-current" : ""} />
+              <Plus size={20} className={isSaved ? "fill-current" : ""} />
               <span className="hidden sm:inline">
                 {actionLoading.saveToPlaylist
                   ? "..."
@@ -708,8 +695,8 @@ const VideoPlayer = () => {
                 }
               </span>
             </button>
-            <button className="flex items-center gap-2 px-4 sm:px-5 py-2 rounded-full bg-gray-800 text-gray-300 hover:bg-gray-700">
-              <Download size={18} />
+            <button className="hidden sm:flex items-center gap-2 px-4 py-2 h-[36px] rounded-full bg-gray-800 text-gray-300 hover:bg-gray-700">
+              <Download size={20} />
               <span className="hidden sm:inline">Download</span>
             </button>
           </div>
