@@ -59,9 +59,12 @@ const StyledWrapper = styled.div`
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 8px 16px;
+    padding: 10px 16px;
+    margin: 2px 2px;
     cursor: pointer;
     position: relative;
+    height: 39px;
+    box-sizing: border-box;
   }
 
   .like-container .like-text-content {
@@ -74,8 +77,8 @@ const StyledWrapper = styled.div`
   }
 
   .like-container .svgs {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     fill: #d1d5db;
     box-sizing: content-box;
     padding: 0 12px 0 8px;

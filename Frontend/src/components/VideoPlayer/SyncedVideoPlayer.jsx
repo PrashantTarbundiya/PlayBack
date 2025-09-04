@@ -642,7 +642,7 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, c
         // Mobile Controls Layout
         <div className={`absolute inset-0 transition-opacity duration-300 ${showControls ? "opacity-100" : "opacity-0"}`}>
           {/* Top Left - Mini Player Button */}
-          <div className="absolute top-4 left-4">
+          <div className="absolute top-3 left-3">
             <button
               onClick={() => {
                 activateMiniPlayer()
@@ -656,7 +656,7 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, c
           </div>
 
           {/* Top Right - Settings Button */}
-          <div className="absolute top-4 right-4">
+          <div className="absolute top-3 right-3">
             <div className="relative">
               <button
                 onClick={(e) => {
@@ -861,9 +861,9 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, c
           </div>
 
           {/* Bottom - Progress Bar and Time */}
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent pt-4 px-2 pb-2">
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent pt-4 px-2 pb-1">
             {/* Progress bar */}
-            <div className="w-full bg-white/20 cursor-pointer group h-1 mb-2 progress-bar" 
+            <div className="w-full bg-white/20 cursor-pointer group h-1 progress-bar" 
                  onMouseDown={handleSeekStart}
                  onTouchStart={handleSeekStart}>
               <div
@@ -877,7 +877,7 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, c
             {/* Bottom Controls */}
             <div className="flex items-center justify-between">
               {/* Bottom Left - Time Display + Volume */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-5">
                 <span className="text-white font-medium text-xs">
                   {formatTime(currentTime)} / {formatTime(duration)}
                 </span>
@@ -893,7 +893,7 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, c
               {/* Bottom Right - Fullscreen Toggle */}
               <button 
                 onClick={toggleFullscreen} 
-                className="p-1 rounded-full text-white transition-colors hover:bg-white/20"
+                className="p-4 rounded-full text-white transition-colors hover:bg-white/20"
                 aria-label="Fullscreen"
               >
                 {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}

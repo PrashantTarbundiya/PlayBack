@@ -656,17 +656,17 @@ const VideoPlayer = () => {
               onLike={handleLike}
               disabled={actionLoading.like}
             />
-            <button className="flex items-center gap-2 px-4 py-2 h-[37px] rounded-full bg-gray-800 text-gray-300 hover:bg-gray-700">
-              <ThumbsDown size={20} />
+            <button className="flex items-center gap-2 px-5 py-[22px] h-[39px] rounded-full bg-gray-800 text-gray-300 hover:bg-gray-700">
+              <ThumbsDown size={25} />
             </button>
-            <button onClick={handleShare} className="flex items-center gap-2 px-4 py-2 h-[36px] rounded-full bg-gray-800 text-gray-300 hover:bg-gray-700">
+            <button onClick={handleShare} className="flex items-center gap-2 px-4 py-[22px] h-[36px] rounded-full bg-gray-800 text-gray-300 hover:bg-gray-700">
               <Share size={20} />
-              <span className="hidden sm:inline">Share</span>
+              <span className="hidden sm:inline ">Share</span>
             </button>
             <button
               onClick={handleWatchLater}
               disabled={actionLoading.watchLater}
-              className={`flex items-center gap-2 px-4 py-2 h-[36px] rounded-full transition-colors ${
+              className={`flex items-center gap-2 px-4 py-[22px] h-[36px] rounded-full transition-colors ${
                 actionLoading.watchLater
                   ? "bg-gray-600 text-gray-400 cursor-not-allowed"
                   : "bg-gray-800 text-gray-300 hover:bg-gray-700"
@@ -678,7 +678,7 @@ const VideoPlayer = () => {
             <button
               onClick={handleSaveToPlaylist}
               disabled={actionLoading.saveToPlaylist}
-              className={`flex items-center gap-2 px-4 py-2 h-[36px] rounded-full transition-colors ${
+              className={`flex items-center gap-2 px-4 py-[22px] h-[36px] rounded-full transition-colors ${
                 actionLoading.saveToPlaylist
                   ? "bg-gray-600 text-gray-400 cursor-not-allowed"
                   : "bg-gray-800 text-gray-300 hover:bg-gray-700"
@@ -695,7 +695,7 @@ const VideoPlayer = () => {
                 }
               </span>
             </button>
-            <button className="hidden sm:flex items-center gap-2 px-4 py-2 h-[36px] rounded-full bg-gray-800 text-gray-300 hover:bg-gray-700">
+            <button className="hidden sm:flex items-center gap-2 px-4 py-[22px] h-[36px] rounded-full bg-gray-800 text-gray-300 hover:bg-gray-700">
               <Download size={20} />
               <span className="hidden sm:inline">Download</span>
             </button>
