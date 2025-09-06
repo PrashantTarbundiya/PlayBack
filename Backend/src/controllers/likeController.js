@@ -93,7 +93,7 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
     const { tweetId } = req.params
 
     if (!isValidObjectId(tweetId)) {
-        throw new apiErrors(400, "Invalid CommentId");
+        throw new apiErrors(400, "Invalid tweetId");
     }
 
     const likeAlready = await likeModel.findOne({
@@ -103,13 +103,18 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
 
     if (likeAlready) {
         await likeModel.findByIdAndDelete(likeAlready?._id)
+        
+        // Get updated like count
+        const likesCount = await likeModel.countDocuments({ tweet: tweetId })
 
         return res.status(200)
             .json(
                 new apiResponse(
                     200,
                     {
-                        tweetId,isLiked: false
+                        tweetId,
+                        isLiked: false,
+                        likesCount
                     }
                 )
             )
@@ -119,13 +124,18 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
         tweet : tweetId,
         likedBy: req.user?._id
     });
+    
+    // Get updated like count
+    const likesCount = await likeModel.countDocuments({ tweet: tweetId })
 
     return res.status(200)
         .json(
             new apiResponse(
                 200,
                 {
-                    isLiked: true
+                    tweetId,
+                    isLiked: true,
+                    likesCount
                 }
             )
         )

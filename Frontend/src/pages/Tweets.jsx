@@ -177,14 +177,21 @@ const Tweets = () => {
         return tweet;
       }));
 
-      // Make API call
-      await likeAPI.toggleTweetLike(tweetId);
+      // Make API call and get response
+      const response = await likeAPI.toggleTweetLike(tweetId);
+      const { isLiked, likesCount } = response.data?.data || {};
       
-      // Add small delay to ensure backend has processed the like
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      // Manually refresh to get accurate backend state
-      await fetchTweets();
+      // Update with actual backend response
+      setTweets(prevTweets => prevTweets.map(tweet => {
+        if (tweet._id === tweetId) {
+          return {
+            ...tweet,
+            isLiked: Boolean(isLiked),
+            likesCount: likesCount || 0
+          };
+        }
+        return tweet;
+      }));
       
     } catch (error) {
       toast.remove()

@@ -193,7 +193,21 @@ const deleteTweet = asyncHandler(async (req, res) => {
 
 const getAllTweets = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10 } = req.query;
-
+    
+    // Get user from token if available
+    let user = null;
+    try {
+        const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
+        if (token) {
+            const jwt = await import('jsonwebtoken');
+            const { userModel } = await import('../models/userModel.js');
+            const decodedToken = jwt.default.verify(token, process.env.ACCESS_TOKEN_SECRET);
+            user = await userModel.findById(decodedToken?._id).select("-password -refreshToken");
+        }
+    } catch (error) {
+        // Continue without user if token is invalid
+    }
+    
     const tweets = await tweetModel.aggregate([
         {
             $lookup: {
@@ -231,8 +245,8 @@ const getAllTweets = asyncHandler(async (req, res) => {
                 ownerDetails: {
                     $first: "$ownerDetails"
                 },
-                isLiked: req.user?._id ? {
-                    $in: [new mongoose.Types.ObjectId(req.user._id), "$likeDetails.likedBy"]
+                isLiked: user?._id ? {
+                    $in: [new mongoose.Types.ObjectId(user._id), "$likeDetails.likedBy"]
                 } : false
             }
         },
@@ -254,7 +268,8 @@ const getAllTweets = asyncHandler(async (req, res) => {
                 ownerDetails: 1,
                 likesCount: 1,
                 createdAt: 1,
-                isLiked: 1
+                isLiked: 1,
+
             }
         }
     ]);
