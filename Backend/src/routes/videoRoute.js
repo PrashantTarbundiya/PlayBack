@@ -46,7 +46,7 @@ router.route("/search").get(getAllVideos);
 
 router.route("/categories").get(getVideoCategories);
 
-router.route("/recommendations").get(verifyJWT, getRecommendedVideos);
+router.route("/recommendations").get(getRecommendedVideos);
 
 router.route("/watch-next/:videoId").get(getWatchNextVideos);
 

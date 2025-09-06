@@ -28,6 +28,8 @@ const VideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc }, ref) 
   const [selectedSubtitle, setSelectedSubtitle] = useState('Off')
   const [autoplayNext, setAutoplayNext] = useState(true)
   const [isSeeking, setIsSeeking] = useState(false)
+  const [isHovering, setIsHovering] = useState(false)
+  const [isTouched, setIsTouched] = useState(false)
 
   // Expose the video element to parent component
   useImperativeHandle(ref, () => videoRef.current, [])
@@ -40,13 +42,13 @@ const VideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc }, ref) 
     if (controlsTimeoutRef.current) {
       clearTimeout(controlsTimeoutRef.current)
     }
-    const timeout = isFullscreen ? 2000 : 3000
+    const timeout = 3000 // Always 3 seconds for consistency
     controlsTimeoutRef.current = setTimeout(() => {
-      if (isPlaying) {
+      if (isPlaying && !isHovering && !isTouched) {
         setShowControls(false)
       }
     }, timeout)
-  }, [isPlaying, isFullscreen])
+  }, [isPlaying, isHovering, isTouched])
 
   // Helper functions
   const togglePlay = useCallback(() => {
@@ -489,8 +491,44 @@ const VideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc }, ref) 
   }
 
   const handleMouseMove = () => {
+    if (!isFullscreen) {
+      setShowControls(true)
+      resetControlsTimeout()
+    }
+  }
+
+  const handleMouseEnter = () => {
+    if (!isFullscreen) {
+      setIsHovering(true)
+      setShowControls(true)
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current)
+      }
+    }
+  }
+
+  const handleMouseLeave = () => {
+    if (!isFullscreen) {
+      setIsHovering(false)
+      if (isPlaying) {
+        resetControlsTimeout()
+      }
+    }
+  }
+
+  const handleTouchStart = () => {
+    setIsTouched(true)
     setShowControls(true)
-    resetControlsTimeout()
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current)
+    }
+    // Reset touch state after 3 seconds
+    setTimeout(() => {
+      setIsTouched(false)
+      if (isPlaying) {
+        resetControlsTimeout()
+      }
+    }, 3000)
   }
 
   const handleContainerClick = (e) => {
@@ -519,7 +557,9 @@ const VideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc }, ref) 
       ref={containerRef}
       className="relative w-full bg-black rounded-xl overflow-hidden focus:outline-none aspect-video"
       onMouseMove={handleMouseMove}
-      onMouseLeave={() => !isPlaying || setShowControls(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onTouchStart={handleTouchStart}
       onClick={handleContainerClick}
       onMouseDown={handleMouseDown}
       tabIndex={0}

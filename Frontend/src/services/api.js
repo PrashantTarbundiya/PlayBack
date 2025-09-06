@@ -175,11 +175,15 @@ export const videoAPI = {
       }
       throw new Error('Could not create or find Watch Later playlist');
     } catch (error) {
-      console.error('Watch Later error:', error);
       // Handle specific error messages
       if (error.response?.status === 400) {
+        const errorMessage = error.response?.data?.message || '';
+        if (errorMessage.includes('already in Watch Later')) {
+          throw new Error('Video is already in Watch Later');
+        }
         throw new Error('Failed to add to Watch Later. Please try again.');
       }
+      console.error('Watch Later error:', error);
       throw new Error(error.message || 'Watch Later feature not available');
     }
   },

@@ -61,7 +61,7 @@ const MiniPlayer = () => {
       if (isBigScreen) {
         setShowControls(false)
       }
-    }, 3000)
+    }, 2000)
   }, [isBigScreen])
 
   // Auto-hide mobile controls
@@ -228,13 +228,10 @@ const MiniPlayer = () => {
     if (!isResizing || isMobile) return
     
     const clientX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX
-    const clientY = e.type === 'mousemove' ? e.clientY : e.touches[0].clientY
     
     const deltaX = clientX - resizeStartRef.current.x
-    
     const newWidth = Math.max(280, Math.min(600, resizeStartRef.current.width + deltaX))
     
-    // For the new layout, we only need to adjust the width. Height will adapt.
     // Use requestAnimationFrame for smooth resizing
     requestAnimationFrame(() => {
       updateMiniPlayerSize({ width: newWidth, height: 'auto' })

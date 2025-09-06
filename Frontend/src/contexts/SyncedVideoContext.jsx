@@ -28,13 +28,14 @@ export const SyncedVideoProvider = ({ children }) => {
     const defaultWidth = 1200
     const defaultHeight = 800
     const playerWidth = 360
-    const playerHeight = 202
+    const playerHeight = Math.round(playerWidth * 9 / 16) + 60 // 16:9 ratio + controls height
     const margin = 20
+    const bottomMargin = 20 // Reduced margin for bottom corner positioning
     const initialX = (typeof window !== 'undefined' ? window.innerWidth : defaultWidth) - playerWidth - margin
-    const initialY = (typeof window !== 'undefined' ? window.innerHeight : defaultHeight) - playerHeight - margin
+    const initialY = (typeof window !== 'undefined' ? window.innerHeight : defaultHeight) - playerHeight - bottomMargin
     return { x: Math.max(margin, initialX), y: Math.max(margin, initialY) }
   })
-  const [miniPlayerSize, setMiniPlayerSize] = useState({ width: 360, height: 202 })
+  const [miniPlayerSize, setMiniPlayerSize] = useState({ width: 360, height: 'auto' })
   const [isDragging, setIsDragging] = useState(false)
   const [isResizing, setIsResizing] = useState(false)
   
@@ -288,10 +289,11 @@ export const SyncedVideoProvider = ({ children }) => {
     
     const resetToBottomRight = () => {
       const playerWidth = 360
-      const playerHeight = 202
+      const playerHeight = Math.round(playerWidth * 9 / 16) + 60 // 16:9 ratio + controls height
       const margin = 20
+      const bottomMargin = 20 // Reduced margin for bottom corner positioning
       const newX = (typeof window !== 'undefined' ? window.innerWidth : 1200) - playerWidth - margin
-      const newY = (typeof window !== 'undefined' ? window.innerHeight : 800) - playerHeight - margin
+      const newY = (typeof window !== 'undefined' ? window.innerHeight : 800) - playerHeight - bottomMargin
       setMiniPlayerPosition({ 
         x: Math.max(margin, newX), 
         y: Math.max(margin, newY) 
@@ -419,10 +421,11 @@ export const SyncedVideoProvider = ({ children }) => {
 
   const resetMiniPlayerPosition = useCallback(() => {
     const playerWidth = 360
-    const playerHeight = 202
+    const playerHeight = Math.round(playerWidth * 9 / 16) + 60 // 16:9 ratio + controls height
     const margin = 20
+    const bottomMargin = 20 // Reduced margin for bottom corner positioning
     const newX = (typeof window !== 'undefined' ? window.innerWidth : 1200) - playerWidth - margin
-    const newY = (typeof window !== 'undefined' ? window.innerHeight : 800) - playerHeight - margin
+    const newY = (typeof window !== 'undefined' ? window.innerHeight : 800) - playerHeight - bottomMargin
     setMiniPlayerPosition({ 
       x: Math.max(margin, newX), 
       y: Math.max(margin, newY) 
@@ -513,10 +516,11 @@ export const SyncedVideoProvider = ({ children }) => {
     const handleResize = () => {
       if (isMiniPlayerActive) {
         const playerWidth = 360
-        const playerHeight = 202
+        const playerHeight = Math.round(playerWidth * 9 / 16) + 60 // 16:9 ratio + controls height
         const margin = 20
+        const bottomMargin = 20 // Reduced margin for bottom corner positioning
         const newX = window.innerWidth - playerWidth - margin
-        const newY = window.innerHeight - playerHeight - margin
+        const newY = window.innerHeight - playerHeight - bottomMargin
         setMiniPlayerPosition({ 
           x: Math.max(margin, newX), 
           y: Math.max(margin, newY) 

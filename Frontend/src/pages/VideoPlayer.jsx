@@ -36,8 +36,12 @@ const VideoPlayer = () => {
   } = useSyncedVideo()
   
   const videoRef = useRef(null)
+  const relatedVideosRef = useRef(null)
   const [video, setVideo] = useState(null)
   const [relatedVideos, setRelatedVideos] = useState([])
+  const [relatedVideosPage, setRelatedVideosPage] = useState(1)
+  const [hasMoreRelated, setHasMoreRelated] = useState(true)
+  const [loadingMoreRelated, setLoadingMoreRelated] = useState(false)
   const [isSubscribed, setIsSubscribed] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
   const [likesCount, setLikesCount] = useState(0)
@@ -81,8 +85,12 @@ const VideoPlayer = () => {
     if (id) {
       setIsSaved(false)
       setSavedPlaylists([])
+      setRelatedVideosPage(1)
+      setHasMoreRelated(true)
     }
   }, [id])
+
+
 
   // Auto-play video when it's loaded
   useEffect(() => {
@@ -254,16 +262,47 @@ const VideoPlayer = () => {
     }
   }
 
-  const fetchRelatedVideos = async () => {
+  const fetchRelatedVideos = async (reset = true) => {
     try {
-      const response = await videoAPI.getAllVideosWithOwnerDetails()
-      const videosData = response?.data?.data?.docs || response?.data?.data || response?.data || []
-      const filtered = videosData.filter(v => v._id !== id)
-      setRelatedVideos(filtered.slice(0, 10))
+      const response = await videoAPI.getWatchNextVideos(id, 10)
+      const videosData = response?.data?.data || response?.data || []
+      if (reset) {
+        setRelatedVideos(videosData)
+        setRelatedVideosPage(1)
+        setHasMoreRelated(videosData.length === 10)
+      }
     } catch (error) {
-      setRelatedVideos([])
+      if (reset) {
+        setRelatedVideos([])
+        setHasMoreRelated(false)
+      }
     }
   }
+
+  const loadMoreRelatedVideos = async () => {
+    if (!hasMoreRelated || loadingMoreRelated) return
+    
+    setLoadingMoreRelated(true)
+    try {
+      const response = await videoAPI.getAllVideosWithOwnerDetails(relatedVideosPage + 1, 5)
+      const videosData = response?.data?.data || response?.data || []
+      const filteredVideos = videosData.filter(v => v._id !== id && !relatedVideos.some(rv => rv._id === v._id))
+      
+      if (filteredVideos.length > 0) {
+        setRelatedVideos(prev => [...prev, ...filteredVideos])
+        setRelatedVideosPage(prev => prev + 1)
+        setHasMoreRelated(filteredVideos.length === 5)
+      } else {
+        setHasMoreRelated(false)
+      }
+    } catch (error) {
+      setHasMoreRelated(false)
+    } finally {
+      setLoadingMoreRelated(false)
+    }
+  }
+
+
 
   const checkLikeStatus = async (videoId) => {
     try {
@@ -434,13 +473,22 @@ const VideoPlayer = () => {
     setActionLoading(prev => ({ ...prev, watchLater: true }))
     
     try {
+      // Check if video is already in Watch Later before making API call
+      const watchLaterPlaylist = savedPlaylists.find(p => p.name === 'Watch Later')
+      if (watchLaterPlaylist) {
+        toast.remove()
+        toast.error("Video is already in Watch Later")
+        return
+      }
+      
       await videoAPI.addToWatchLater(id)
       toast.remove()
       toast.success("Added to Watch Later!")
+      // Refresh save status to update UI
+      await checkSaveStatus(id)
     } catch (error) {
-      const errorMessage = error.message || "Failed to add to Watch Later"
       toast.remove()
-      toast.error(errorMessage)
+      toast.error("Failed to add to Watch Later")
     } finally {
       setActionLoading(prev => ({ ...prev, watchLater: false }))
     }
@@ -863,9 +911,19 @@ const VideoPlayer = () => {
         ) : (
           <div>
             <h3 className="text-lg font-semibold mb-4">Related Videos</h3>
-            <div className="space-y-3">
+            <div ref={relatedVideosRef} className="related-videos-container space-y-3">
               {relatedVideos.length > 0 ? (
-                relatedVideos.map(vid => <VideoCard key={vid._id} video={vid} />)
+                <>
+                  {relatedVideos.map(vid => <VideoCard key={vid._id} video={vid} disablePreview={true} />)}
+                  {loadingMoreRelated && (
+                    <div className="flex justify-center py-4">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                    </div>
+                  )}
+                  {!hasMoreRelated && relatedVideos.length > 10 && (
+                    <p className="text-center text-sm text-gray-500 py-4">No more videos to load</p>
+                  )}
+                </>
               ) : (
                 <p className="text-sm text-gray-500">No related videos found.</p>
               )}

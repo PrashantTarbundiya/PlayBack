@@ -7,7 +7,7 @@ import { videoAPI } from "../../services/api"
 import PlaylistModal from "../PlaylistModal/PlaylistModal"
 import { useVideoNavigation } from "../../hooks/useVideoNavigation"
 
-const VideoCard = memo(({ video, showPlaylistIndex, playlist = null, videoIndex = 0 }) => {
+const VideoCard = memo(({ video, showPlaylistIndex, playlist = null, videoIndex = 0, disablePreview = false }) => {
   const { handleVideoCardClick } = useVideoNavigation()
   const [showOptions, setShowOptions] = useState(false)
   const [thumbnailError, setThumbnailError] = useState(false)
@@ -48,6 +48,67 @@ const VideoCard = memo(({ video, showPlaylistIndex, playlist = null, videoIndex 
     }
   }, [isOwnerIdOnly, video.owner, ownerData, loadingOwner])
 
+  // Handle hover preview logic
+  useEffect(() => {
+    if (!disablePreview && isHovering && !showPreview && !previewError) {
+      hoverTimeoutRef.current = setTimeout(() => {
+        setShowPreview(true)
+      }, 2000)
+    } else if (!isHovering) {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current)
+        hoverTimeoutRef.current = null
+      }
+      setShowPreview(false)
+      setPreviewLoaded(false)
+    }
+
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current)
+        hoverTimeoutRef.current = null
+      }
+    }
+  }, [disablePreview, isHovering, showPreview, previewError])
+
+  // Handle video preview controls
+  useEffect(() => {
+    if (!disablePreview && showPreview && videoRef.current) {
+      const video = videoRef.current
+      const playPromise = video.play()
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          if (error.name !== 'AbortError') {
+            setPreviewError(true)
+          }
+        })
+      }
+    } else if (videoRef.current) {
+      const video = videoRef.current
+      if (video.parentNode) {
+        video.pause()
+        video.currentTime = 0
+      }
+    }
+  }, [disablePreview, showPreview])
+
+  // Cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      if (videoRef.current) {
+        const video = videoRef.current
+        try {
+          video.pause()
+        } catch (error) {
+          // Ignore errors during cleanup
+        }
+      }
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current)
+      }
+    }
+  }, [])
+
   // Get the effective owner (populated or fetched)
   const effectiveOwner = isOwnerPopulated ? video.owner : ownerData
 
@@ -65,72 +126,11 @@ const VideoCard = memo(({ video, showPlaylistIndex, playlist = null, videoIndex 
     }
   }, [showOptions])
 
-  // Handle hover preview logic
-  useEffect(() => {
-    if (isHovering && !showPreview && !previewError) {
-      // Start timer for 2 seconds
-      hoverTimeoutRef.current = setTimeout(() => {
-        setShowPreview(true)
-      }, 2000)
-    } else if (!isHovering) {
-      // Clear timer and hide preview when not hovering
-      if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current)
-        hoverTimeoutRef.current = null
-      }
-      setShowPreview(false)
-      setPreviewLoaded(false)
-    }
 
-    return () => {
-      if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current)
-        hoverTimeoutRef.current = null
-      }
-    }
-  }, [isHovering, showPreview, previewError])
 
-  // Handle video preview controls
-  useEffect(() => {
-    if (showPreview && videoRef.current) {
-      const video = videoRef.current
-      const playPromise = video.play()
-      if (playPromise !== undefined) {
-        playPromise.catch(error => {
-          // Only log AbortError if it's not due to DOM removal
-          if (error.name !== 'AbortError') {
-            setPreviewError(true)
-          }
-        })
-      }
-    } else if (videoRef.current) {
-      const video = videoRef.current
-      // Check if video is still in DOM before pausing
-      if (video.parentNode) {
-        video.pause()
-        video.currentTime = 0
-      }
-    }
-  }, [showPreview])
 
-  // Cleanup on component unmount
-  useEffect(() => {
-    return () => {
-      if (videoRef.current) {
-        const video = videoRef.current
-        // Pause video safely on unmount
-        try {
-          video.pause()
-        } catch (error) {
-          // Ignore errors during cleanup
-        }
-      }
-      // Clear any pending timeout
-      if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current)
-      }
-    }
-  }, [])
+
+
 
   const formatViews = useCallback((views) => {
     // Handle null, undefined, or invalid values
@@ -249,13 +249,11 @@ const VideoCard = memo(({ video, showPlaylistIndex, playlist = null, videoIndex 
     if (!video.videoFile) return null
     
     try {
-      // If it's a string, return it directly
       if (typeof video.videoFile === 'string') {
         const fixedUrl = fixCloudinaryUrl(video.videoFile)
         return fixedUrl
       }
       
-      // If it's an object, extract the URL
       const videoUrl = video.videoFile.url || video.videoFile.secure_url || video.videoFile.public_id || ""
       const fixedUrl = fixCloudinaryUrl(videoUrl)
       return fixedUrl
@@ -265,7 +263,6 @@ const VideoCard = memo(({ video, showPlaylistIndex, playlist = null, videoIndex 
   }, [video.videoFile, fixCloudinaryUrl])
 
   const handleVideoPreviewError = (error) => {
-    // Only show error for actual playback issues, not AbortError
     if (error && error.target && error.target.error) {
       const videoError = error.target.error
       if (videoError.code !== videoError.MEDIA_ERR_ABORTED) {
@@ -289,12 +286,20 @@ const VideoCard = memo(({ video, showPlaylistIndex, playlist = null, videoIndex 
   }, [previewMuted])
 
   const handleMouseEnter = useCallback(() => {
-    setIsHovering(true)
-  }, [])
+    if (!disablePreview) {
+      setIsHovering(true)
+    }
+  }, [disablePreview])
 
   const handleMouseLeave = useCallback(() => {
-    setIsHovering(false)
-  }, [])
+    if (!disablePreview) {
+      setIsHovering(false)
+    }
+  }, [disablePreview])
+
+
+
+
 
   // Memoize avatar URL to avoid recalculation
   const getAvatarUrl = useMemo(() => {
@@ -429,22 +434,24 @@ const VideoCard = memo(({ video, showPlaylistIndex, playlist = null, videoIndex 
       >
         <div
           className="relative aspect-video bg-black overflow-hidden"
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
+          {...(!disablePreview && {
+            onMouseEnter: handleMouseEnter,
+            onMouseLeave: handleMouseLeave
+          })}
         >
           {/* Thumbnail */}
           <img
             src={getThumbnailUrl}
             alt={video.title || "Video thumbnail"}
             className={`w-full h-full object-cover transition-opacity duration-300 ${
-              showPreview && previewLoaded ? 'opacity-0' : 'opacity-100'
+              !disablePreview && showPreview && previewLoaded ? 'opacity-0' : 'opacity-100'
             }`}
             onError={handleThumbnailError}
             loading="lazy"
           />
           
           {/* Video Preview */}
-          {showPreview && getVideoUrl && (
+          {!disablePreview && showPreview && getVideoUrl && (
             <video
               ref={videoRef}
               src={getVideoUrl}
@@ -473,7 +480,7 @@ const VideoCard = memo(({ video, showPlaylistIndex, playlist = null, videoIndex 
           )}
           
           {/* Preview controls */}
-          {showPreview && previewLoaded && (
+          {!disablePreview && showPreview && previewLoaded && (
             <div className="absolute top-2 right-2 flex gap-1">
               <button
                 onClick={togglePreviewMute}
@@ -486,7 +493,7 @@ const VideoCard = memo(({ video, showPlaylistIndex, playlist = null, videoIndex 
           )}
           
           {/* Hover indicator */}
-          {isHovering && !showPreview && !previewError && (
+          {!disablePreview && isHovering && !showPreview && !previewError && (
             <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
               <div className="bg-black/60 text-white text-xs px-2 py-1 rounded">
                 Hover for preview...

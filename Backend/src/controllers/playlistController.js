@@ -277,7 +277,11 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
 
     // Check if video is already in the playlist
     if (playlist.videos.includes(videoId)) {
-        throw new apiErrors(400, "Video is already in this playlist")
+        const isWatchLater = playlist.name === 'Watch Later' || playlist.name.toLowerCase() === 'watch later'
+        const message = isWatchLater 
+            ? "Video is already in Watch Later" 
+            : "Video is already in this playlist"
+        throw new apiErrors(400, message)
     }
 
     const updatedPlaylist = await playlistModel.findByIdAndUpdate(

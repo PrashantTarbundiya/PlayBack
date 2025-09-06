@@ -642,102 +642,152 @@ const getRecommendedVideos = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10 } = req.query;
     const userId = req.user?._id;
     
-    let recommendedVideos = [];
+    let finalVideos = [];
+    const historyBasedCount = Math.min(6, Math.ceil(limit * 0.6)); // 5-6 videos from history
+    const otherVideosCount = limit - historyBasedCount;
     
     if (userId) {
-        // Get user's watch history
-        const user = await userModel.findById(userId).populate({
-            path: 'watchHistory',
-            select: 'category owner'
-        });
-        
-        if (user && user.watchHistory && user.watchHistory.length > 0) {
-            // Get categories from watch history
-            const watchedCategories = user.watchHistory.map(video => video.category);
-            const categoryFrequency = {};
-            
-            // Count frequency of each category
-            watchedCategories.forEach(category => {
-                categoryFrequency[category] = (categoryFrequency[category] || 0) + 1;
+        try {
+            // Get user's watch history
+            const user = await userModel.findById(userId).populate({
+                path: 'watchHistory',
+                select: 'category owner'
             });
             
-            // Get most watched categories (top 3)
-            const topCategories = Object.entries(categoryFrequency)
-                .sort(([,a], [,b]) => b - a)
-                .slice(0, 3)
-                .map(([category]) => category);
-            
-            // Get watched video IDs to exclude them
-            const watchedVideoIds = user.watchHistory.map(video => video._id);
-            
-            // Find recommended videos based on top categories
-            recommendedVideos = await videoModel.aggregate([
-                {
-                    $match: {
-                        _id: { $nin: watchedVideoIds },
-                        category: { $in: topCategories },
-                        isPublished: true
-                    }
-                },
-                {
-                    $lookup: {
-                        from: "users",
-                        localField: "owner",
-                        foreignField: "_id",
-                        as: "ownerDetails",
-                        pipeline: [
-                            {
-                                $project: {
-                                    username: 1,
-                                    fullName: 1,
-                                    avatar: 1
-                                }
+            if (user && user.watchHistory && user.watchHistory.length > 0) {
+                // Get categories from watch history
+                const watchedCategories = user.watchHistory.map(video => video.category).filter(Boolean);
+                const categoryFrequency = {};
+                
+                // Count frequency of each category
+                watchedCategories.forEach(category => {
+                    categoryFrequency[category] = (categoryFrequency[category] || 0) + 1;
+                });
+                
+                // Get most watched categories (top 3)
+                const topCategories = Object.entries(categoryFrequency)
+                    .sort(([,a], [,b]) => b - a)
+                    .slice(0, 3)
+                    .map(([category]) => category);
+                
+                if (topCategories.length > 0) {
+                    // Get watched video IDs to exclude them
+                    const watchedVideoIds = user.watchHistory.map(video => video._id);
+                    
+                    // Get videos from watch history categories
+                    const historyBasedVideos = await videoModel.aggregate([
+                        {
+                            $match: {
+                                _id: { $nin: watchedVideoIds },
+                                category: { $in: topCategories },
+                                isPublished: true
                             }
-                        ]
-                    }
-                },
-                {
-                    $unwind: "$ownerDetails"
-                },
-                {
-                    $addFields: {
-                        owner: "$ownerDetails"
-                    }
-                },
-                {
-                    $addFields: {
-                        recommendationReason: {
-                            $switch: {
-                                branches: topCategories.map(category => ({
-                                    case: { $eq: ["$category", category] },
-                                    then: `Because you watched ${category} videos`
-                                })),
-                                default: "Recommended for you"
+                        },
+                        { $sample: { size: historyBasedCount * 2 } },
+                        {
+                            $lookup: {
+                                from: "users",
+                                localField: "owner",
+                                foreignField: "_id",
+                                as: "ownerDetails",
+                                pipeline: [
+                                    {
+                                        $project: {
+                                            username: 1,
+                                            fullName: 1,
+                                            avatar: 1
+                                        }
+                                    }
+                                ]
                             }
+                        },
+                        {
+                            $unwind: "$ownerDetails"
+                        },
+                        {
+                            $addFields: {
+                                owner: "$ownerDetails",
+                                recommendationType: "history"
+                            }
+                        },
+                        {
+                            $project: {
+                                ownerDetails: 0
+                            }
+                        },
+                        {
+                            $limit: historyBasedCount
                         }
-                    }
-                },
-                {
-                    $project: {
-                        ownerDetails: 0  // Remove the temporary ownerDetails field
-                    }
-                },
-                {
-                    $sort: { views: -1, createdAt: -1 }
-                },
-                {
-                    $limit: parseInt(limit) * 2 // Get more to ensure variety
+                    ]);
+                    
+                    // Get other videos from different categories
+                    const excludeIds = [...watchedVideoIds, ...historyBasedVideos.map(v => v._id)];
+                    const otherVideos = await videoModel.aggregate([
+                        {
+                            $match: {
+                                _id: { $nin: excludeIds },
+                                category: { $nin: topCategories },
+                                isPublished: true
+                            }
+                        },
+                        { $sample: { size: otherVideosCount * 2 } },
+                        {
+                            $lookup: {
+                                from: "users",
+                                localField: "owner",
+                                foreignField: "_id",
+                                as: "ownerDetails",
+                                pipeline: [
+                                    {
+                                        $project: {
+                                            username: 1,
+                                            fullName: 1,
+                                            avatar: 1
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            $unwind: "$ownerDetails"
+                        },
+                        {
+                            $addFields: {
+                                owner: "$ownerDetails",
+                                recommendationType: "explore"
+                            }
+                        },
+                        {
+                            $project: {
+                                ownerDetails: 0
+                            }
+                        },
+                        {
+                            $limit: otherVideosCount
+                        }
+                    ]);
+                    
+                    // Combine and deduplicate videos
+                    const combinedVideos = [...historyBasedVideos, ...otherVideos];
+                    const uniqueVideos = combinedVideos.filter((video, index, self) => 
+                        index === self.findIndex(v => v._id.toString() === video._id.toString())
+                    );
+                    finalVideos = uniqueVideos.sort(() => Math.random() - 0.5);
                 }
-            ]);
+            }
+        } catch (error) {
+            // If there's an error with personalized recommendations, continue to fallback
+            console.error('Error getting personalized recommendations:', error);
         }
     }
     
-    // If no recommendations or user not logged in, get trending videos
-    if (recommendedVideos.length === 0) {
-        recommendedVideos = await videoModel.aggregate([
+    // If no recommendations or user not logged in, get mixed trending videos
+    if (finalVideos.length === 0) {
+        finalVideos = await videoModel.aggregate([
             {
                 $match: { isPublished: true }
             },
+            { $sample: { size: parseInt(limit) * 2 } },
             {
                 $lookup: {
                     from: "users",
@@ -760,21 +810,14 @@ const getRecommendedVideos = asyncHandler(async (req, res) => {
             },
             {
                 $addFields: {
-                    owner: "$ownerDetails"
-                }
-            },
-            {
-                $addFields: {
-                    recommendationReason: "Trending now"
+                    owner: "$ownerDetails",
+                    recommendationType: "trending"
                 }
             },
             {
                 $project: {
-                    ownerDetails: 0  // Remove the temporary ownerDetails field
+                    ownerDetails: 0
                 }
-            },
-            {
-                $sort: { views: -1, createdAt: -1 }
             },
             {
                 $limit: parseInt(limit)
@@ -783,14 +826,14 @@ const getRecommendedVideos = asyncHandler(async (req, res) => {
     }
     
     // Apply pagination
-    const startIndex = (page - 1) * limit;
-    const paginatedVideos = recommendedVideos.slice(startIndex, startIndex + parseInt(limit));
+    const startIndex = (parseInt(page) - 1) * parseInt(limit);
+    const paginatedVideos = finalVideos.slice(startIndex, startIndex + parseInt(limit));
     
     return res.status(200).json(
         new apiResponse(200, {
             videos: paginatedVideos,
-            hasMore: recommendedVideos.length > startIndex + parseInt(limit),
-            totalCount: recommendedVideos.length
+            hasMore: finalVideos.length > startIndex + parseInt(limit),
+            totalCount: finalVideos.length
         }, "Recommended videos fetched successfully")
     );
 });
@@ -811,10 +854,11 @@ const getWatchNextVideos = asyncHandler(async (req, res) => {
         throw new apiErrors(404, "Video not found");
     }
     
-    let watchNextVideos = [];
+    const sameCategoryCount = Math.ceil(limit * 0.6); // 60% from same category
+    const otherVideosCount = limit - sameCategoryCount;
     
-    // Get videos from same category first
-    watchNextVideos = await videoModel.aggregate([
+    // Get videos from same category with randomization
+    const sameCategoryVideos = await videoModel.aggregate([
         {
             $match: {
                 _id: { $ne: new mongoose.Types.ObjectId(videoId) },
@@ -822,6 +866,7 @@ const getWatchNextVideos = asyncHandler(async (req, res) => {
                 isPublished: true
             }
         },
+        { $sample: { size: sameCategoryCount * 2 } }, // Get more for randomization
         {
             $lookup: {
                 from: "users",
@@ -844,39 +889,85 @@ const getWatchNextVideos = asyncHandler(async (req, res) => {
         },
         {
             $addFields: {
-                owner: "$ownerDetails"
-            }
-        },
-        {
-            $addFields: {
-                recommendationReason: `More ${currentVideo.category} videos`
+                owner: "$ownerDetails",
+                recommendationType: "same-category"
             }
         },
         {
             $project: {
-                ownerDetails: 0  // Remove the temporary ownerDetails field
+                ownerDetails: 0
             }
         },
         {
-            $sort: { views: -1, createdAt: -1 }
-        },
-        {
-            $limit: parseInt(limit)
+            $limit: sameCategoryCount
         }
     ]);
     
-    // If not enough videos from same category, fill with popular videos
+    // Get videos from other categories
+    const excludeIds = sameCategoryVideos.map(v => v._id).concat([new mongoose.Types.ObjectId(videoId)]);
+    const otherVideos = await videoModel.aggregate([
+        {
+            $match: {
+                _id: { $nin: excludeIds },
+                category: { $ne: currentVideo.category },
+                isPublished: true
+            }
+        },
+        { $sample: { size: otherVideosCount * 2 } }, // Get more for randomization
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "ownerDetails",
+                pipeline: [
+                    {
+                        $project: {
+                            username: 1,
+                            fullName: 1,
+                            avatar: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $unwind: "$ownerDetails"
+        },
+        {
+            $addFields: {
+                owner: "$ownerDetails",
+                recommendationType: "mixed"
+            }
+        },
+        {
+            $project: {
+                ownerDetails: 0
+            }
+        },
+        {
+            $limit: otherVideosCount
+        }
+    ]);
+    
+    // Combine and deduplicate videos
+    let watchNextVideos = [...sameCategoryVideos, ...otherVideos];
+    watchNextVideos = watchNextVideos.filter((video, index, self) => 
+        index === self.findIndex(v => v._id.toString() === video._id.toString())
+    );
+    
     if (watchNextVideos.length < limit) {
         const remaining = limit - watchNextVideos.length;
-        const excludeIds = watchNextVideos.map(v => v._id).concat([new mongoose.Types.ObjectId(videoId)]);
+        const allExcludeIds = watchNextVideos.map(v => v._id).concat([new mongoose.Types.ObjectId(videoId)]);
         
         const additionalVideos = await videoModel.aggregate([
             {
                 $match: {
-                    _id: { $nin: excludeIds },
+                    _id: { $nin: allExcludeIds },
                     isPublished: true
                 }
             },
+            { $sample: { size: remaining } },
             {
                 $lookup: {
                     from: "users",
@@ -899,29 +990,26 @@ const getWatchNextVideos = asyncHandler(async (req, res) => {
             },
             {
                 $addFields: {
-                    owner: "$ownerDetails"
-                }
-            },
-            {
-                $addFields: {
-                    recommendationReason: "You might also like"
+                    owner: "$ownerDetails",
+                    recommendationType: "popular"
                 }
             },
             {
                 $project: {
-                    ownerDetails: 0  // Remove the temporary ownerDetails field
+                    ownerDetails: 0
                 }
-            },
-            {
-                $sort: { views: -1, createdAt: -1 }
-            },
-            {
-                $limit: remaining
             }
         ]);
         
         watchNextVideos = [...watchNextVideos, ...additionalVideos];
+        // Final deduplication after adding additional videos
+        watchNextVideos = watchNextVideos.filter((video, index, self) => 
+            index === self.findIndex(v => v._id.toString() === video._id.toString())
+        );
     }
+    
+    // Shuffle the final array for random order
+    watchNextVideos = watchNextVideos.sort(() => Math.random() - 0.5);
     
     return res.status(200).json(
         new apiResponse(200, watchNextVideos, "Watch next videos fetched successfully")

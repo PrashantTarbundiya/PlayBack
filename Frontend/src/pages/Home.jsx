@@ -47,6 +47,18 @@ const Home = () => {
   const fetchRecommendedVideos = async (category = "All", pageNum = 1, limitNum = 10) => {
     try {
       if (category === "All") {
+        // Try to get personalized recommendations first
+        try {
+          const response = await videoAPI.getRecommendedVideos(pageNum, limitNum);
+          const data = response.data?.data?.videos || response.data?.data;
+          if (Array.isArray(data) && data.length > 0) {
+            return data;
+          }
+        } catch (error) {
+          // Fallback to regular videos if recommendations fail
+        }
+        
+        // Fallback to all videos
         const response = await videoAPI.getAllVideosWithOwnerDetails(pageNum, limitNum);
         const data = response.data?.data;
         return Array.isArray(data) ? data : [];
@@ -62,7 +74,7 @@ const Home = () => {
     }
   };
 
-  const LIMIT = 10;
+  const LIMIT = 1000;
 
   const resetAndLoad = useCallback(async () => {
     try {
@@ -87,7 +99,11 @@ const Home = () => {
     setIsFetchingMore(true);
     try {
       const nextBatch = await fetchRecommendedVideos(selectedCategory, page, LIMIT);
-      setVideos(prev => [...prev, ...nextBatch]);
+      setVideos(prev => {
+        const existingIds = new Set(prev.map(v => v._id));
+        const uniqueNewVideos = nextBatch.filter(v => !existingIds.has(v._id));
+        return [...prev, ...uniqueNewVideos];
+      });
       setHasMore(nextBatch.length === LIMIT);
       setPage(prev => prev + 1);
     } catch (_) {
