@@ -4,6 +4,8 @@ import {apiResponse} from "../utils/apiResponse.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
 import { tweetModel } from "../models/tweetModel.js"
 import { createTweetNotification } from "./notificationController.js"
+import jwt from "jsonwebtoken"
+import { userModel } from "../models/userModel.js"
 
 const createTweet = asyncHandler(async (req, res) => {
     const {content} = req.body;
@@ -199,9 +201,7 @@ const getAllTweets = asyncHandler(async (req, res) => {
     try {
         const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
         if (token) {
-            const jwt = await import('jsonwebtoken');
-            const { userModel } = await import('../models/userModel.js');
-            const decodedToken = jwt.default.verify(token, process.env.ACCESS_TOKEN_SECRET);
+            const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
             user = await userModel.findById(decodedToken?._id).select("-password -refreshToken");
         }
     } catch (error) {
