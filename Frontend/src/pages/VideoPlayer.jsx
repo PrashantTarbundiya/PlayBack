@@ -16,6 +16,7 @@ import { formatDistanceToNow } from "date-fns"
 import toast from "react-hot-toast"
 import { CenteredLoader } from "../components/Skeleton/LoadingScreen"
 import VideoPlayerSkeleton from "../components/Skeleton/VideoPlayerSkeleton"
+import VideoSummarizer from "../components/VideoSummarizer/VideoSummarizer"
 
 const VideoPlayer = () => {
   const { id } = useParams()
@@ -939,6 +940,9 @@ const VideoPlayer = () => {
         videoId={id}
         savedPlaylists={savedPlaylists}
       />
+
+      {/* AI Video Summarizer - Floating Button */}
+      <VideoSummarizer videoId={id} videoTitle={video.title} />
     </div>
   )
 }

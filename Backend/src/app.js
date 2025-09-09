@@ -42,6 +42,7 @@ import likeRouter from "./routes/likeRoute.js"
 import playlistRouter from "./routes/playlistRoute.js"
 import dashboardRouter from "./routes/dashboardRoute.js"
 import notificationRouter from "./routes/notificationRoute.js"
+import aiRouter from "./routes/aiRoute.js"
 
 //routes declaration
 app.use("/api/v1/healthcheck", healthcheckRouter)
@@ -54,6 +55,7 @@ app.use("/api/v1/likes", likeRouter)
 app.use("/api/v1/playlist", playlistRouter)
 app.use("/api/v1/dashboard", dashboardRouter)
 app.use("/api/v1/notifications", notificationRouter)
+app.use("/api/v1/ai", aiRouter)
 
 
 app.use((err, req, res, next) => {

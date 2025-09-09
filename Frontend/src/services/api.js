@@ -300,4 +300,10 @@ export const playlistAPI = {
     api.get(`/playlist/check/${videoId}`),
 };
 
+// === AI APIs ===
+export const aiAPI = {
+  summarizeVideo: (videoId) => api.get(`/ai/summarize/${videoId}`),
+  askQuestion: (videoId, question) => api.post(`/ai/ask/${videoId}`, { question }),
+};
+
 export default api;

@@ -42,12 +42,19 @@
 - 📂 Category organization
 - 👀 View tracking
 - 🎯 Smart recommendations
+- 🤖 AI-powered video analysis
 
 ### 🎭 **Social Features**
 - 👍 Likes & comments system
 - 📋 Custom playlists
 - 🔔 Real-time notifications
 - 📊 Creator dashboard
+
+### 🤖 **AI Features**
+- 📝 Video content summarization
+- 💬 Interactive Q&A chat
+- 🎯 Context-aware responses
+- 🧠 Powered by Gemini 2.5 Pro
 
 </td>
 </tr>
@@ -151,6 +158,9 @@ FACEBOOK_APP_ID=your_facebook_client_id
 FACEBOOK_APP_SECRET=your_facebook_client_secret
 GITHUB_CLIENT_ID=your_github_client_id
 GITHUB_CLIENT_SECRET=your_github_client_secret
+
+# 🤖 AI Integration (Get from https://makersuite.google.com/app/apikey)
+GEMINI_API_KEY=your_gemini_api_key
 ```
 
 #### 📂 `Frontend/.env`
@@ -352,6 +362,37 @@ Configure OAuth providers with these callback URLs:
 
 ---
 
+## 🤖 AI Video Assistant
+
+### Interactive AI Features
+PlayBack includes a powerful AI assistant that uses **Gemini 2.5 Pro** to analyze video content and provide interactive assistance:
+
+#### 📝 Video Content Analysis:
+- **Comprehensive Summary**: Detailed analysis of actual video content
+- **Key Points**: Important topics and concepts covered
+- **Topics Covered**: Categorized subject areas
+- **Key Takeaways**: Main insights and learnings
+
+#### 💬 Interactive Q&A:
+- **Ask Questions**: Get answers about specific video content
+- **Real-time Chat**: Interactive conversation about the video
+- **Context-Aware**: AI understands the video content for accurate responses
+- **Educational Support**: Perfect for learning and comprehension
+
+#### How it works:
+1. Click the floating AI button (bottom-right corner) on any video page
+2. AI analyzes the actual video content using Gemini 2.5 Pro
+3. View comprehensive analysis in the left panel
+4. Ask specific questions in the chat panel on the right
+5. Get instant, context-aware answers about the video
+
+#### Setup:
+1. Get your Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Add it to your Backend `.env` file as `GEMINI_API_KEY=your-api-key`
+3. The floating AI assistant will appear on all video player pages
+
+---
+
 ## 📖 API Overview
 
 > **Base URL:** `http://localhost:8000/api/v1`
@@ -399,6 +440,18 @@ Configure OAuth providers with these callback URLs:
 | `GET` | `/:id` | Get playlist |
 | `PATCH` | `/add/:videoId/:playlistId` | Add video to playlist |
 | `PATCH` | `/remove/:videoId/:playlistId` | Remove video from playlist |
+
+</details>
+
+### 🤖 AI Features (`/ai`)
+
+<details>
+<summary><strong>AI-Powered Analysis</strong></summary>
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/summarize/:videoId` | Analyze video content and generate summary |
+| `POST` | `/ask/:videoId` | Ask questions about video content |
 
 </details>
 
