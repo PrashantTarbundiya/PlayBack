@@ -95,26 +95,13 @@ const Upload = () => {
       toast.remove()
       toast.success("Video uploaded successfully!")
       
-      // Extract video ID from response - backend returns video directly in response.data
-      const videoId = response?.data?._id || null;
-      
-      // Only try to navigate to video page if we have a valid video ID
-      if (videoId && videoId !== 'undefined' && typeof videoId === 'string') {
-        try {
-          navigate(`/watch/${videoId}`)
-        } catch (navError) {
-          // If navigation fails, redirect to profile
-          navigate(`/profile/${user.username}`)
-        }
-      } else {
-        // No valid video ID, redirect to profile
-        navigate(`/profile/${user.username}`)
-      }
+      // Always redirect to dashboard after successful upload
+      navigate('/dashboard')
     } catch (error) {
-      // If upload fails completely, still redirect to profile instead of showing error
+      // If upload fails, show error and redirect to dashboard
       toast.remove()
-      toast.success("Video upload completed!")
-      navigate(`/profile/${user.username}`)
+      toast.error("Upload failed. Please try again.")
+      navigate('/dashboard')
     } finally {
       setUploading(false)
       setUploadProgress(0)
