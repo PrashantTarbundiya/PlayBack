@@ -125,7 +125,7 @@ const VideoSummarizer = ({ videoId, videoTitle }) => {
       {/* Modal */}
       {isOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-1 sm:p-2">
-          <div className="bg-gray-900 rounded-xl w-full max-w-4xl h-[85vh] sm:h-[80vh] flex flex-col border border-gray-700 shadow-2xl">
+          <div className="bg-gray-900 rounded-xl w-full max-w-4xl h-[81vh] sm:h-[85vh] md:h-[80vh] flex flex-col border border-gray-700 shadow-2xl">
             {/* Header */}
             <div className="flex items-center justify-between p-3 sm:p-4 border-b border-gray-700">
               <div className="flex items-center gap-2 sm:gap-3">
@@ -176,7 +176,7 @@ const VideoSummarizer = ({ videoId, videoTitle }) => {
                   </h3>
                 </div>
                 
-                <div className="flex-1 overflow-y-auto p-2 sm:p-4 pt-4 sm:pt-2 space-y-4">
+                <div className="flex-1 overflow-y-auto p-2 sm:p-4 pt-4 sm:pt-2 space-y-4 max-h-[calc(90vh-200px)] sm:max-h-[calc(85vh-180px)] md:max-h-none">
                   {loading ? (
                     <div className="flex items-center justify-center h-32">
                       <div className="text-center">
@@ -329,7 +329,7 @@ const VideoSummarizer = ({ videoId, videoTitle }) => {
                 </div>
                 
                 {/* Chat Messages */}
-                <div className="flex-1 overflow-y-auto p-2 sm:p-4 pt-4 sm:pt-2 space-y-3">
+                <div className="flex-1 overflow-y-auto p-2 sm:p-4 pt-4 sm:pt-2 space-y-3 max-h-[calc(90vh-260px)] sm:max-h-[calc(85vh-240px)] md:max-h-[calc(80vh-200px)]">
                   {conversation.length === 0 ? (
                     <div className="text-center text-gray-400 py-8">
                       <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
@@ -412,7 +412,7 @@ const VideoSummarizer = ({ videoId, videoTitle }) => {
                 </div>
 
                 {/* Question Input */}
-                <div className="p-2 sm:p-4 border-t border-gray-700 flex-shrink-0">
+                <div className="p-2 sm:p-4 border-t border-gray-700 flex-shrink-0 bg-gray-900">
                   <form onSubmit={handleAskQuestion} className="flex gap-2">
                     <input
                       type="text"

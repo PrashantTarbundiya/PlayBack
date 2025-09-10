@@ -302,11 +302,18 @@ export const SyncedVideoProvider = ({ children }) => {
     
     resetToBottomRight()
     
+    // Ensure video continues playing when switching to mini player
+    const wasPlaying = isPlaying
+    
     setTimeout(() => {
       setActivePlayer('mini')
-      play()
-    }, 300)
-  }, [currentVideo, setActivePlayer, play])
+      if (wasPlaying) {
+        setTimeout(() => {
+          play()
+        }, 100)
+      }
+    }, 200)
+  }, [currentVideo, setActivePlayer, play, isPlaying])
   
   const deactivateMiniPlayer = useCallback(() => {
     setIsMiniPlayerActive(false)

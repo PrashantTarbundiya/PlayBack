@@ -50,14 +50,15 @@ const Categories = () => {
       let response
       
       if (selectedCategory === 'All') {
-        response = await videoAPI.getAllVideosWithOwnerDetails(pageNum, 20)
+        response = await videoAPI.getAllVideosWithOwnerDetails(pageNum, 50)
       } else {
-        response = await videoAPI.getVideosByCategory(selectedCategory, pageNum, 20)
+        response = await videoAPI.getVideosByCategory(selectedCategory, pageNum, 50)
       }
       
       // Handle different response structures
       const data = response.data?.data
       let newVideos = []
+      let hasNextPage = false
       
       if (Array.isArray(data)) {
         // Direct array response
@@ -65,6 +66,7 @@ const Categories = () => {
       } else if (data?.docs && Array.isArray(data.docs)) {
         // Paginated response
         newVideos = data.docs
+        hasNextPage = data.hasNextPage || false
       } else if (response.data && Array.isArray(response.data)) {
         // Response data is directly an array
         newVideos = response.data
@@ -77,12 +79,10 @@ const Categories = () => {
       }
       
       // Check if there are more videos
-      if (data?.hasNextPage === false || newVideos.length < 20) {
-        setHasMore(false)
-      }
+      setHasMore(hasNextPage && newVideos.length >= 50)
       
     } catch (error) {
-      // console.error('Failed to fetch videos:', error)
+      console.error('Failed to fetch videos:', error)
       if (reset) {
         setVideos([])
       }

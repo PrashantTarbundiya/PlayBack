@@ -117,26 +117,52 @@ const MiniPlayer = () => {
   // Set this player as active when video is ready and sync play state
   // Sync video play state when isPlaying changes
   useEffect(() => {
-    if (miniVideoRef.current && activePlayerRef.current === miniVideoRef.current) {
+    if (miniVideoRef.current && activePlayerRef.current === miniVideoRef.current && isVideoReady) {
       if (isPlaying) {
-        miniVideoRef.current.play().catch(() => {})
+        // Small delay to ensure video is ready for playback
+        setTimeout(() => {
+          if (miniVideoRef.current && activePlayerRef.current === miniVideoRef.current) {
+            miniVideoRef.current.play().catch(() => {})
+          }
+        }, 50)
       } else {
         miniVideoRef.current.pause()
       }
     }
-  }, [isPlaying, activePlayerRef])
+  }, [isPlaying, activePlayerRef, isVideoReady])
 
   useEffect(() => {
     if (isVideoReady && isMiniPlayerActive && miniVideoRef.current) {
       setActivePlayer('mini')
-      // Force play when miniplayer is active
+      // Ensure video continues playing when miniplayer becomes active
       setTimeout(() => {
-        if (miniVideoRef.current && activePlayerRef.current === miniVideoRef.current) {
+        if (miniVideoRef.current && activePlayerRef.current === miniVideoRef.current && isPlaying) {
           miniVideoRef.current.play().catch(() => {})
         }
-      }, 100)
+      }, 150)
     }
-  }, [isVideoReady, isMiniPlayerActive, setActivePlayer, activePlayerRef])
+  }, [isVideoReady, isMiniPlayerActive, setActivePlayer, activePlayerRef, isPlaying])
+
+  // Periodic sync to ensure video state matches global state
+  useEffect(() => {
+    if (!isMiniPlayerActive || !isVideoReady || !miniVideoRef.current) return
+    
+    const syncInterval = setInterval(() => {
+      if (miniVideoRef.current && activePlayerRef.current === miniVideoRef.current) {
+        const video = miniVideoRef.current
+        const shouldBePlaying = isPlaying
+        const isActuallyPlaying = !video.paused
+        
+        if (shouldBePlaying && !isActuallyPlaying) {
+          video.play().catch(() => {})
+        } else if (!shouldBePlaying && isActuallyPlaying) {
+          video.pause()
+        }
+      }
+    }, 500) // Check every 500ms
+    
+    return () => clearInterval(syncInterval)
+  }, [isMiniPlayerActive, isVideoReady, isPlaying, activePlayerRef])
   
   // Handle drag start
   const handleDragStart = useCallback((e) => {
@@ -310,15 +336,22 @@ const MiniPlayer = () => {
   }, [])
 
   const handleVideoPlay = useCallback(() => {
-    if (miniVideoRef.current) {
+    if (miniVideoRef.current && activePlayerRef.current === miniVideoRef.current) {
       setActivePlayer('mini')
     }
-    // Don't automatically trigger play state change here to avoid conflicts
-  }, [setActivePlayer])
+  }, [setActivePlayer, activePlayerRef])
 
   const handleVideoPause = useCallback(() => {
-    // Don't automatically trigger pause state change here to avoid conflicts
-  }, [])
+    // Video paused - sync with global state if this is the active player
+    if (miniVideoRef.current && activePlayerRef.current === miniVideoRef.current && isPlaying) {
+      // If global state says playing but video paused, try to resume
+      setTimeout(() => {
+        if (miniVideoRef.current && !miniVideoRef.current.paused && activePlayerRef.current === miniVideoRef.current) {
+          miniVideoRef.current.play().catch(() => {})
+        }
+      }, 100)
+    }
+  }, [activePlayerRef, isPlaying])
   
   const handleVideoClick = useCallback(() => {
     if (currentVideo) {
