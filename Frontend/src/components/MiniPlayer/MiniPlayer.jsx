@@ -119,13 +119,9 @@ const MiniPlayer = () => {
   useEffect(() => {
     if (miniVideoRef.current && activePlayerRef.current === miniVideoRef.current) {
       if (isPlaying) {
-        if (miniVideoRef.current.paused) {
-          miniVideoRef.current.play()
-        }
+        miniVideoRef.current.play().catch(() => {})
       } else {
-        if (!miniVideoRef.current.paused) {
-          miniVideoRef.current.pause()
-        }
+        miniVideoRef.current.pause()
       }
     }
   }, [isPlaying, activePlayerRef])
@@ -133,14 +129,14 @@ const MiniPlayer = () => {
   useEffect(() => {
     if (isVideoReady && isMiniPlayerActive && miniVideoRef.current) {
       setActivePlayer('mini')
-      // Sync the play state when switching to mini player
-      if (isPlaying) {
-        miniVideoRef.current.play()
-      } else {
-        miniVideoRef.current.pause()
-      }
+      // Force play when miniplayer is active
+      setTimeout(() => {
+        if (miniVideoRef.current && activePlayerRef.current === miniVideoRef.current) {
+          miniVideoRef.current.play().catch(() => {})
+        }
+      }, 100)
     }
-  }, [isVideoReady, isMiniPlayerActive, setActivePlayer, isPlaying])
+  }, [isVideoReady, isMiniPlayerActive, setActivePlayer, activePlayerRef])
   
   // Handle drag start
   const handleDragStart = useCallback((e) => {
@@ -377,8 +373,16 @@ const MiniPlayer = () => {
     return thumbnail.url || thumbnail.secure_url || "/default-thumbnail.jpg"
   }
 
+  // Listen for close mini player event from video clicks
   useEffect(() => {
+    const handleCloseMiniPlayer = () => {
+      closeMiniPlayer()
+    }
+
+    window.addEventListener('closeMiniPlayer', handleCloseMiniPlayer)
+    
     return () => {
+      window.removeEventListener('closeMiniPlayer', handleCloseMiniPlayer)
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current)
       }
@@ -386,7 +390,7 @@ const MiniPlayer = () => {
         clearTimeout(mobileControlsTimeoutRef.current)
       }
     }
-  }, [])
+  }, [closeMiniPlayer])
   
   if (!isMiniPlayerActive || !currentVideo) {
     return null
@@ -415,6 +419,7 @@ const MiniPlayer = () => {
   return (
     <div
       ref={containerRef}
+      data-mini-player
       className={`bg-black rounded-xl shadow-2xl border border-gray-800 transition-all duration-300 ${
         isDragging ? 'shadow-2xl scale-105 cursor-grabbing' : 'cursor-grab'
       } ${isResizing ? 'border-blue-500 shadow-blue-500/30' : ''} ${isBigScreen ? 'flex flex-col' : ''}`}

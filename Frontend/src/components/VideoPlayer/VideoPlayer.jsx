@@ -534,6 +534,12 @@ const VideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc }, ref) 
   const handleContainerClick = (e) => {
     // Only toggle play if clicking on the video itself, not controls
     if (e.target === videoRef.current || e.target === containerRef.current) {
+      // Check if mini player is active and close it
+      const miniPlayer = document.querySelector('[data-mini-player]')
+      if (miniPlayer) {
+        const closeMiniPlayerEvent = new CustomEvent('closeMiniPlayer')
+        window.dispatchEvent(closeMiniPlayerEvent)
+      }
       togglePlay()
     }
   }

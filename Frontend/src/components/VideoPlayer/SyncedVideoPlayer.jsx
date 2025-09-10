@@ -566,6 +566,13 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, c
 
   const handleContainerClick = (e) => {
     if (e.target === mainVideoRef.current || e.target === containerRef.current) {
+      // RULE: When user interacts with main player, ensure miniplayer is closed
+      // This ensures main player never gets overridden by miniplayer
+      const miniPlayer = document.querySelector('[data-mini-player]')
+      if (miniPlayer) {
+        const closeMiniPlayerEvent = new CustomEvent('closeMiniPlayer')
+        window.dispatchEvent(closeMiniPlayerEvent)
+      }
       togglePlay()
     }
   }

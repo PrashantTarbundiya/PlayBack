@@ -30,25 +30,22 @@ export const useVideoNavigation = () => {
       ? `${videoPath}?${queryParams.toString()}`
       : videoPath
 
-    // If we're currently playing a different video and not on video player page,
-    // activate mini player for current video before navigating
-    if (currentVideo && 
-        currentVideo._id !== video._id && 
-        isPlaying && 
-        !location.pathname.startsWith('/watch/') &&
-        !isMiniPlayerActive) {
-      activateMiniPlayer()
-    }
-
-    // Load the new video into context
+    // RULE: When user selects/starts a new video:
+    // 1. Stop previous video
+    // 2. Remove miniplayer if active  
+    // 3. Load new video in main player
+    // This is handled by loadVideo() which now implements these rules
+    
+    // Load the new video into context (this will handle miniplayer removal)
     loadVideo(video, playlist, videoIndex)
     
     // Navigate to the video page
     navigate(fullPath)
-  }, [currentVideo, isPlaying, isMiniPlayerActive, location.pathname, loadVideo, activateMiniPlayer, navigate])
+  }, [loadVideo, navigate])
 
   // Handle video card click with mini player logic
   const handleVideoCardClick = useCallback((video, playlist = null, videoIndex = 0) => {
+    // RULE: Playing new video should stop current miniplayer and load in main player
     navigateToVideo(video, playlist, videoIndex)
   }, [navigateToVideo])
 

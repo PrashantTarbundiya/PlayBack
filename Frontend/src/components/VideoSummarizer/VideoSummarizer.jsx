@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Brain, X, Send, Loader2, Sparkles, MessageCircle } from 'lucide-react';
-import { aiAPI } from '../../services/api';
+import api, { aiAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 
 const VideoSummarizer = ({ videoId, videoTitle }) => {
@@ -30,25 +30,29 @@ const VideoSummarizer = ({ videoId, videoTitle }) => {
 
   const handleSummarize = async () => {
     if (!videoId) {
+      toast.remove();
       toast.error('Video ID not found');
       return;
     }
 
+    toast.remove();
     setLoading(true);
 
     try {
       const response = await aiAPI.summarizeVideo(videoId);
+
       const data = response.data?.data;
       
       if (data) {
         setSummary(data);
+        toast.remove();
         toast.success('Video analyzed successfully!');
       } else {
         throw new Error('No summary data received');
       }
     } catch (error) {
-      console.error('Summarization error:', error);
       const errorMessage = error.response?.data?.message || error.message || 'Failed to analyze video';
+      toast.remove();
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -59,6 +63,7 @@ const VideoSummarizer = ({ videoId, videoTitle }) => {
     e.preventDefault();
     if (!question.trim() || !videoId) return;
 
+    toast.remove();
     const userQuestion = question.trim();
     setQuestion('');
     setAskingQuestion(true);
@@ -76,9 +81,9 @@ const VideoSummarizer = ({ videoId, videoTitle }) => {
         throw new Error('No answer received');
       }
     } catch (error) {
-      console.error('Question error:', error);
       const errorMessage = error.response?.data?.message || error.message || 'Failed to get answer';
       setConversation(prev => [...prev, { type: 'ai', content: `Sorry, I couldn't answer that question. ${errorMessage}` }]);
+      toast.remove();
       toast.error(errorMessage);
     } finally {
       setAskingQuestion(false);
@@ -171,7 +176,7 @@ const VideoSummarizer = ({ videoId, videoTitle }) => {
                   </h3>
                 </div>
                 
-                <div className="flex-1 overflow-y-auto p-2 sm:p-4 pt-4 sm:pt-2 space-y-4 max-h-[65vh] md:max-h-[70vh] lg:max-h-none">
+                <div className="flex-1 overflow-y-auto p-2 sm:p-4 pt-4 sm:pt-2 space-y-4">
                   {loading ? (
                     <div className="flex items-center justify-center h-32">
                       <div className="text-center">
@@ -181,24 +186,26 @@ const VideoSummarizer = ({ videoId, videoTitle }) => {
                     </div>
                   ) : summary ? (
                     <>
-                      {/* Summary */}
-                      <div>
-                        <h4 className="text-white font-medium mb-2 flex items-center gap-2 text-sm sm:text-base">
-                          📝 Content Summary
-                        </h4>
-                        <p className="text-gray-300 text-xs sm:text-sm leading-relaxed bg-gray-800 p-2 sm:p-3 rounded-lg">
-                          {summary.summary}
-                        </p>
-                      </div>
+                      {/* Comprehensive Summary */}
+                      {summary.comprehensiveSummary && (
+                        <div>
+                          <h4 className="text-white font-medium mb-2 flex items-center gap-2 text-sm sm:text-base">
+                            📝 Comprehensive Summary
+                          </h4>
+                          <p className="text-gray-300 text-xs sm:text-sm leading-relaxed bg-gray-800 p-2 sm:p-3 rounded-lg">
+                            {summary.comprehensiveSummary}
+                          </p>
+                        </div>
+                      )}
 
                       {/* Key Points */}
-                      {summary.keyPoints && summary.keyPoints.length > 0 && (
+                      {summary.detailedKeyPoints && summary.detailedKeyPoints.length > 0 && (
                         <div>
                           <h4 className="text-white font-medium mb-2 flex items-center gap-2 text-sm sm:text-base">
                             🔑 Key Points
                           </h4>
                           <ul className="space-y-2">
-                            {summary.keyPoints.map((point, index) => (
+                            {summary.detailedKeyPoints.map((point, index) => (
                               <li key={index} className="text-gray-300 text-xs sm:text-sm flex items-start gap-2 bg-gray-800 p-1.5 sm:p-2 rounded">
                                 <span className="text-blue-400 mt-1 flex-shrink-0">•</span>
                                 <span>{point}</span>
@@ -208,36 +215,98 @@ const VideoSummarizer = ({ videoId, videoTitle }) => {
                         </div>
                       )}
 
-                      {/* Topics */}
-                      {summary.topics && summary.topics.length > 0 && (
+                      {/* Research Insights */}
+                      {summary.researchInsights && (
                         <div>
                           <h4 className="text-white font-medium mb-2 flex items-center gap-2 text-sm sm:text-base">
-                            🏷️ Topics Covered
+                            🔬 Research Insights
                           </h4>
-                          <div className="flex flex-wrap gap-2">
-                            {summary.topics.map((topic, index) => (
-                              <span key={index} className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-blue-900/50 text-blue-300 text-xs rounded-full border border-blue-700">
-                                {topic}
-                              </span>
-                            ))}
+                          <div className="space-y-3">
+                            {summary.researchInsights.factualData && summary.researchInsights.factualData.length > 0 && (
+                              <div>
+                                <h5 className="text-blue-300 text-xs font-medium mb-1">📊 Factual Data</h5>
+                                <ul className="space-y-1">
+                                  {summary.researchInsights.factualData.map((fact, index) => (
+                                    <li key={index} className="text-gray-300 text-xs flex items-start gap-2">
+                                      <span className="text-blue-400 mt-1 flex-shrink-0">•</span>
+                                      <span>{fact}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            {summary.researchInsights.expertOpinions && summary.researchInsights.expertOpinions.length > 0 && (
+                              <div>
+                                <h5 className="text-green-300 text-xs font-medium mb-1">👨‍🎓 Expert Opinions</h5>
+                                <ul className="space-y-1">
+                                  {summary.researchInsights.expertOpinions.map((opinion, index) => (
+                                    <li key={index} className="text-gray-300 text-xs flex items-start gap-2">
+                                      <span className="text-green-400 mt-1 flex-shrink-0">•</span>
+                                      <span>{opinion}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
                           </div>
                         </div>
                       )}
 
-                      {/* Takeaways */}
-                      {summary.takeaways && summary.takeaways.length > 0 && (
+                      {/* Educational Outcomes */}
+                      {summary.educationalOutcomes && (
                         <div>
-                          <h4 className="text-white font-medium mb-2 flex items-center gap-2">
-                            💡 Key Takeaways
+                          <h4 className="text-white font-medium mb-2 flex items-center gap-2 text-sm sm:text-base">
+                            🎓 Learning Outcomes
                           </h4>
-                          <ul className="space-y-1">
-                            {summary.takeaways.map((takeaway, index) => (
-                              <li key={index} className="text-gray-300 text-sm flex items-start gap-2">
-                                <span className="text-green-400 mt-1">✓</span>
-                                <span>{takeaway}</span>
-                              </li>
-                            ))}
-                          </ul>
+                          <div className="space-y-2">
+                            {summary.educationalOutcomes.learningObjectives && summary.educationalOutcomes.learningObjectives.length > 0 && (
+                              <div>
+                                <h5 className="text-purple-300 text-xs font-medium mb-1">🎯 Learning Objectives</h5>
+                                <ul className="space-y-1">
+                                  {summary.educationalOutcomes.learningObjectives.map((objective, index) => (
+                                    <li key={index} className="text-gray-300 text-xs flex items-start gap-2">
+                                      <span className="text-purple-400 mt-1 flex-shrink-0">•</span>
+                                      <span>{objective}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            {summary.educationalOutcomes.practicalApplications && summary.educationalOutcomes.practicalApplications.length > 0 && (
+                              <div>
+                                <h5 className="text-yellow-300 text-xs font-medium mb-1">⚡ Practical Applications</h5>
+                                <ul className="space-y-1">
+                                  {summary.educationalOutcomes.practicalApplications.map((application, index) => (
+                                    <li key={index} className="text-gray-300 text-xs flex items-start gap-2">
+                                      <span className="text-yellow-400 mt-1 flex-shrink-0">•</span>
+                                      <span>{application}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Contextual Relevance */}
+                      {summary.contextualRelevance && (
+                        <div>
+                          <h4 className="text-white font-medium mb-2 flex items-center gap-2 text-sm sm:text-base">
+                            🌐 Context & Relevance
+                          </h4>
+                          <div className="bg-gray-800 p-2 sm:p-3 rounded-lg space-y-2">
+                            {summary.contextualRelevance.industryContext && (
+                              <p className="text-gray-300 text-xs">
+                                <span className="text-blue-300 font-medium">Industry Context:</span> {summary.contextualRelevance.industryContext}
+                              </p>
+                            )}
+                            {summary.contextualRelevance.targetAudience && (
+                              <p className="text-gray-300 text-xs">
+                                <span className="text-green-300 font-medium">Target Audience:</span> {summary.contextualRelevance.targetAudience}
+                              </p>
+                            )}
+                          </div>
                         </div>
                       )}
                     </>
@@ -260,7 +329,7 @@ const VideoSummarizer = ({ videoId, videoTitle }) => {
                 </div>
                 
                 {/* Chat Messages */}
-                <div className="flex-1 overflow-y-auto p-2 sm:p-4 pt-4 sm:pt-2 space-y-3 max-h-[65vh] md:max-h-[70vh] lg:max-h-none">
+                <div className="flex-1 overflow-y-auto p-2 sm:p-4 pt-4 sm:pt-2 space-y-3">
                   {conversation.length === 0 ? (
                     <div className="text-center text-gray-400 py-8">
                       <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
@@ -275,7 +344,57 @@ const VideoSummarizer = ({ videoId, videoTitle }) => {
                             ? 'bg-blue-600 text-white' 
                             : 'bg-gray-800 text-gray-300 border border-gray-700'
                         }`}>
-                          {msg.content}
+                          {msg.type === 'ai' ? (
+                            <div className="space-y-2">
+                              {msg.content.split('\n').map((line, lineIndex) => {
+                                if (line.trim() === '') return null;
+                                
+                                // Handle section headers (bold text)
+                                if (line.startsWith('**') && line.endsWith('**')) {
+                                  return (
+                                    <div key={lineIndex} className="font-bold text-blue-300 mt-3 first:mt-0">
+                                      {line.replace(/\*\*/g, '')}
+                                    </div>
+                                  );
+                                }
+                                
+                                // Handle inline bold text
+                                if (line.includes('**')) {
+                                  const parts = line.split(/\*\*(.*?)\*\*/g);
+                                  return (
+                                    <div key={lineIndex} className="leading-relaxed">
+                                      {parts.map((part, partIndex) => 
+                                        partIndex % 2 === 1 ? (
+                                          <span key={partIndex} className="font-bold text-blue-300">{part}</span>
+                                        ) : (
+                                          <span key={partIndex}>{part}</span>
+                                        )
+                                      )}
+                                    </div>
+                                  );
+                                }
+                                
+                                // Handle bullet points
+                                if (line.startsWith('•') || line.startsWith('-') || line.startsWith('*')) {
+                                  return (
+                                    <div key={lineIndex} className="flex items-start gap-2 ml-2">
+                                      <span className="text-blue-400 mt-0.5 flex-shrink-0">•</span>
+                                      <span>{line.replace(/^[•\-*]\s*/, '')}</span>
+                                    </div>
+                                  );
+                                }
+                                
+                                // Regular text
+                                return (
+                                  <div key={lineIndex} className="leading-relaxed">
+                                    {line}
+                                  </div>
+                                );
+                              }).filter(Boolean)}
+                            </div>
+                          ) : (
+                            msg.content
+                          )}
                         </div>
                       </div>
                     ))
@@ -284,8 +403,8 @@ const VideoSummarizer = ({ videoId, videoTitle }) => {
                   {askingQuestion && (
                     <div className="flex justify-start">
                       <div className="bg-gray-800 border border-gray-700 p-3 rounded-lg text-sm text-gray-300 flex items-center gap-2">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Thinking...
+                        <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
+                        <span>Analyzing and formatting response...</span>
                       </div>
                     </div>
                   )}
@@ -293,7 +412,7 @@ const VideoSummarizer = ({ videoId, videoTitle }) => {
                 </div>
 
                 {/* Question Input */}
-                <div className="p-2 sm:p-4 border-t border-gray-700">
+                <div className="p-2 sm:p-4 border-t border-gray-700 flex-shrink-0">
                   <form onSubmit={handleAskQuestion} className="flex gap-2">
                     <input
                       type="text"

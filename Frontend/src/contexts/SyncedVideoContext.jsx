@@ -289,9 +289,9 @@ export const SyncedVideoProvider = ({ children }) => {
     
     const resetToBottomRight = () => {
       const playerWidth = 360
-      const playerHeight = Math.round(playerWidth * 9 / 16) + 60 // 16:9 ratio + controls height
+      const playerHeight = Math.round(playerWidth * 9 / 16) + 60
       const margin = 20
-      const bottomMargin = 20 // Reduced margin for bottom corner positioning
+      const bottomMargin = 20
       const newX = (typeof window !== 'undefined' ? window.innerWidth : 1200) - playerWidth - margin
       const newY = (typeof window !== 'undefined' ? window.innerHeight : 800) - playerHeight - bottomMargin
       setMiniPlayerPosition({ 
@@ -304,8 +304,9 @@ export const SyncedVideoProvider = ({ children }) => {
     
     setTimeout(() => {
       setActivePlayer('mini')
-    }, 200)
-  }, [currentVideo, setActivePlayer])
+      play()
+    }, 300)
+  }, [currentVideo, setActivePlayer, play])
   
   const deactivateMiniPlayer = useCallback(() => {
     setIsMiniPlayerActive(false)
@@ -316,8 +317,13 @@ export const SyncedVideoProvider = ({ children }) => {
   }, [setActivePlayer])
   
   const closeMiniPlayer = useCallback(() => {
+    // RULE: User can manually close miniplayer
     setIsMiniPlayerActive(false)
     pause()
+    // Return player to idle state
+    setCurrentVideo(null)
+    setCurrentTime(0)
+    setDuration(0)
   }, [pause])
   
   const returnToMainPlayer = useCallback(() => {
@@ -358,6 +364,11 @@ export const SyncedVideoProvider = ({ children }) => {
       return
     }
     
+    // RULE: When user plays new video, stop current miniplayer video and hide miniplayer
+    if (isMiniPlayerActive) {
+      setIsMiniPlayerActive(false)
+    }
+    
     currentVideoIdRef.current = video._id
     isLoadingNewVideoRef.current = true
     
@@ -374,6 +385,7 @@ export const SyncedVideoProvider = ({ children }) => {
     setIsPlaying(false)
     setIsBuffering(true)
     
+    // Stop and reset both players
     if (mainVideoRef.current) {
       mainVideoRef.current.pause()
       mainVideoRef.current.currentTime = 0
@@ -383,12 +395,9 @@ export const SyncedVideoProvider = ({ children }) => {
       miniVideoRef.current.currentTime = 0
     }
     
+    // RULE: Load and play new video in main player (miniplayer never overrides main player)
     setTimeout(() => {
-      if (isMiniPlayerActive) {
-        setActivePlayer('mini')
-      } else {
-        setActivePlayer('main')
-      }
+      setActivePlayer('main')
       
       setTimeout(() => {
         isLoadingNewVideoRef.current = false
@@ -397,6 +406,11 @@ export const SyncedVideoProvider = ({ children }) => {
   }, [isMiniPlayerActive, setActivePlayer])
   
   const handleVideoEnd = useCallback(() => {
+    // RULE: Hide miniplayer automatically when video ends
+    if (isMiniPlayerActive) {
+      setIsMiniPlayerActive(false)
+    }
+    
     if (autoPlayNext && currentPlaylist && playlistVideos.length > 0) {
       const nextIndex = currentVideoIndex + 1
       if (nextIndex < playlistVideos.length) {
@@ -409,7 +423,7 @@ export const SyncedVideoProvider = ({ children }) => {
     } else {
       setIsPlaying(false)
     }
-  }, [autoPlayNext, currentPlaylist, playlistVideos, currentVideoIndex, navigate])
+  }, [autoPlayNext, currentPlaylist, playlistVideos, currentVideoIndex, navigate, isMiniPlayerActive])
   
   const updateMiniPlayerPosition = useCallback((position) => {
     setMiniPlayerPosition(position)

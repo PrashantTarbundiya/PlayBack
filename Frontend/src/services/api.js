@@ -302,8 +302,8 @@ export const playlistAPI = {
 
 // === AI APIs ===
 export const aiAPI = {
-  summarizeVideo: (videoId) => api.get(`/ai/summarize/${videoId}`),
-  askQuestion: (videoId, question) => api.post(`/ai/ask/${videoId}`, { question }),
+  summarizeVideo: (videoId) => api.get(`/ai/summarize/${videoId}`, { timeout: 120000 }),
+  askQuestion: (videoId, question) => api.post(`/ai/ask/${videoId}`, { question }, { timeout: 60000 }),
 };
 
 export default api;
