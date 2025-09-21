@@ -5,6 +5,7 @@ import { useAuth } from "../contexts/AuthContext"
 import { authAPI } from "../services/api"
 import { User, Mail, Lock, Camera, Save } from "lucide-react"
 import toast from "react-hot-toast"
+import VideoPreviewSettings from "../components/Settings/VideoPreviewSettings"
 
 const Settings = () => {
   const { user: currentUser, updateUser } = useAuth()
@@ -304,6 +305,9 @@ const Settings = () => {
               </button>
             </form>
           </div>
+
+          {/* Video Preview Settings */}
+          <VideoPreviewSettings />
 
         </div>
       </div>

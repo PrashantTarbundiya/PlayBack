@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
+import { useVideoPreviewSettings } from '../contexts/VideoPreviewContext'
 
-const useVideoPreview = (videoUrl, hoverDelay = 2000) => {
+const useVideoPreview = (videoUrl, hoverDelay) => {
+  const { settings, isPreviewEnabled } = useVideoPreviewSettings()
   const [isHovering, setIsHovering] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
-  const [previewMuted, setPreviewMuted] = useState(true)
+  const [previewMuted, setPreviewMuted] = useState(settings.autoMute)
   const [previewLoaded, setPreviewLoaded] = useState(false)
   const [previewError, setPreviewError] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -11,13 +13,19 @@ const useVideoPreview = (videoUrl, hoverDelay = 2000) => {
   const hoverTimeoutRef = useRef(null)
   const videoRef = useRef(null)
 
+  // Update muted state when settings change
+  useEffect(() => {
+    setPreviewMuted(settings.autoMute)
+  }, [settings.autoMute])
+
   // Handle hover preview logic
   useEffect(() => {
-    if (isHovering && !showPreview && !previewError && videoUrl) {
+    if (isHovering && !showPreview && !previewError && videoUrl && isPreviewEnabled()) {
       // Start timer for specified delay
+      const delay = hoverDelay || settings.delay
       hoverTimeoutRef.current = setTimeout(() => {
         setShowPreview(true)
-      }, hoverDelay)
+      }, delay)
     } else if (!isHovering) {
       // Clear timer and hide preview when not hovering
       if (hoverTimeoutRef.current) {
@@ -35,7 +43,7 @@ const useVideoPreview = (videoUrl, hoverDelay = 2000) => {
         hoverTimeoutRef.current = null
       }
     }
-  }, [isHovering, showPreview, previewError, videoUrl, hoverDelay])
+  }, [isHovering, showPreview, previewError, videoUrl, hoverDelay, settings.delay, isPreviewEnabled])
 
   // Handle video preview controls
   useEffect(() => {

@@ -1,64 +1,24 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import { Play, Volume2, Clock, Zap } from 'lucide-react'
+import { useVideoPreviewSettings } from '../../contexts/VideoPreviewContext'
 
-const VideoPreviewSettings = ({ 
-  onSettingsChange,
-  initialSettings = {
-    enabled: true,
-    delay: 2000,
-    autoMute: true,
-    showHoverIndicator: true,
-    previewQuality: 'medium'
-  }
-}) => {
-  const [settings, setSettings] = useState(initialSettings)
-
-  useEffect(() => {
-    // Load settings from localStorage
-    const savedSettings = localStorage.getItem('videoPreviewSettings')
-    if (savedSettings) {
-      try {
-        const parsed = JSON.parse(savedSettings)
-        setSettings({ ...initialSettings, ...parsed })
-      } catch (error) {
-        console.error('Error parsing video preview settings:', error)
-      }
-    }
-  }, [])
-
-  useEffect(() => {
-    // Save settings to localStorage
-    localStorage.setItem('videoPreviewSettings', JSON.stringify(settings))
-    
-    // Notify parent component
-    if (onSettingsChange) {
-      onSettingsChange(settings)
-    }
-  }, [settings, onSettingsChange])
+const VideoPreviewSettings = () => {
+  const { settings, updateSettings, resetSettings } = useVideoPreviewSettings()
 
   const handleToggle = (key) => {
-    setSettings(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }))
+    updateSettings({ [key]: !settings[key] })
   }
 
   const handleDelayChange = (delay) => {
-    setSettings(prev => ({
-      ...prev,
-      delay: parseInt(delay)
-    }))
+    updateSettings({ delay: parseInt(delay) })
   }
 
   const handleQualityChange = (quality) => {
-    setSettings(prev => ({
-      ...prev,
-      previewQuality: quality
-    }))
+    updateSettings({ previewQuality: quality })
   }
 
   const resetToDefaults = () => {
-    setSettings(initialSettings)
+    resetSettings()
   }
 
   return (

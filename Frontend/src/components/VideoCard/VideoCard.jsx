@@ -6,9 +6,11 @@ import { toast } from "react-hot-toast"
 import { videoAPI } from "../../services/api"
 import PlaylistModal from "../PlaylistModal/PlaylistModal"
 import { useVideoNavigation } from "../../hooks/useVideoNavigation"
+import { useVideoPreviewSettings } from "../../contexts/VideoPreviewContext"
 
 const VideoCard = memo(({ video, showPlaylistIndex, playlist = null, videoIndex = 0, disablePreview = false }) => {
   const { handleVideoCardClick } = useVideoNavigation()
+  const { settings, isPreviewEnabled } = useVideoPreviewSettings()
   const [showOptions, setShowOptions] = useState(false)
   const [thumbnailError, setThumbnailError] = useState(false)
   const [avatarError, setAvatarError] = useState(false)
@@ -17,7 +19,7 @@ const VideoCard = memo(({ video, showPlaylistIndex, playlist = null, videoIndex 
   const [showPlaylistModal, setShowPlaylistModal] = useState(false)
   const [isHovering, setIsHovering] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
-  const [previewMuted, setPreviewMuted] = useState(true)
+  const [previewMuted, setPreviewMuted] = useState(settings.autoMute)
   const [previewLoaded, setPreviewLoaded] = useState(false)
   const [previewError, setPreviewError] = useState(false)
   const optionsRef = useRef(null)
@@ -48,12 +50,17 @@ const VideoCard = memo(({ video, showPlaylistIndex, playlist = null, videoIndex 
     }
   }, [isOwnerIdOnly, video.owner, ownerData, loadingOwner])
 
+  // Update muted state when settings change
+  useEffect(() => {
+    setPreviewMuted(settings.autoMute)
+  }, [settings.autoMute])
+
   // Handle hover preview logic
   useEffect(() => {
-    if (!disablePreview && isHovering && !showPreview && !previewError) {
+    if (!disablePreview && isPreviewEnabled() && isHovering && !showPreview && !previewError) {
       hoverTimeoutRef.current = setTimeout(() => {
         setShowPreview(true)
-      }, 2000)
+      }, settings.delay)
     } else if (!isHovering) {
       if (hoverTimeoutRef.current) {
         clearTimeout(hoverTimeoutRef.current)
@@ -69,7 +76,7 @@ const VideoCard = memo(({ video, showPlaylistIndex, playlist = null, videoIndex 
         hoverTimeoutRef.current = null
       }
     }
-  }, [disablePreview, isHovering, showPreview, previewError])
+  }, [disablePreview, isPreviewEnabled, isHovering, showPreview, previewError, settings.delay])
 
   // Handle video preview controls
   useEffect(() => {
@@ -493,7 +500,7 @@ const VideoCard = memo(({ video, showPlaylistIndex, playlist = null, videoIndex 
           )}
           
           {/* Hover indicator */}
-          {!disablePreview && isHovering && !showPreview && !previewError && (
+          {!disablePreview && settings.showHoverIndicator && isHovering && !showPreview && !previewError && (
             <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
               <div className="bg-black/60 text-white text-xs px-2 py-1 rounded">
                 Hover for preview...
