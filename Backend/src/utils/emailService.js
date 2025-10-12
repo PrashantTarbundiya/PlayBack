@@ -1,35 +1,41 @@
-import nodemailer from 'nodemailer';
-
-// Create transporter
-const createTransporter = () => {
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-        throw new Error('Email configuration missing. Please set EMAIL_USER and EMAIL_PASS in environment variables.');
+const sendBrevoEmail = async (emailData) => {
+    if (!process.env.BREVO_API_KEY) {
+        throw new Error('Brevo API key missing. Please set BREVO_API_KEY in environment variables.');
     }
-    
-    return nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS
+
+    try {
+        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+                'api-key': process.env.BREVO_API_KEY,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(emailData)
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Email sending failed');
         }
-    });
+
+        const data = await response.json();
+        return { success: true, messageId: data.messageId };
+    } catch (error) {
+        console.error('Brevo email error:', error.message);
+        return { success: false, error: error.message };
+    }
 };
 
-// Generate 6-digit OTP
 export const generateOTP = () => {
     return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-// Send OTP email for password reset
 export const sendOTPEmail = async (email, otp, fullName) => {
-    try {
-        const transporter = createTransporter();
-        
-        const mailOptions = {
-            from: process.env.EMAIL_USER,
-            to: email,
-            subject: 'PlayBack - Password Reset OTP',
-            html: `
+    const emailData = {
+        sender: { name: 'PlayBack', email: process.env.BREVO_SENDER_EMAIL || 'noreply@playback.com' },
+        to: [{ email, name: fullName }],
+        subject: 'PlayBack - Password Reset OTP',
+        htmlContent: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
                     <div style="background-color: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
                         <div style="text-align: center; margin-bottom: 30px;">
@@ -75,26 +81,16 @@ export const sendOTPEmail = async (email, otp, fullName) => {
                     </div>
                 </div>
             `
-        };
-
-        const result = await transporter.sendMail(mailOptions);
-        return { success: true, messageId: result.messageId };
-    } catch (error) {
-        console.error('Email sending error:', error);
-        return { success: false, error: error.message };
-    }
+    };
+    return await sendBrevoEmail(emailData);
 };
 
-// Send OTP email for registration
 export const sendRegistrationOTPEmail = async (email, otp, fullName) => {
-    try {
-        const transporter = createTransporter();
-        
-        const mailOptions = {
-            from: process.env.EMAIL_USER,
-            to: email,
-            subject: 'PlayBack - Welcome! Verify Your Email',
-            html: `
+    const emailData = {
+        sender: { name: 'PlayBack', email: process.env.BREVO_SENDER_EMAIL || 'noreply@playback.com' },
+        to: [{ email, name: fullName }],
+        subject: 'PlayBack - Welcome! Verify Your Email',
+        htmlContent: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f0f8ff;">
                     <div style="background-color: #ffffff; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 2px solid #3b82f6;">
                         <div style="text-align: center; margin-bottom: 30px;">
@@ -167,26 +163,16 @@ export const sendRegistrationOTPEmail = async (email, otp, fullName) => {
                     </div>
                 </div>
             `
-        };
-
-        const result = await transporter.sendMail(mailOptions);
-        return { success: true, messageId: result.messageId };
-    } catch (error) {
-        console.error('Registration email sending error:', error);
-        return { success: false, error: error.message };
-    }
+    };
+    return await sendBrevoEmail(emailData);
 };
 
-// Send password reset confirmation email
 export const sendPasswordResetConfirmationEmail = async (email, fullName) => {
-    try {
-        const transporter = createTransporter();
-        
-        const mailOptions = {
-            from: process.env.EMAIL_USER,
-            to: email,
-            subject: 'PlayBack - Password Reset Successful',
-            html: `
+    const emailData = {
+        sender: { name: 'PlayBack', email: process.env.BREVO_SENDER_EMAIL || 'noreply@playback.com' },
+        to: [{ email, name: fullName }],
+        subject: 'PlayBack - Password Reset Successful',
+        htmlContent: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
                     <div style="background-color: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
                         <div style="text-align: center; margin-bottom: 30px;">
@@ -231,12 +217,6 @@ export const sendPasswordResetConfirmationEmail = async (email, fullName) => {
                     </div>
                 </div>
             `
-        };
-
-        const result = await transporter.sendMail(mailOptions);
-        return { success: true, messageId: result.messageId };
-    } catch (error) {
-        console.error('Email sending error:', error);
-        return { success: false, error: error.message };
-    }
+    };
+    return await sendBrevoEmail(emailData);
 };

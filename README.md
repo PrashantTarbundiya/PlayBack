@@ -153,9 +153,9 @@ CLOUDINARY_CLOUD_NAME=your-cloud-name
 CLOUDINARY_API_KEY=your-api-key
 CLOUDINARY_API_SECRET=your-api-secret
 
-# 📧 Email Service
-EMAIL_USER=your@gmail.com
-EMAIL_PASS=your-gmail-app-password
+# 📧 Email Service (Brevo HTTP API)
+BREVO_API_KEY=your-brevo-api-key
+BREVO_SENDER_EMAIL=noreply@yourdomain.com
 
 # 🌐 OAuth Providers
 GOOGLE_CLIENT_ID=your_google_client_id
