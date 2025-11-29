@@ -68,15 +68,14 @@ const VideoSummarizer = ({ videoId, videoTitle }) => {
     setQuestion('');
     setAskingQuestion(true);
 
-    // Add user question to conversation
     setConversation(prev => [...prev, { type: 'user', content: userQuestion }]);
 
     try {
       const response = await aiAPI.askQuestion(videoId, userQuestion);
-      const data = response.data?.data;
+      const answer = response.data?.data;
       
-      if (data && data.answer) {
-        setConversation(prev => [...prev, { type: 'ai', content: data.answer }]);
+      if (answer) {
+        setConversation(prev => [...prev, { type: 'ai', content: String(answer) }]);
       } else {
         throw new Error('No answer received');
       }
@@ -186,26 +185,26 @@ const VideoSummarizer = ({ videoId, videoTitle }) => {
                     </div>
                   ) : summary ? (
                     <>
-                      {/* Comprehensive Summary */}
-                      {summary.comprehensiveSummary && (
+                      {/* Summary */}
+                      {(summary.comprehensiveSummary || summary.summary) && (
                         <div>
                           <h4 className="text-white font-medium mb-2 flex items-center gap-2 text-sm sm:text-base">
-                            📝 Comprehensive Summary
+                            📝 Summary
                           </h4>
                           <p className="text-gray-300 text-xs sm:text-sm leading-relaxed bg-gray-800 p-2 sm:p-3 rounded-lg">
-                            {summary.comprehensiveSummary}
+                            {summary.comprehensiveSummary || summary.summary}
                           </p>
                         </div>
                       )}
 
                       {/* Key Points */}
-                      {summary.detailedKeyPoints && summary.detailedKeyPoints.length > 0 && (
+                      {(summary.detailedKeyPoints || summary.keyPoints) && (summary.detailedKeyPoints || summary.keyPoints).length > 0 && (
                         <div>
                           <h4 className="text-white font-medium mb-2 flex items-center gap-2 text-sm sm:text-base">
                             🔑 Key Points
                           </h4>
                           <ul className="space-y-2">
-                            {summary.detailedKeyPoints.map((point, index) => (
+                            {(summary.detailedKeyPoints || summary.keyPoints).map((point, index) => (
                               <li key={index} className="text-gray-300 text-xs sm:text-sm flex items-start gap-2 bg-gray-800 p-1.5 sm:p-2 rounded">
                                 <span className="text-blue-400 mt-1 flex-shrink-0">•</span>
                                 <span>{point}</span>
@@ -215,98 +214,80 @@ const VideoSummarizer = ({ videoId, videoTitle }) => {
                         </div>
                       )}
 
-                      {/* Research Insights */}
-                      {summary.researchInsights && (
+                      {/* Insights */}
+                      {(summary.researchInsights || summary.insights) && (
                         <div>
                           <h4 className="text-white font-medium mb-2 flex items-center gap-2 text-sm sm:text-base">
-                            🔬 Research Insights
+                            🔬 Insights
                           </h4>
-                          <div className="space-y-3">
-                            {summary.researchInsights.factualData && summary.researchInsights.factualData.length > 0 && (
-                              <div>
-                                <h5 className="text-blue-300 text-xs font-medium mb-1">📊 Factual Data</h5>
-                                <ul className="space-y-1">
-                                  {summary.researchInsights.factualData.map((fact, index) => (
-                                    <li key={index} className="text-gray-300 text-xs flex items-start gap-2">
-                                      <span className="text-blue-400 mt-1 flex-shrink-0">•</span>
-                                      <span>{fact}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                            {summary.researchInsights.expertOpinions && summary.researchInsights.expertOpinions.length > 0 && (
-                              <div>
-                                <h5 className="text-green-300 text-xs font-medium mb-1">👨‍🎓 Expert Opinions</h5>
-                                <ul className="space-y-1">
-                                  {summary.researchInsights.expertOpinions.map((opinion, index) => (
-                                    <li key={index} className="text-gray-300 text-xs flex items-start gap-2">
-                                      <span className="text-green-400 mt-1 flex-shrink-0">•</span>
-                                      <span>{opinion}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
+                          <div className="space-y-3 bg-gray-800 p-2 sm:p-3 rounded-lg">
+                            {(() => {
+                              const insights = summary.researchInsights || summary.insights;
+                              if (insights.topics) {
+                                return insights.topics.map((topic, index) => (
+                                  <div key={index} className="text-gray-300 text-xs flex items-start gap-2">
+                                    <span className="text-blue-400 mt-1 flex-shrink-0">•</span>
+                                    <span>{topic}</span>
+                                  </div>
+                                ));
+                              }
+                              if (insights.factualData) {
+                                return insights.factualData.map((fact, index) => (
+                                  <div key={index} className="text-gray-300 text-xs flex items-start gap-2">
+                                    <span className="text-blue-400 mt-1 flex-shrink-0">•</span>
+                                    <span>{fact}</span>
+                                  </div>
+                                ));
+                              }
+                              return null;
+                            })()}
                           </div>
                         </div>
                       )}
 
-                      {/* Educational Outcomes */}
-                      {summary.educationalOutcomes && (
+                      {/* Learning Outcomes */}
+                      {(summary.educationalOutcomes || summary.learningOutcomes) && (
                         <div>
                           <h4 className="text-white font-medium mb-2 flex items-center gap-2 text-sm sm:text-base">
                             🎓 Learning Outcomes
                           </h4>
-                          <div className="space-y-2">
-                            {summary.educationalOutcomes.learningObjectives && summary.educationalOutcomes.learningObjectives.length > 0 && (
-                              <div>
-                                <h5 className="text-purple-300 text-xs font-medium mb-1">🎯 Learning Objectives</h5>
-                                <ul className="space-y-1">
-                                  {summary.educationalOutcomes.learningObjectives.map((objective, index) => (
-                                    <li key={index} className="text-gray-300 text-xs flex items-start gap-2">
-                                      <span className="text-purple-400 mt-1 flex-shrink-0">•</span>
-                                      <span>{objective}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                            {summary.educationalOutcomes.practicalApplications && summary.educationalOutcomes.practicalApplications.length > 0 && (
-                              <div>
-                                <h5 className="text-yellow-300 text-xs font-medium mb-1">⚡ Practical Applications</h5>
-                                <ul className="space-y-1">
-                                  {summary.educationalOutcomes.practicalApplications.map((application, index) => (
-                                    <li key={index} className="text-gray-300 text-xs flex items-start gap-2">
-                                      <span className="text-yellow-400 mt-1 flex-shrink-0">•</span>
-                                      <span>{application}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                          </div>
+                          <ul className="space-y-2 bg-gray-800 p-2 sm:p-3 rounded-lg">
+                            {(summary.educationalOutcomes?.learningObjectives || summary.learningOutcomes || []).map((outcome, index) => (
+                              <li key={index} className="text-gray-300 text-xs flex items-start gap-2">
+                                <span className="text-purple-400 mt-1 flex-shrink-0">•</span>
+                                <span>{outcome}</span>
+                              </li>
+                            ))}
+                          </ul>
                         </div>
                       )}
 
-                      {/* Contextual Relevance */}
-                      {summary.contextualRelevance && (
+                      {/* Applications */}
+                      {(summary.educationalOutcomes?.practicalApplications || summary.applications) && (
                         <div>
                           <h4 className="text-white font-medium mb-2 flex items-center gap-2 text-sm sm:text-base">
-                            🌐 Context & Relevance
+                            ⚡ Applications
                           </h4>
-                          <div className="bg-gray-800 p-2 sm:p-3 rounded-lg space-y-2">
-                            {summary.contextualRelevance.industryContext && (
-                              <p className="text-gray-300 text-xs">
-                                <span className="text-blue-300 font-medium">Industry Context:</span> {summary.contextualRelevance.industryContext}
-                              </p>
-                            )}
-                            {summary.contextualRelevance.targetAudience && (
-                              <p className="text-gray-300 text-xs">
-                                <span className="text-green-300 font-medium">Target Audience:</span> {summary.contextualRelevance.targetAudience}
-                              </p>
-                            )}
-                          </div>
+                          <ul className="space-y-2 bg-gray-800 p-2 sm:p-3 rounded-lg">
+                            {(summary.educationalOutcomes?.practicalApplications || summary.applications || []).map((app, index) => (
+                              <li key={index} className="text-gray-300 text-xs flex items-start gap-2">
+                                <span className="text-yellow-400 mt-1 flex-shrink-0">•</span>
+                                <span>{app}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Target Audience */}
+                      {(summary.contextualRelevance?.targetAudience || summary.audience) && (
+                        <div>
+                          <h4 className="text-white font-medium mb-2 flex items-center gap-2 text-sm sm:text-base">
+                            🎯 Target Audience
+                          </h4>
+                          <p className="text-gray-300 text-xs bg-gray-800 p-2 sm:p-3 rounded-lg">
+                            {summary.contextualRelevance?.targetAudience || summary.audience}
+                          </p>
                         </div>
                       )}
                     </>
@@ -344,57 +325,9 @@ const VideoSummarizer = ({ videoId, videoTitle }) => {
                             ? 'bg-blue-600 text-white' 
                             : 'bg-gray-800 text-gray-300 border border-gray-700'
                         }`}>
-                          {msg.type === 'ai' ? (
-                            <div className="space-y-2">
-                              {msg.content.split('\n').map((line, lineIndex) => {
-                                if (line.trim() === '') return null;
-                                
-                                // Handle section headers (bold text)
-                                if (line.startsWith('**') && line.endsWith('**')) {
-                                  return (
-                                    <div key={lineIndex} className="font-bold text-blue-300 mt-3 first:mt-0">
-                                      {line.replace(/\*\*/g, '')}
-                                    </div>
-                                  );
-                                }
-                                
-                                // Handle inline bold text
-                                if (line.includes('**')) {
-                                  const parts = line.split(/\*\*(.*?)\*\*/g);
-                                  return (
-                                    <div key={lineIndex} className="leading-relaxed">
-                                      {parts.map((part, partIndex) => 
-                                        partIndex % 2 === 1 ? (
-                                          <span key={partIndex} className="font-bold text-blue-300">{part}</span>
-                                        ) : (
-                                          <span key={partIndex}>{part}</span>
-                                        )
-                                      )}
-                                    </div>
-                                  );
-                                }
-                                
-                                // Handle bullet points
-                                if (line.startsWith('•') || line.startsWith('-') || line.startsWith('*')) {
-                                  return (
-                                    <div key={lineIndex} className="flex items-start gap-2 ml-2">
-                                      <span className="text-blue-400 mt-0.5 flex-shrink-0">•</span>
-                                      <span>{line.replace(/^[•\-*]\s*/, '')}</span>
-                                    </div>
-                                  );
-                                }
-                                
-                                // Regular text
-                                return (
-                                  <div key={lineIndex} className="leading-relaxed">
-                                    {line}
-                                  </div>
-                                );
-                              }).filter(Boolean)}
-                            </div>
-                          ) : (
-                            msg.content
-                          )}
+                          <div className="leading-relaxed whitespace-pre-wrap">
+                            {msg.content}
+                          </div>
                         </div>
                       </div>
                     ))
