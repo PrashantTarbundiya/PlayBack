@@ -12,6 +12,7 @@ import { videoAPI, likeAPI, subscriptionAPI, authAPI, playlistAPI } from "../ser
 import SubscriptionDropdown from "../components/SubscriptionDropdown/SubscriptionDropdown"
 import { useAuth } from "../contexts/AuthContext"
 import { useSyncedVideo } from "../contexts/SyncedVideoContext"
+import { useVideo } from "../contexts/VideoContext"
 import { formatDistanceToNow } from "date-fns"
 import toast from "react-hot-toast"
 import { CenteredLoader } from "../components/Skeleton/LoadingScreen"
@@ -22,6 +23,7 @@ const VideoPlayer = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { cacheVideoData, getCachedVideoData } = useVideo()
   const {
     currentVideo,
     loadVideo,
@@ -43,6 +45,9 @@ const VideoPlayer = () => {
   const [relatedVideosPage, setRelatedVideosPage] = useState(1)
   const [hasMoreRelated, setHasMoreRelated] = useState(true)
   const [loadingMoreRelated, setLoadingMoreRelated] = useState(false)
+  const [loadingRelated, setLoadingRelated] = useState(false)
+  const [loadingComments, setLoadingComments] = useState(false)
+  const [shouldLoadComments, setShouldLoadComments] = useState(false)
   const [isSubscribed, setIsSubscribed] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
   const [likesCount, setLikesCount] = useState(0)
@@ -77,8 +82,23 @@ const VideoPlayer = () => {
         setCurrentVideoIndex(0)
       }
       
+      // Priority 1: Load video first
       fetchVideo()
-      fetchRelatedVideos().catch(() => {})
+      
+      // Priority 2: Load related videos after a short delay
+      const relatedTimer = setTimeout(() => {
+        fetchRelatedVideos().catch(() => {})
+      }, 300)
+      
+      // Priority 3: Load comments last
+      const commentsTimer = setTimeout(() => {
+        setShouldLoadComments(true)
+      }, 800)
+      
+      return () => {
+        clearTimeout(relatedTimer)
+        clearTimeout(commentsTimer)
+      }
     }
   }, [id, user?._id])
 
@@ -88,6 +108,8 @@ const VideoPlayer = () => {
       setSavedPlaylists([])
       setRelatedVideosPage(1)
       setHasMoreRelated(true)
+      setShouldLoadComments(false)
+      setRelatedVideos([])
     }
   }, [id])
 
@@ -168,6 +190,21 @@ const VideoPlayer = () => {
 
       const trimmedId = id.trim()
       
+      // Check cache first
+      const cached = getCachedVideoData(trimmedId)
+      if (cached) {
+        setVideo(cached.video)
+        setLikesCount(cached.likesCount)
+        setIsLiked(cached.isLiked)
+        setIsSubscribed(cached.isSubscribed)
+        setIsSaved(cached.isSaved)
+        setSavedPlaylists(cached.savedPlaylists)
+        if (cached.relatedVideos) setRelatedVideos(cached.relatedVideos)
+        loadVideo(cached.video, currentPlaylist, currentVideoIndex)
+        setLoading(false)
+        return
+      }
+      
       const response = await videoAPI.getVideoById(trimmedId)
       const videoData = response?.data?.data || response?.data
 
@@ -211,6 +248,16 @@ const VideoPlayer = () => {
           // Silently handle watch history errors to not disrupt video loading
         }
       }
+      
+      // Cache the video data
+      cacheVideoData(trimmedId, {
+        video: videoData,
+        likesCount: videoData.likesCount || 0,
+        isLiked,
+        isSubscribed,
+        isSaved: false,
+        savedPlaylists: []
+      })
 
     } catch (error) {
       let errorMessage = "Failed to load video"
@@ -264,19 +311,39 @@ const VideoPlayer = () => {
   }
 
   const fetchRelatedVideos = async (reset = true) => {
+    if (loadingRelated) return
+    
+    // Check if related videos are already cached
+    const cached = getCachedVideoData(id)
+    if (cached?.relatedVideos?.length > 0 && reset) {
+      setRelatedVideos(cached.relatedVideos)
+      setRelatedVideosPage(1)
+      setHasMoreRelated(cached.relatedVideos.length === 8)
+      return
+    }
+    
     try {
-      const response = await videoAPI.getWatchNextVideos(id, 10)
+      setLoadingRelated(true)
+      const response = await videoAPI.getWatchNextVideos(id, 8)
       const videosData = response?.data?.data || response?.data || []
       if (reset) {
         setRelatedVideos(videosData)
         setRelatedVideosPage(1)
-        setHasMoreRelated(videosData.length === 10)
+        setHasMoreRelated(videosData.length === 8)
+        
+        // Update cache with related videos
+        const existingCache = getCachedVideoData(id)
+        if (existingCache) {
+          cacheVideoData(id, { ...existingCache, relatedVideos: videosData })
+        }
       }
     } catch (error) {
       if (reset) {
         setRelatedVideos([])
         setHasMoreRelated(false)
       }
+    } finally {
+      setLoadingRelated(false)
     }
   }
 
@@ -285,14 +352,14 @@ const VideoPlayer = () => {
     
     setLoadingMoreRelated(true)
     try {
-      const response = await videoAPI.getAllVideosWithOwnerDetails(relatedVideosPage + 1, 5)
+      const response = await videoAPI.getAllVideosWithOwnerDetails(relatedVideosPage + 1, 8)
       const videosData = response?.data?.data || response?.data || []
       const filteredVideos = videosData.filter(v => v._id !== id && !relatedVideos.some(rv => rv._id === v._id))
       
       if (filteredVideos.length > 0) {
         setRelatedVideos(prev => [...prev, ...filteredVideos])
         setRelatedVideosPage(prev => prev + 1)
-        setHasMoreRelated(filteredVideos.length === 5)
+        setHasMoreRelated(filteredVideos.length === 8)
       } else {
         setHasMoreRelated(false)
       }
@@ -302,6 +369,25 @@ const VideoPlayer = () => {
       setLoadingMoreRelated(false)
     }
   }
+  
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    if (!relatedVideosRef.current || currentPlaylist) return
+    
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMoreRelated && !loadingMoreRelated) {
+          loadMoreRelatedVideos()
+        }
+      },
+      { threshold: 0.5 }
+    )
+    
+    const sentinel = relatedVideosRef.current.querySelector('.load-more-sentinel')
+    if (sentinel) observer.observe(sentinel)
+    
+    return () => observer.disconnect()
+  }, [hasMoreRelated, loadingMoreRelated, relatedVideos, currentPlaylist])
 
 
 
@@ -393,6 +479,12 @@ const VideoPlayer = () => {
       setIsLiked(newLikeStatus)
       setLikesCount(newLikesCount)
       
+      // Update cache
+      const cached = getCachedVideoData(id)
+      if (cached) {
+        cacheVideoData(id, { ...cached, isLiked: newLikeStatus, likesCount: newLikesCount })
+      }
+      
       toast.remove()
       toast.success(newLikeStatus ? "Video liked!" : "Like removed")
       
@@ -440,6 +532,12 @@ const VideoPlayer = () => {
         : !isSubscribed
 
       setIsSubscribed(newSubscriptionStatus)
+      
+      // Update cache
+      const cached = getCachedVideoData(id)
+      if (cached) {
+        cacheVideoData(id, { ...cached, isSubscribed: newSubscriptionStatus })
+      }
       
       toast.remove()
       toast.success(newSubscriptionStatus ? "Subscribed!" : "Unsubscribed")
@@ -789,8 +887,14 @@ const VideoPlayer = () => {
           <p className="text-sm text-gray-300 whitespace-pre-wrap">{video.description || "No description available"}</p>
         </div>
 
-        {/* Comments */}
-        <CommentSection videoId={id} />
+        {/* Comments - Lazy Loaded */}
+        {shouldLoadComments ? (
+          <CommentSection videoId={id} />
+        ) : (
+          <div className="bg-gray-900 p-8 rounded-lg text-center">
+            <div className="animate-pulse text-gray-500">Loading comments...</div>
+          </div>
+        )}
       </div>
 
       {/* Playlist/Related Videos Sidebar */}
@@ -913,16 +1017,21 @@ const VideoPlayer = () => {
           <div>
             <h3 className="text-lg font-semibold mb-4">Related Videos</h3>
             <div ref={relatedVideosRef} className="related-videos-container space-y-3">
-              {relatedVideos.length > 0 ? (
+              {loadingRelated && relatedVideos.length === 0 ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                </div>
+              ) : relatedVideos.length > 0 ? (
                 <>
                   {relatedVideos.map(vid => <VideoCard key={vid._id} video={vid} disablePreview={true} />)}
+                  {hasMoreRelated && <div className="load-more-sentinel h-4" />}
                   {loadingMoreRelated && (
                     <div className="flex justify-center py-4">
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
                     </div>
                   )}
-                  {!hasMoreRelated && relatedVideos.length > 10 && (
-                    <p className="text-center text-sm text-gray-500 py-4">No more videos to load</p>
+                  {!hasMoreRelated && relatedVideos.length > 8 && (
+                    <p className="text-center text-sm text-gray-500 py-4">No more videos</p>
                   )}
                 </>
               ) : (

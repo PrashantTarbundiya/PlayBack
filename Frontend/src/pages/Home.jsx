@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useVideo } from "../contexts/VideoContext";
 import { videoAPI } from "../services/api";
 import VideoCard from "../components/VideoCard/VideoCard";
@@ -8,6 +8,7 @@ import { VideoGridSkeleton } from "../components/Skeleton/Skeleton";
 
 const Home = () => {
   const { videos, setVideos, loading, setLoading } = useVideo();
+  const categoryCache = useRef(new Map());
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [categoriesLoading, setCategoriesLoading] = useState(true);
@@ -82,10 +83,29 @@ const Home = () => {
       setVideos([]);
       setPage(1);
       setHasMore(true);
+      
+      // Check cache first
+      const cached = categoryCache.current.get(selectedCategory);
+      if (cached && Date.now() - cached.timestamp < 3 * 60 * 1000) {
+        setVideos(cached.videos);
+        setHasMore(cached.hasMore);
+        setPage(cached.page);
+        setLoading(false);
+        return;
+      }
+      
       const firstBatch = await fetchRecommendedVideos(selectedCategory, 1, LIMIT);
       setVideos(firstBatch);
       setHasMore(firstBatch.length === LIMIT);
       setPage(2);
+      
+      // Cache the results
+      categoryCache.current.set(selectedCategory, {
+        videos: firstBatch,
+        hasMore: firstBatch.length === LIMIT,
+        page: 2,
+        timestamp: Date.now()
+      });
     } catch (_) {
       setVideos([]);
       setHasMore(false);
