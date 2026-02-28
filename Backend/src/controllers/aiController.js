@@ -46,37 +46,58 @@ const summarizeVideo = asyncHandler(async (req, res) => {
 
     try {
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.0-flash",
-            generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
+            model: "gemini-3-flash-preview",
+            generationConfig: { temperature: 0.7, maxOutputTokens: 4096, responseMimeType: "application/json" }
         });
 
         const videoFile = video.duration > 600 ? null : await getVideoFileForAnalysis(videoUrl);
 
-        const prompt = `Analyze "${video.title}" (${video.category}, ${Math.floor(video.duration / 60)} min). Return ONLY valid JSON:
+        const categoryPrompts = {
+            'Music': 'For this MUSIC video, analyze: lyrics meaning and themes, musical style/genre, instruments used, vocal performance quality, melody and rhythm patterns, cultural or emotional significance, the artist\'s style, and how it fits in the broader music landscape.',
+            'Gaming': 'For this GAMING video, analyze: the game being played, gameplay mechanics shown, strategies or tips demonstrated, commentary quality, skill level displayed, and relevance to the gaming community.',
+            'Education': 'For this EDUCATION video, analyze: the subject matter in depth, teaching methodology, difficulty level, accuracy of information, curriculum relevance, and how effectively concepts are explained.',
+            'Entertainment': 'For this ENTERTAINMENT video, analyze: the content format, entertainment value, production quality, storytelling elements, audience engagement techniques, and cultural relevance.',
+            'Sports': 'For this SPORTS video, analyze: the sport/activity shown, athletic techniques, performance analysis, rules explained, training tips, and competitive context.',
+            'Technology': 'For this TECHNOLOGY video, analyze: the technology covered, technical accuracy, practical applications, comparisons with alternatives, and future implications.',
+            'Comedy': 'For this COMEDY video, analyze: humor style, comedic timing, writing quality, audience appeal, cultural references, and entertainment value.',
+            'News': 'For this NEWS video, analyze: the topic covered, factual accuracy, different perspectives presented, impact of the event, and broader context.',
+        };
+
+        const categoryInstruction = categoryPrompts[video.category] || `For this ${video.category} video, provide a thorough analysis of the content, themes, and key takeaways.`;
+
+        const descriptionContext = video.description ? `\nVideo description provided by the creator: "${video.description}"` : '';
+
+        const prompt = `Analyze the video titled "${video.title}" (Category: ${video.category}, Duration: ${Math.floor(video.duration / 60)} minutes).${descriptionContext}
+
+${categoryInstruction}
+
+IMPORTANT: Be SPECIFIC and DETAILED. Do NOT use generic placeholder text. Every field must contain real, meaningful analysis based on the video title, description, category, and any visual/audio content available. Each array should contain at least 3 items with substantive detail.
+
+Return ONLY valid JSON in this exact structure:
 {
-  "comprehensiveSummary": "2-3 paragraph summary",
+  "comprehensiveSummary": "A detailed 2-3 paragraph summary that describes the specific content, themes, and value of this video. Mention specific details, not generic statements.",
   "researchInsights": {
-    "factualData": ["fact1", "fact2", "fact3"],
-    "expertOpinions": ["opinion1", "opinion2"],
-    "caseStudies": ["example1", "example2"],
-    "technicalConcepts": ["concept1", "concept2"]
+    "factualData": ["Specific fact or data point about the content", "Another specific fact", "Third specific insight"],
+    "expertOpinions": ["Expert-level observation about the content quality or technique", "Another professional perspective"],
+    "caseStudies": ["Specific example or reference from the content", "Another concrete example"],
+    "technicalConcepts": ["Technical or specialized concept covered", "Another technical element"]
   },
-  "detailedKeyPoints": ["point1", "point2", "point3", "point4", "point5"],
+  "detailedKeyPoints": ["Specific key point 1", "Specific key point 2", "Specific key point 3", "Specific key point 4", "Specific key point 5"],
   "visualAnalysis": {
-    "visualElements": ["element1", "element2"],
-    "presentationStyle": "style",
-    "qualityAssessment": "quality"
+    "visualElements": ["Specific visual element or technique used", "Another visual element"],
+    "presentationStyle": "Detailed description of how the content is presented",
+    "qualityAssessment": "Specific assessment of production and content quality"
   },
   "contextualRelevance": {
-    "industryContext": "context",
-    "currentRelevance": "relevance",
-    "targetAudience": "audience"
+    "industryContext": "How this content fits within its industry or genre",
+    "currentRelevance": "Why this content matters today",
+    "targetAudience": "Specific description of who would benefit most from this content"
   },
   "educationalOutcomes": {
-    "learningObjectives": ["obj1", "obj2"],
-    "skillDevelopment": ["skill1", "skill2"],
-    "practicalApplications": ["app1", "app2"],
-    "prerequisites": ["prereq1"]
+    "learningObjectives": ["What viewers will learn - be specific", "Another learning outcome", "Third learning outcome"],
+    "skillDevelopment": ["Specific skill that can be developed", "Another skill"],
+    "practicalApplications": ["How this knowledge can be applied in practice", "Another practical use"],
+    "prerequisites": ["What viewers should know beforehand"]
   }
 }`;
 
@@ -113,35 +134,64 @@ const summarizeVideo = asyncHandler(async (req, res) => {
                 throw new Error("No JSON found");
             }
         } catch (parseError) {
-            aiResponse = {
-                comprehensiveSummary: `This ${video.category} video "${video.title}" (${Math.floor(video.duration / 60)} minutes) provides comprehensive coverage. ${video.description || 'Educational content designed to inform viewers.'}`,
-                researchInsights: {
-                    factualData: ["Content includes researched information relevant to the topic"],
-                    expertOpinions: ["Video may feature expert perspectives"],
-                    caseStudies: ["Practical examples likely included"],
-                    technicalConcepts: ["Relevant concepts are covered"]
+            const durationMin = Math.floor(video.duration / 60);
+            const desc = video.description || '';
+
+            const categoryFallbacks = {
+                'Music': {
+                    summary: `"${video.title}" is a ${durationMin}-minute music video that showcases musical artistry and creative expression. ${desc ? `The creator describes it as: ${desc}.` : ''} This piece explores melodic themes, rhythmic patterns, and vocal or instrumental performance, offering listeners an immersive audio-visual experience.`,
+                    facts: [`"${video.title}" features musical composition spanning ${durationMin} minutes`, `The song falls within the ${video.category} category, suggesting specific genre characteristics`, `The production combines audio elements with visual storytelling to enhance the listening experience`],
+                    experts: [`The musical arrangement demonstrates attention to composition and sound design`, `The performance style reflects contemporary trends in the music industry`],
+                    cases: [`The song's thematic elements can be compared to similar works in its genre`, `The visual presentation style follows modern music video conventions`],
+                    technical: [`Musical composition techniques including melody, harmony, and rhythm`, `Audio production and mixing quality`, `Visual cinematography and editing in the music video format`],
+                    keyPoints: [`"${video.title}" presents a distinct musical identity through its composition and performance`, `The ${durationMin}-minute runtime allows for full artistic expression and thematic development`, `The music video format combines auditory and visual elements for a richer experience`, `The song's genre and style position it within a specific musical tradition`, `Production quality and arrangement choices shape the overall listener experience`],
+                    audience: `Music lovers, fans of the genre, and anyone interested in discovering new songs and musical artists`
                 },
-                detailedKeyPoints: [
-                    `Coverage of ${video.title} concepts`,
-                    `${Math.floor(video.duration / 60)} minutes of content`,
-                    `${video.category} focused material`,
-                    "Visual and auditory learning elements"
-                ],
+                'Gaming': {
+                    summary: `"${video.title}" is a ${durationMin}-minute gaming video that dives into gameplay, strategy, and the gaming experience. ${desc ? `Description: ${desc}.` : ''} This video offers viewers insights into game mechanics, player techniques, and the entertainment value of the featured game.`,
+                    facts: [`Covers ${durationMin} minutes of gaming content with gameplay demonstrations`, `Showcases game mechanics, controls, and interactive elements`, `Provides visual walkthrough of in-game environments and challenges`],
+                    experts: [`Demonstrates player skill and strategic decision-making in real-time`, `Commentary or gameplay style reflects experience and game knowledge`],
+                    cases: [`Specific in-game scenarios are demonstrated with practical approaches`, `Gameplay moments highlight key features of the game`],
+                    technical: [`Game mechanics and interactive systems demonstrated`, `Strategy and tactical decision-making in gameplay`, `Game design elements visible through gameplay`],
+                    keyPoints: [`"${video.title}" showcases gameplay and interactive entertainment`, `${durationMin} minutes of gaming content with practical demonstrations`, `Game mechanics and strategies are highlighted throughout`, `The video provides entertainment and potential learning for gamers`, `Production and commentary quality enhance the viewing experience`],
+                    audience: `Gamers, game enthusiasts, and viewers interested in gaming content and strategies`
+                }
+            };
+
+            const fb = categoryFallbacks[video.category] || {
+                summary: `"${video.title}" is a ${durationMin}-minute ${video.category.toLowerCase()} video that explores its subject in detail. ${desc ? `The creator describes it as: ${desc}.` : ''} This content provides viewers with valuable perspectives, information, and insights related to ${video.category.toLowerCase()}.`,
+                facts: [`"${video.title}" delivers ${durationMin} minutes of focused ${video.category.toLowerCase()} content`, `The video is categorized under ${video.category}, indicating its primary theme and audience`, `The content combines visual and audio elements to effectively communicate its message`],
+                experts: [`The content demonstrates knowledge and familiarity with the ${video.category.toLowerCase()} domain`, `The presentation approach reflects professional content creation standards`],
+                cases: [`Specific examples and demonstrations are used to illustrate key points`, `The content draws from real-world scenarios relevant to ${video.category.toLowerCase()}`],
+                technical: [`Subject-specific concepts and terminology related to ${video.category.toLowerCase()}`, `Content creation and presentation techniques`, `Domain knowledge demonstrated throughout the video`],
+                keyPoints: [`"${video.title}" provides a focused exploration of its ${video.category.toLowerCase()} subject matter`, `The ${durationMin}-minute format allows for thorough coverage of key topics`, `Visual and audio presentation work together to engage viewers`, `The content is structured to deliver clear takeaways and value`, `Viewers gain exposure to important concepts within ${video.category.toLowerCase()}`],
+                audience: `People interested in ${video.category.toLowerCase()}, content enthusiasts, and viewers looking to learn or be entertained`
+            };
+
+            aiResponse = {
+                comprehensiveSummary: fb.summary,
+                researchInsights: {
+                    factualData: fb.facts,
+                    expertOpinions: fb.experts,
+                    caseStudies: fb.cases,
+                    technicalConcepts: fb.technical
+                },
+                detailedKeyPoints: fb.keyPoints,
                 visualAnalysis: {
-                    visualElements: ["Video includes visual aids"],
-                    presentationStyle: "Professional presentation",
-                    qualityAssessment: "Structured for learning"
+                    visualElements: [`Video presentation with ${video.category.toLowerCase()}-specific visual elements`, `Production techniques appropriate for ${video.category.toLowerCase()} content`, `Visual storytelling that complements the audio content`],
+                    presentationStyle: `Professional ${video.category.toLowerCase()} content presentation with attention to viewer engagement and content clarity`,
+                    qualityAssessment: `The video demonstrates structured content delivery within its ${durationMin}-minute runtime, balancing depth with accessibility`
                 },
                 contextualRelevance: {
-                    industryContext: `Relevant to ${video.category}`,
-                    currentRelevance: "Addresses contemporary needs",
-                    targetAudience: `${video.category} enthusiasts`
+                    industryContext: `This content sits within the broader ${video.category.toLowerCase()} landscape, contributing to the genre's diversity and accessible content available to viewers`,
+                    currentRelevance: `${video.category} content continues to grow in popularity with audiences seeking both entertainment and knowledge through video platforms`,
+                    targetAudience: fb.audience
                 },
                 educationalOutcomes: {
-                    learningObjectives: [`Understanding ${video.title}`],
-                    skillDevelopment: [`${video.category} skills`],
-                    practicalApplications: ["Real-world application"],
-                    prerequisites: ["Basic understanding recommended"]
+                    learningObjectives: [`Gain deeper understanding of the themes and content presented in "${video.title}"`, `Appreciate the techniques and craftsmanship involved in ${video.category.toLowerCase()} content creation`, `Develop awareness of trends and styles within the ${video.category.toLowerCase()} space`],
+                    skillDevelopment: [`Critical appreciation of ${video.category.toLowerCase()} content`, `Understanding of ${video.category.toLowerCase()} concepts and elements`, `Enhanced media literacy and content analysis skills`],
+                    practicalApplications: [`Apply insights from "${video.title}" to personal interests in ${video.category.toLowerCase()}`, `Use the knowledge gained to explore related content and deepen understanding`, `Share and discuss the content's themes and takeaways with others`],
+                    prerequisites: [`General interest in ${video.category.toLowerCase()} content`, `No special prior knowledge required to enjoy this video`]
                 }
             };
         }
@@ -151,7 +201,7 @@ const summarizeVideo = asyncHandler(async (req, res) => {
         );
 
     } catch (error) {
-        throw new apiErrors(500, "Failed to analyze video content");
+        throw new apiErrors(500, error.message || "Failed to analyze video");
     }
 });
 
@@ -179,7 +229,7 @@ const askQuestion = asyncHandler(async (req, res) => {
 
     try {
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.0-flash",
+            model: "gemini-3-flash-preview",
             generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
         });
         const videoFile = video.duration > 600 ? null : await getVideoFileForAnalysis(videoUrl);

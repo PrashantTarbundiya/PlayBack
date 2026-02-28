@@ -42,7 +42,7 @@ const VideoSummarizer = ({ videoId, videoTitle }) => {
       const response = await aiAPI.summarizeVideo(videoId);
 
       const data = response.data?.data;
-      
+
       if (data) {
         setSummary(data);
         toast.remove();
@@ -73,7 +73,7 @@ const VideoSummarizer = ({ videoId, videoTitle }) => {
     try {
       const response = await aiAPI.askQuestion(videoId, userQuestion);
       const answer = response.data?.data;
-      
+
       if (answer) {
         setConversation(prev => [...prev, { type: 'ai', content: String(answer) }]);
       } else {
@@ -92,13 +92,13 @@ const VideoSummarizer = ({ videoId, videoTitle }) => {
   const openModal = () => {
     setIsOpen(true);
     document.body.style.overflow = 'hidden';
-    
+
     // Pause video if playing
     const video = document.querySelector('video');
     if (video && !video.paused) {
       video.pause();
     }
-    
+
     if (!summary) {
       handleSummarize();
     }
@@ -148,17 +148,15 @@ const VideoSummarizer = ({ videoId, videoTitle }) => {
             <div className="lg:hidden flex border-b border-gray-700">
               <button
                 onClick={() => setShowQA(false)}
-                className={`flex-1 p-2 text-xs font-medium transition-colors ${
-                  !showQA ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400'
-                }`}
+                className={`flex-1 p-2 text-xs font-medium transition-colors ${!showQA ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400'
+                  }`}
               >
                 Summary
               </button>
               <button
                 onClick={() => setShowQA(true)}
-                className={`flex-1 p-2 text-xs font-medium transition-colors ${
-                  showQA ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400'
-                }`}
+                className={`flex-1 p-2 text-xs font-medium transition-colors ${showQA ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400'
+                  }`}
               >
                 Ask Questions
               </button>
@@ -174,7 +172,7 @@ const VideoSummarizer = ({ videoId, videoTitle }) => {
                     Video Analysis
                   </h3>
                 </div>
-                
+
                 <div className="flex-1 overflow-y-auto p-2 sm:p-4 pt-4 sm:pt-2 space-y-4 max-h-[calc(90vh-200px)] sm:max-h-[calc(85vh-180px)] md:max-h-none">
                   {loading ? (
                     <div className="flex items-center justify-center h-32">
@@ -245,6 +243,113 @@ const VideoSummarizer = ({ videoId, videoTitle }) => {
                         </div>
                       )}
 
+                      {/* Expert Opinions */}
+                      {summary.researchInsights?.expertOpinions && summary.researchInsights.expertOpinions.length > 0 && (
+                        <div>
+                          <h4 className="text-white font-medium mb-2 flex items-center gap-2 text-sm sm:text-base">
+                            💡 Expert Opinions
+                          </h4>
+                          <ul className="space-y-2 bg-gray-800 p-2 sm:p-3 rounded-lg">
+                            {summary.researchInsights.expertOpinions.map((opinion, index) => (
+                              <li key={index} className="text-gray-300 text-xs flex items-start gap-2">
+                                <span className="text-green-400 mt-1 flex-shrink-0">•</span>
+                                <span>{opinion}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Technical Concepts */}
+                      {summary.researchInsights?.technicalConcepts && summary.researchInsights.technicalConcepts.length > 0 && (
+                        <div>
+                          <h4 className="text-white font-medium mb-2 flex items-center gap-2 text-sm sm:text-base">
+                            🛠️ Technical Concepts
+                          </h4>
+                          <ul className="space-y-2 bg-gray-800 p-2 sm:p-3 rounded-lg">
+                            {summary.researchInsights.technicalConcepts.map((concept, index) => (
+                              <li key={index} className="text-gray-300 text-xs flex items-start gap-2">
+                                <span className="text-cyan-400 mt-1 flex-shrink-0">•</span>
+                                <span>{concept}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Visual Analysis */}
+                      {summary.visualAnalysis && (
+                        <div>
+                          <h4 className="text-white font-medium mb-2 flex items-center gap-2 text-sm sm:text-base">
+                            🎬 Visual Analysis
+                          </h4>
+                          <div className="space-y-2 bg-gray-800 p-2 sm:p-3 rounded-lg">
+                            {summary.visualAnalysis.presentationStyle && (
+                              <p className="text-gray-300 text-xs">
+                                <span className="text-white font-medium">Style: </span>
+                                {summary.visualAnalysis.presentationStyle}
+                              </p>
+                            )}
+                            {summary.visualAnalysis.qualityAssessment && (
+                              <p className="text-gray-300 text-xs">
+                                <span className="text-white font-medium">Quality: </span>
+                                {summary.visualAnalysis.qualityAssessment}
+                              </p>
+                            )}
+                            {summary.visualAnalysis.visualElements?.length > 0 && (
+                              <ul className="space-y-1 mt-1">
+                                {summary.visualAnalysis.visualElements.map((el, index) => (
+                                  <li key={index} className="text-gray-300 text-xs flex items-start gap-2">
+                                    <span className="text-pink-400 mt-1 flex-shrink-0">•</span>
+                                    <span>{el}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Industry Context */}
+                      {summary.contextualRelevance && (summary.contextualRelevance.industryContext || summary.contextualRelevance.currentRelevance) && (
+                        <div>
+                          <h4 className="text-white font-medium mb-2 flex items-center gap-2 text-sm sm:text-base">
+                            🌐 Industry Context
+                          </h4>
+                          <div className="space-y-2 bg-gray-800 p-2 sm:p-3 rounded-lg">
+                            {summary.contextualRelevance.industryContext && (
+                              <p className="text-gray-300 text-xs">
+                                <span className="text-white font-medium">Context: </span>
+                                {summary.contextualRelevance.industryContext}
+                              </p>
+                            )}
+                            {summary.contextualRelevance.currentRelevance && (
+                              <p className="text-gray-300 text-xs">
+                                <span className="text-white font-medium">Relevance: </span>
+                                {summary.contextualRelevance.currentRelevance}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Skill Development */}
+                      {summary.educationalOutcomes?.skillDevelopment && summary.educationalOutcomes.skillDevelopment.length > 0 && (
+                        <div>
+                          <h4 className="text-white font-medium mb-2 flex items-center gap-2 text-sm sm:text-base">
+                            📈 Skill Development
+                          </h4>
+                          <ul className="space-y-2 bg-gray-800 p-2 sm:p-3 rounded-lg">
+                            {summary.educationalOutcomes.skillDevelopment.map((skill, index) => (
+                              <li key={index} className="text-gray-300 text-xs flex items-start gap-2">
+                                <span className="text-orange-400 mt-1 flex-shrink-0">•</span>
+                                <span>{skill}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
                       {/* Learning Outcomes */}
                       {(summary.educationalOutcomes || summary.learningOutcomes) && (
                         <div>
@@ -308,7 +413,7 @@ const VideoSummarizer = ({ videoId, videoTitle }) => {
                     Ask Questions
                   </h3>
                 </div>
-                
+
                 {/* Chat Messages */}
                 <div className="flex-1 overflow-y-auto p-2 sm:p-4 pt-4 sm:pt-2 space-y-3 max-h-[calc(90vh-260px)] sm:max-h-[calc(85vh-240px)] md:max-h-[calc(80vh-200px)]">
                   {conversation.length === 0 ? (
@@ -320,11 +425,10 @@ const VideoSummarizer = ({ videoId, videoTitle }) => {
                   ) : (
                     conversation.map((msg, index) => (
                       <div key={index} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[80%] p-3 rounded-lg text-sm ${
-                          msg.type === 'user' 
-                            ? 'bg-blue-600 text-white' 
+                        <div className={`max-w-[80%] p-3 rounded-lg text-sm ${msg.type === 'user'
+                            ? 'bg-blue-600 text-white'
                             : 'bg-gray-800 text-gray-300 border border-gray-700'
-                        }`}>
+                          }`}>
                           <div className="leading-relaxed whitespace-pre-wrap">
                             {msg.content}
                           </div>
@@ -332,7 +436,7 @@ const VideoSummarizer = ({ videoId, videoTitle }) => {
                       </div>
                     ))
                   )}
-                  
+
                   {askingQuestion && (
                     <div className="flex justify-start">
                       <div className="bg-gray-800 border border-gray-700 p-3 rounded-lg text-sm text-gray-300 flex items-center gap-2">
