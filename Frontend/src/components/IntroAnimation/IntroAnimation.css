@@ -1,0 +1,392 @@
+/* IntroAnimation.css */
+/* Premium "Cinematic Eclipse" Concept (1000% Effort Enhanced) */
+
+.eclipse-intro-container {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background-color: #050505;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Block all clicks/interactions from passing through to the app */
+    pointer-events: auto;
+    overflow: hidden;
+    font-family: "Space Mono", monospace;
+    transition: background-color 1s ease;
+}
+
+.eclipse-intro-container.exit {
+    background-color: transparent !important;
+}
+
+/* --- THE AMBIENT BACKGROUND GLOW --- */
+.eclipse-ambient-glow {
+    position: absolute;
+    inset: 0;
+    /* Richer, deeper cinematic blue void */
+    background: radial-gradient(circle at center, #0a1520 0%, #050505 60%);
+    opacity: 0;
+    transition: opacity 3s ease;
+    z-index: 1;
+}
+
+/* --- ENHANCEMENT: DEEP-SPACE STARFIELD --- */
+.eclipse-starfield {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 3s ease;
+}
+
+.eclipse-intro-container.eclipse .eclipse-starfield,
+.eclipse-intro-container.flare .eclipse-starfield,
+.eclipse-intro-container.illuminate .eclipse-starfield {
+    opacity: 1;
+}
+
+.eclipse-star {
+    position: absolute;
+    left: var(--sx);
+    top: var(--sy);
+    width: var(--ss);
+    height: var(--ss);
+    background: var(--sc);
+    border-radius: 50%;
+    opacity: var(--so);
+    box-shadow: 0 0 calc(var(--ss) * 2) var(--sc);
+    /* Individual twinkling */
+    animation: starTwinkle 3s infinite alternate ease-in-out;
+    animation-delay: var(--sd);
+}
+
+@keyframes starTwinkle {
+    0% {
+        opacity: calc(var(--so) * 0.3);
+        transform: scale(0.8);
+    }
+
+    100% {
+        opacity: var(--so);
+        transform: scale(1.2);
+    }
+}
+
+
+/* --- THE MAIN STAGE (Slow Camera Push) --- */
+.eclipse-center-stage {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transform: scale(0.9);
+    opacity: 1;
+    transition: transform 7s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.eclipse-intro-container.eclipse .eclipse-center-stage,
+.eclipse-intro-container.flare .eclipse-center-stage,
+.eclipse-intro-container.illuminate .eclipse-center-stage {
+    transform: scale(1.05);
+    /* Slow, continuous forward push */
+}
+
+.eclipse-intro-container.exit .eclipse-center-stage {
+    opacity: 0;
+    transform: scale(1.3);
+    /* Accelerates radially into app */
+    transition: transform 1.8s cubic-bezier(0.8, 0, 0.2, 1), opacity 1.5s ease 0.1s;
+}
+
+
+/* --- COMPONENT STACKING & LOGO BOUNDS --- */
+.eclipse-logo-wrapper {
+    position: relative;
+    width: clamp(160px, 35vw, 350px);
+    aspect-ratio: 1/1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.eclipse-logo-wrapper img {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+
+/* --- LAYER 1: SILHOUETTE --- */
+.eclipse-logo-silhouette {
+    /* Completely hidden in the darkness at start */
+    filter: brightness(0);
+    opacity: 1;
+    z-index: 2;
+}
+
+
+/* --- LAYER 2: THE ECLIPSE RIM-LIGHT --- */
+.eclipse-light-sweep-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 3;
+    /* Diagonal straight-edge mask */
+    clip-path: polygon(-50% -50%, 0% -50%, -50% 0%);
+    transition: clip-path 3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.eclipse-intro-container.eclipse .eclipse-light-sweep-container,
+.eclipse-intro-container.flare .eclipse-light-sweep-container,
+.eclipse-intro-container.illuminate .eclipse-light-sweep-container {
+    /* Sweep the mask completely across and off the logo */
+    clip-path: polygon(150% -50%, 150% 150%, -50% 150%);
+}
+
+.eclipse-logo-rimlight {
+    /* Exquisitely sharp leading edge light tracing the logo geometry */
+    filter: brightness(2.5) drop-shadow(0 0 15px #4ab4ff) sepia(100%) hue-rotate(180deg) saturate(200%);
+    opacity: 1;
+}
+
+.eclipse-intro-container.illuminate .eclipse-logo-rimlight {
+    opacity: 0;
+    transition: opacity 1s ease;
+}
+
+
+/* --- THE LENS FLARE (The edge-striking light source) --- */
+.eclipse-lens-flare {
+    position: absolute;
+    top: -10%;
+    left: -10%;
+    width: 250px;
+    height: 2px;
+    background: #ffffff;
+    border-radius: 50%;
+    /* Layered multi-colored optical blooming */
+    box-shadow: 0 0 10px #ffffff, 0 0 30px #4ab4ff, 0 0 60px #4ab4ff, 0 0 120px rgba(0, 100, 255, 0.5);
+    z-index: 4;
+    opacity: 0;
+    transform: rotate(45deg) scaleX(0);
+}
+
+.eclipse-intro-container.flare .eclipse-lens-flare {
+    animation: luxuriousFlareTravel 1.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes luxuriousFlareTravel {
+    0% {
+        top: -10%;
+        left: -10%;
+        opacity: 0;
+        transform: rotate(45deg) scaleX(0);
+    }
+
+    50% {
+        opacity: 1;
+        transform: rotate(45deg) scaleX(1.5);
+        box-shadow: 0 0 20px #fff, 0 0 80px #4ab4ff, 0 0 150px rgba(74, 180, 255, 0.6);
+    }
+
+    100% {
+        top: 110%;
+        left: 110%;
+        opacity: 0;
+        transform: rotate(45deg) scaleX(0);
+    }
+}
+
+
+/* --- LAYER 3: CORE ILLUMINATION & VOLUMETRIC RAYS --- */
+.eclipse-logo-core {
+    opacity: 0;
+    z-index: 5;
+    filter: drop-shadow(0 0 0px #4ab4ff);
+    transition: opacity 1.5s ease, filter 2s ease;
+}
+
+.eclipse-intro-container.illuminate .eclipse-logo-core {
+    opacity: 1;
+    filter: drop-shadow(0 10px 25px rgba(74, 180, 255, 0.4));
+}
+
+/* ENHANCEMENT: Massive Anamorphic Light Burst expanding from behind the core logo */
+.eclipse-core-rays {
+    position: absolute;
+    inset: 30%;
+    border-radius: 50%;
+    background: #ffffff;
+    z-index: 4;
+    opacity: 0;
+    mix-blend-mode: overlay;
+    box-shadow: 0 0 50px 20px #4ab4ff;
+    transform: scale(0.5);
+}
+
+.eclipse-intro-container.illuminate .eclipse-core-rays {
+    animation: coreRayBlast 3s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+}
+
+@keyframes coreRayBlast {
+    0% {
+        opacity: 0;
+        transform: scale(0.5);
+        box-shadow: 0 0 50px 20px #4ab4ff;
+    }
+
+    20% {
+        opacity: 0.8;
+        transform: scale(1.5);
+        box-shadow: 0 0 100px 50px #ffffff, 0 0 200px 100px #4ab4ff;
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(3);
+        box-shadow: 0 0 20px 10px #4ab4ff;
+    }
+}
+
+
+/* --- ADVANCED CINEMATIC TAGLINE BURN-IN --- */
+.eclipse-tagline-container {
+    margin-top: 2rem;
+    height: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.eclipse-tagline {
+    display: flex;
+    justify-content: center;
+    gap: 0.15rem;
+}
+
+.eclipse-char {
+    font-size: clamp(0.7rem, 1.3vw, 1rem);
+    letter-spacing: 0.3em;
+    color: #dfdfdf;
+    font-weight: 400;
+
+    /* Pre-burn styling: Blurry, stretched, transparent and blue-tinted */
+    opacity: 0;
+    filter: blur(12px) brightness(3);
+    transform: scale(1.5) translateY(10px);
+    color: #4ab4ff;
+    text-shadow: 0 0 20px #4ab4ff;
+}
+
+.eclipse-char.dot {
+    color: #4ab4ff;
+}
+
+.eclipse-intro-container.illuminate .eclipse-char {
+    /* Execute the burn-in sequentially based on the --char-index variable */
+    animation: cinematicTextBurnIn 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    animation-delay: calc(0.3s + (var(--char-index) * 0.04s));
+    /* cascading delay */
+}
+
+@keyframes cinematicTextBurnIn {
+    0% {
+        opacity: 0;
+        filter: blur(12px) brightness(3);
+        transform: scale(1.5) translateY(10px);
+        color: #4ab4ff;
+        text-shadow: 0 0 20px #4ab4ff;
+    }
+
+    40% {
+        opacity: 1;
+        filter: blur(2px) brightness(2);
+        transform: scale(1.1) translateY(-2px);
+        color: #ffffff;
+        text-shadow: 0 0 10px #ffffff;
+    }
+
+    100% {
+        opacity: 1;
+        filter: blur(0px) brightness(1);
+        transform: scale(1) translateY(0);
+        color: #dfdfdf;
+        text-shadow: 0 0 0px transparent;
+    }
+}
+
+
+/* --- CINEMATIC DUST MOTES (Increased Count & Depth) --- */
+.eclipse-dust-particles {
+    position: absolute;
+    inset: -20%;
+    z-index: 20;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 2s ease;
+}
+
+.eclipse-intro-container.eclipse .eclipse-dust-particles,
+.eclipse-intro-container.flare .eclipse-dust-particles,
+.eclipse-intro-container.illuminate .eclipse-dust-particles {
+    opacity: 1;
+}
+
+.eclipse-dust {
+    position: absolute;
+    left: var(--dx);
+    top: var(--dy);
+    width: 2px;
+    height: 2px;
+    background: #fff;
+    border-radius: 50%;
+    opacity: 0.15;
+    filter: blur(1px);
+    transform: scale(var(--ds));
+    animation: drift 10s infinite alternate ease-in-out;
+    animation-delay: var(--dd);
+    /* Subtle glow on the dust itself */
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+}
+
+@keyframes drift {
+    0% {
+        transform: scale(var(--ds)) translate(0, 0);
+        opacity: 0.05;
+    }
+
+    100% {
+        transform: scale(calc(var(--ds) * 1.5)) translate(40px, -40px);
+        opacity: 0.3;
+    }
+}
+
+
+/* --- RESPONSIVE FIXES --- */
+@media (max-width: 768px) {
+    .eclipse-logo-wrapper {
+        width: clamp(140px, 45vw, 250px);
+    }
+
+    .eclipse-char {
+        font-size: clamp(0.6rem, 2vw, 0.8rem);
+        letter-spacing: 0.2em;
+    }
+}
+
+@media (max-width: 480px) {
+    .eclipse-logo-wrapper {
+        width: clamp(120px, 50vw, 200px);
+    }
+
+    .eclipse-char {
+        font-size: 0.55rem;
+        letter-spacing: 0.15em;
+    }
+}

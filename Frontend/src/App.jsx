@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
-import { memo, Suspense, lazy } from "react"
+import { memo, Suspense, lazy, useState } from "react"
 import { AuthProvider } from "./contexts/AuthContext"
 import { VideoProvider } from "./contexts/VideoContext"
 import { SyncedVideoProvider } from "./contexts/SyncedVideoContext"
@@ -9,6 +9,7 @@ import ProtectedRoute from "./components/ProtectedRoute"
 import Layout from "./components/Layout/Layout"
 import { Toaster } from "react-hot-toast"
 import LoadingScreen from "./components/Skeleton/LoadingScreen"
+import IntroAnimation from "./components/IntroAnimation/IntroAnimation"
 import "./App.css"
 
 // Lazy load pages to reduce initial bundle size
@@ -39,84 +40,87 @@ const PlaylistDetail = lazy(() => import("./pages/PlaylistDetail"))
 const PageLoader = () => <LoadingScreen message="Loading page..." />
 
 const App = memo(() => {
+  const [showIntro, setShowIntro] = useState(true)
+
   return (
     <AuthProvider>
+      {showIntro && <IntroAnimation onComplete={() => setShowIntro(false)} />}
       <VideoProvider>
         <Router>
           <SyncedVideoProvider>
             <NotificationProvider>
               <VideoPreviewProvider>
                 <div className="App">
-                <Suspense fallback={<PageLoader />}>
-                  <Routes>
-                    {/* Public routes */}
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
-                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Suspense fallback={<PageLoader />}>
+                    <Routes>
+                      {/* Public routes */}
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/register" element={<Register />} />
+                      <Route path="/forgot-password" element={<ForgotPassword />} />
 
-                    {/* Layout wrapper for authenticated and public pages */}
-                    <Route path="/" element={<Layout />}>
-                      <Route index element={<Home />} />
-                      <Route path="watch/:id" element={<VideoPlayer />} />
-                      <Route path="search" element={<Search />} />
-                      <Route path="trending" element={<Trending />} />
-                      <Route path="tweets" element={<Tweets />} />
-                      <Route path="notifications" element={<Notifications />} />
-                      <Route path="library" element={<Library />} />
-                      <Route path="profile/:username" element={<Profile />} />
-                      <Route path="channel/:username/videos" element={<ChannelVideos />} />
-                      <Route path="dashboard" element={
-                        <ProtectedRoute>
-                          <Dashboard />
-                        </ProtectedRoute>
-                      } />
-                      
-                      {/* These routes show login prompts within layout instead of redirecting */}
-                      <Route path="upload" element={
-                        <ProtectedRoute>
-                          <Upload />
-                        </ProtectedRoute>
-                      } />
-                      <Route path="history" element={<History />} />
-                      <Route path="watch-later" element={<WatchLater />} />
-                      <Route path="liked" element={<LikedVideos />} />
-                      <Route path="playlists" element={<Playlists />} />
-                      <Route path="settings" element={<Settings />} />
-                      <Route path="browse-playlists" element={<BrowsePlaylists />} />
-                      <Route path="playlist/:id" element={<PlaylistDetail />} />
-                      
-                      {/* Fallback route */}
-                      <Route path="*" element={<Navigate to="/" replace />} />
-                    </Route>
-                  </Routes>
-                </Suspense>
+                      {/* Layout wrapper for authenticated and public pages */}
+                      <Route path="/" element={<Layout />}>
+                        <Route index element={<Home />} />
+                        <Route path="watch/:id" element={<VideoPlayer />} />
+                        <Route path="search" element={<Search />} />
+                        <Route path="trending" element={<Trending />} />
+                        <Route path="tweets" element={<Tweets />} />
+                        <Route path="notifications" element={<Notifications />} />
+                        <Route path="library" element={<Library />} />
+                        <Route path="profile/:username" element={<Profile />} />
+                        <Route path="channel/:username/videos" element={<ChannelVideos />} />
+                        <Route path="dashboard" element={
+                          <ProtectedRoute>
+                            <Dashboard />
+                          </ProtectedRoute>
+                        } />
 
-                <Toaster
-                  position="top-center"
-                  toastOptions={{
-                    duration: 4000,
-                    style: {
-                      background: "#1e1e1e",
-                      color: "#ffffff",
-                      border: "1px solid #404040",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      maxWidth: "500px",
-                    },
-                    success: {
-                      iconTheme: {
-                        primary: "#10b981",
-                        secondary: "#ffffff",
+                        {/* These routes show login prompts within layout instead of redirecting */}
+                        <Route path="upload" element={
+                          <ProtectedRoute>
+                            <Upload />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="history" element={<History />} />
+                        <Route path="watch-later" element={<WatchLater />} />
+                        <Route path="liked" element={<LikedVideos />} />
+                        <Route path="playlists" element={<Playlists />} />
+                        <Route path="settings" element={<Settings />} />
+                        <Route path="browse-playlists" element={<BrowsePlaylists />} />
+                        <Route path="playlist/:id" element={<PlaylistDetail />} />
+
+                        {/* Fallback route */}
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                      </Route>
+                    </Routes>
+                  </Suspense>
+
+                  <Toaster
+                    position="top-center"
+                    toastOptions={{
+                      duration: 4000,
+                      style: {
+                        background: "#1e1e1e",
+                        color: "#ffffff",
+                        border: "1px solid #404040",
+                        borderRadius: "8px",
+                        fontSize: "14px",
+                        maxWidth: "500px",
                       },
-                    },
-                    error: {
-                      iconTheme: {
-                        primary: "#ef4444",
-                        secondary: "#ffffff",
+                      success: {
+                        iconTheme: {
+                          primary: "#10b981",
+                          secondary: "#ffffff",
+                        },
                       },
-                    },
-                  }}
-                />
+                      error: {
+                        iconTheme: {
+                          primary: "#ef4444",
+                          secondary: "#ffffff",
+                        },
+                      },
+                    }}
+                  />
                 </div>
               </VideoPreviewProvider>
             </NotificationProvider>
