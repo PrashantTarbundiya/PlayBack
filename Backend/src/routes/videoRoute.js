@@ -54,7 +54,20 @@ router
     .route("/:videoId")
     .get(getVideoById)
     .delete(verifyJWT, deleteVideo)
-    .patch(verifyJWT, upload.single("thumbnail"), updateVideo);
+    .patch(
+        verifyJWT,
+        upload.fields([
+            {
+                name: "thumbnail",
+                maxCount: 1
+            },
+            {
+                name: "videoFile",
+                maxCount: 1
+            }
+        ]),
+        updateVideo
+    );
 
 router.route("/user/:username").get(getUserVideos);
 
@@ -63,13 +76,13 @@ router.route("/toggle/publish/:videoId").patch(verifyJWT, togglePublishStatus);
 router.route("/views/:videoId").patch(async (req, res) => {
     try {
         const { videoId } = req.params;
-        
+
         if (!mongoose.isValidObjectId(videoId)) {
             throw new apiErrors(400, "Invalid video ID");
         }
-        
+
         await videoModel.findByIdAndUpdate(videoId, { $inc: { views: 1 } });
-        
+
         return res.status(200).json(
             new apiResponse(200, {}, "Views incremented successfully")
         );

@@ -40,11 +40,19 @@ const PlaylistDetail = lazy(() => import("./pages/PlaylistDetail"))
 const PageLoader = () => <LoadingScreen message="Loading page..." />
 
 const App = memo(() => {
-  const [showIntro, setShowIntro] = useState(true)
+  const [showIntro, setShowIntro] = useState(() => {
+    // Only show intro if it hasn't been played in this session yet
+    return !sessionStorage.getItem('introPlayed')
+  })
+
+  const handleIntroComplete = () => {
+    sessionStorage.setItem('introPlayed', 'true')
+    setShowIntro(false)
+  }
 
   return (
     <AuthProvider>
-      {showIntro && <IntroAnimation onComplete={() => setShowIntro(false)} />}
+      {showIntro && <IntroAnimation onComplete={handleIntroComplete} />}
       <VideoProvider>
         <Router>
           <SyncedVideoProvider>
