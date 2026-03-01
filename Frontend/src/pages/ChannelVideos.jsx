@@ -20,7 +20,6 @@ const ChannelVideos = () => {
   const [videos, setVideos] = useState([])
   const [loading, setLoading] = useState(true)
   const [isSubscribed, setIsSubscribed] = useState(false)
-  const [subscribing, setSubscribing] = useState(false)
 
   useEffect(() => {
     if (username) {
@@ -54,35 +53,7 @@ const ChannelVideos = () => {
     }
   }
 
-  const handleSubscribe = async () => {
-    if (!currentUser) {
-      toast.remove()
-      toast.error("Please login to subscribe")
-      return
-    }
 
-    if (!channel) return
-
-    try {
-      setSubscribing(true)
-      await subscriptionAPI.toggleSubscription(channel._id)
-      setIsSubscribed(!isSubscribed)
-      setChannel(prev => ({
-        ...prev,
-        subscribersCount: isSubscribed 
-          ? (prev.subscribersCount || 1) - 1 
-          : (prev.subscribersCount || 0) + 1
-      }))
-      toast.remove();
-      toast.success(isSubscribed ? "Unsubscribed" : "Subscribed")
-    } catch (error) {
-      console.error("Subscription error:", error)
-      toast.remove()
-      toast.error("Failed to update subscription")
-    } finally {
-      setSubscribing(false)
-    }
-  }
 
   if (loading) {
     return (

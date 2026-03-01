@@ -26,7 +26,6 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState("videos")
   const [loading, setLoading] = useState(true)
   const [isOwnProfile, setIsOwnProfile] = useState(false)
-  const [subscribing, setSubscribing] = useState(false)
   const [editingTweet, setEditingTweet] = useState(null)
   const [editContent, setEditContent] = useState('')
   const [showDropdown, setShowDropdown] = useState(null)
@@ -46,7 +45,7 @@ const Profile = () => {
       setIsOwnProfile(isOwnProfileMemo)
       fetchUserProfile()
       fetchUserVideos()
-      
+
       if (isOwnProfileMemo) {
         fetchSubscribedChannels()
       }
@@ -84,7 +83,7 @@ const Profile = () => {
       document.addEventListener('mousedown', handleClickOutside)
       return () => document.removeEventListener('mousedown', handleClickOutside)
     }
-    
+
     // Cleanup function to remove any stale event listeners
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
@@ -123,7 +122,7 @@ const Profile = () => {
 
   const fetchUserTweets = useCallback(async () => {
     if (!user?._id) return
-    
+
     try {
       const response = await tweetAPI.getUserTweets(user._id)
       const tweetsData = response.data?.data || []
@@ -135,7 +134,7 @@ const Profile = () => {
 
   const fetchSubscribedChannels = useCallback(async () => {
     if (!currentUser?._id) return
-    
+
     try {
       const response = await subscriptionAPI.getSubscribedChannels(currentUser._id)
       const subscriptionsData = response.data.data || []
@@ -148,47 +147,47 @@ const Profile = () => {
   const fetchUserPlaylists = useCallback(async () => {
     try {
       let playlistsData = []
-      
+
       if (isOwnProfile) {
         // If viewing own profile, get both own playlists and saved playlists
         const [userPlaylists, savedPlaylists] = await Promise.all([
           videoAPI.getUserPlaylistsForSelection(),
           playlistAPI.getSavedPlaylists().catch(() => ({ data: { data: [] } }))
         ])
-        
+
         // Filter out system playlists for own profile
         const filteredUserPlaylists = userPlaylists.filter(
           playlist => playlist.name !== "Watch Later" &&
-                     playlist.name !== "Watch History"
+            playlist.name !== "Watch History"
         )
-        
+
         // Mark saved playlists
         const markedSavedPlaylists = (savedPlaylists?.data?.data || []).map(playlist => ({
           ...playlist,
           isSaved: true
         }))
-        
+
         // Combine both arrays
         playlistsData = [...filteredUserPlaylists, ...markedSavedPlaylists]
       } else if (user?._id) {
         // If viewing someone else's profile, get their public playlists only
         const response = await playlistAPI.getUserPlaylists(user._id)
         const allPlaylists = response.data?.data || []
-        
+
         // Filter to show only public playlists (excluding system playlists)
         playlistsData = allPlaylists.filter(playlist => {
           // Exclude system playlists
           if (playlist.name === "Watch Later" || playlist.name === "Watch History") {
             return false
           }
-          
+
           // Show playlist if it's explicitly public OR if privacy fields are missing (default to public)
           return playlist.isPublic !== false && playlist.visibility !== 'private'
         })
       }
-      
+
       setPlaylists(playlistsData)
-      
+
       // Check saved playlists after playlists are loaded
       if (!isOwnProfile && currentUser && playlistsData.length > 0) {
         // Small delay to ensure state is updated
@@ -211,7 +210,7 @@ const Profile = () => {
 
       // Toggle between public and private
       const newVisibility = currentVisibility === 'public' ? 'private' : 'public'
-      
+
       // Update playlist visibility via API call with required fields
       await playlistAPI.updatePlaylist(playlistId, {
         name: playlist.name,
@@ -219,14 +218,14 @@ const Profile = () => {
         visibility: newVisibility,
         isPublic: newVisibility === 'public'
       })
-      
+
       // Update local state
       setPlaylists(prev => prev.map(p =>
         p._id === playlistId
           ? { ...p, visibility: newVisibility, isPublic: newVisibility === 'public' }
           : p
       ))
-      
+
       toast.remove()
       toast.success(`Playlist is now ${newVisibility}`)
     } catch (error) {
@@ -260,10 +259,10 @@ const Profile = () => {
 
     try {
       setSavingPlaylists(prev => new Set(prev).add(playlistId))
-      
+
       // Use the new bookmark system instead of creating copies
       await playlistAPI.savePlaylist(playlistId)
-      
+
       setSavedPlaylists(prev => new Set(prev).add(playlistId))
       toast.remove()
       toast.success(`Bookmarked "${playlistName}"! You can find it in your Playlists page.`)
@@ -290,7 +289,7 @@ const Profile = () => {
       // Get user's own playlists to check which ones are saved
       const response = await playlistAPI.getUserPlaylists(currentUser._id)
       const userPlaylists = response.data?.data || []
-      
+
       // Find saved playlists that match the profile user's playlists
       const savedPlaylistIds = new Set()
       playlistsData.forEach(playlist => {
@@ -302,7 +301,7 @@ const Profile = () => {
           savedPlaylistIds.add(playlist._id)
         }
       })
-      
+
       setSavedPlaylists(savedPlaylistIds)
     } catch (error) {
     }
@@ -317,9 +316,9 @@ const Profile = () => {
 
     try {
       setUnsavingPlaylists(prev => new Set(prev).add(playlistId))
-      
+
       await playlistAPI.unsavePlaylist(playlistId)
-      
+
       setSavedPlaylists(prev => {
         const newSet = new Set(prev)
         newSet.delete(playlistId)
@@ -348,35 +347,7 @@ const Profile = () => {
     navigate(`/channel/${channelUsername}/videos`)
   }, [navigate])
 
-  const handleSubscribe = useCallback(async () => {
-    if (!currentUser) {
-      toast.remove()
-      toast.error("Please login to subscribe")
-      return
-    }
 
-    if (!user) return
-
-    try {
-      setSubscribing(true)
-      await subscriptionAPI.toggleSubscription(user._id)
-      setUser(prev => ({
-        ...prev,
-        isSubscribed: !prev.isSubscribed,
-        subscribersCount: prev.isSubscribed
-          ? (prev.subscribersCount || 1) - 1
-          : (prev.subscribersCount || 0) + 1
-      }))
-      
-      toast.remove()
-      toast.success(user.isSubscribed ? "Unsubscribed" : "Subscribed")
-    } catch (error) {
-      toast.remove()
-      toast.error("Failed to update subscription")
-    } finally {
-      setSubscribing(false)
-    }
-  }, [currentUser, user, username])
 
   const handleUpdateTweet = async (tweetId) => {
     if (!editContent.trim()) {
@@ -554,11 +525,10 @@ const Profile = () => {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`py-4 px-2 border-b-2 font-medium transition whitespace-nowrap ${
-                  activeTab === tab
+                className={`py-4 px-2 border-b-2 font-medium transition whitespace-nowrap ${activeTab === tab
                     ? 'text-blue-500 border-blue-500'
                     : 'text-gray-400 border-transparent hover:text-white'
-                }`}
+                  }`}
               >
                 {tab === 'videos' && (
                   <>
@@ -641,7 +611,7 @@ const Profile = () => {
                           )}
                         </div>
                       </div>
-                      
+
                       <div className="p-4">
                         <div className="flex justify-between items-start mb-2">
                           <h3
@@ -665,13 +635,12 @@ const Profile = () => {
                                   savingPlaylists.has(playlist._id) ||
                                   unsavingPlaylists.has(playlist._id)
                                 }
-                                className={`p-1.5 rounded-full transition-colors ${
-                                  savedPlaylists.has(playlist._id)
+                                className={`p-1.5 rounded-full transition-colors ${savedPlaylists.has(playlist._id)
                                     ? 'bg-green-600 hover:bg-green-700 text-white'
                                     : savingPlaylists.has(playlist._id) || unsavingPlaylists.has(playlist._id)
-                                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                                    : 'bg-blue-600 hover:bg-blue-700 text-white'
-                                }`}
+                                      ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                      : 'bg-blue-600 hover:bg-blue-700 text-white'
+                                  }`}
                                 title={
                                   savedPlaylists.has(playlist._id)
                                     ? "Remove from bookmarks"
@@ -761,13 +730,13 @@ const Profile = () => {
                             )}
                           </div>
                         </div>
-                        
+
                         {playlist.description && (
                           <p className="text-gray-400 text-sm mb-3 line-clamp-2">
                             {playlist.description}
                           </p>
                         )}
-                        
+
                         <div className="flex items-center justify-between text-xs text-gray-500">
                           <span>{playlist.totalVideos || 0} videos</span>
                           <div className="flex items-center gap-1">
@@ -833,7 +802,7 @@ const Profile = () => {
                                 {formatDistanceToNow(new Date(tweet.createdAt))} ago
                               </span>
                             </div>
-                            
+
                             {isOwnProfile && (
                               <div className="relative">
                                 <button
@@ -842,7 +811,7 @@ const Profile = () => {
                                 >
                                   <MoreHorizontal size={16} className="text-gray-400" />
                                 </button>
-                                
+
                                 {showDropdown === tweet._id && (
                                   <div className="absolute right-0 mt-2 w-48 bg-[#2a2a2a] rounded-lg shadow-lg z-10">
                                     <button
@@ -864,7 +833,7 @@ const Profile = () => {
                               </div>
                             )}
                           </div>
-                          
+
                           <div className="mt-2">
                             {editingTweet === tweet._id ? (
                               <div className="space-y-3">
@@ -900,7 +869,7 @@ const Profile = () => {
                               <p className="text-white whitespace-pre-wrap">{tweet.content}</p>
                             )}
                           </div>
-                          
+
                           {editingTweet !== tweet._id && (
                             <div className="flex items-center space-x-6 mt-3">
                               <span className="flex items-center space-x-2 text-gray-400">

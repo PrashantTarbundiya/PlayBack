@@ -37,7 +37,7 @@ const VideoPlayer = () => {
     setAutoPlayNext,
     handleVideoEnd
   } = useSyncedVideo()
-  
+
   const videoRef = useRef(null)
   const relatedVideosRef = useRef(null)
   const [video, setVideo] = useState(null)
@@ -72,7 +72,7 @@ const VideoPlayer = () => {
       const urlParams = new URLSearchParams(window.location.search)
       const playlistId = urlParams.get('playlist')
       const videoIndex = urlParams.get('index')
-      
+
       if (playlistId) {
         fetchPlaylistContext(playlistId, videoIndex)
       } else {
@@ -81,20 +81,20 @@ const VideoPlayer = () => {
         setPlaylistVideos([])
         setCurrentVideoIndex(0)
       }
-      
+
       // Priority 1: Load video first
       fetchVideo()
-      
+
       // Priority 2: Load related videos after a short delay
       const relatedTimer = setTimeout(() => {
-        fetchRelatedVideos().catch(() => {})
+        fetchRelatedVideos().catch(() => { })
       }, 300)
-      
+
       // Priority 3: Load comments last
       const commentsTimer = setTimeout(() => {
         setShouldLoadComments(true)
       }, 800)
-      
+
       return () => {
         clearTimeout(relatedTimer)
         clearTimeout(commentsTimer)
@@ -127,7 +127,7 @@ const VideoPlayer = () => {
           })
         }
       }, 500)
-      
+
       return () => clearTimeout(timer)
     }
   }, [video, loading])
@@ -148,7 +148,7 @@ const VideoPlayer = () => {
 
       switch (e.code) {
         case 'Space':
-          videoElement.paused ? videoElement.play().catch(() => {}) : videoElement.pause()
+          videoElement.paused ? videoElement.play().catch(() => { }) : videoElement.pause()
           break
         case 'ArrowLeft':
           videoElement.currentTime = Math.max(0, videoElement.currentTime - 10)
@@ -189,7 +189,7 @@ const VideoPlayer = () => {
       if (!id?.trim()) throw new Error("Video ID is missing")
 
       const trimmedId = id.trim()
-      
+
       // Check cache first
       const cached = getCachedVideoData(trimmedId)
       if (cached) {
@@ -204,17 +204,17 @@ const VideoPlayer = () => {
         setLoading(false)
         return
       }
-      
+
       const response = await videoAPI.getVideoById(trimmedId)
       const videoData = response?.data?.data || response?.data
 
       if (!videoData) throw new Error("No video data received")
       setVideo(videoData)
       setLikesCount(videoData.likesCount || 0)
-      
+
       // Load video into synced context
       loadVideo(videoData, currentPlaylist, currentVideoIndex)
-      
+
       // Set initial states from video data if available
       if (videoData.isLiked !== undefined) {
         setIsLiked(videoData.isLiked)
@@ -248,7 +248,7 @@ const VideoPlayer = () => {
           // Silently handle watch history errors to not disrupt video loading
         }
       }
-      
+
       // Cache the video data
       cacheVideoData(trimmedId, {
         video: videoData,
@@ -288,16 +288,16 @@ const VideoPlayer = () => {
       setIsPlaylistLoading(true)
       const response = await playlistAPI.getPlaylistById(playlistId)
       const playlistData = response?.data?.data
-      
+
       if (playlistData) {
         setCurrentPlaylist(playlistData)
         const videos = playlistData.videos || []
         setPlaylistVideos(videos)
-        
+
         // Find current video index
         const currentIndex = videoIndex ? parseInt(videoIndex) : videos.findIndex(v => v._id === id)
         setCurrentVideoIndex(currentIndex >= 0 ? currentIndex : 0)
-        
+
         // Update synced context with playlist info
         if (video) {
           loadVideo(video, playlistData, currentIndex >= 0 ? currentIndex : 0)
@@ -312,7 +312,7 @@ const VideoPlayer = () => {
 
   const fetchRelatedVideos = async (reset = true) => {
     if (loadingRelated) return
-    
+
     // Check if related videos are already cached
     const cached = getCachedVideoData(id)
     if (cached?.relatedVideos?.length > 0 && reset) {
@@ -321,7 +321,7 @@ const VideoPlayer = () => {
       setHasMoreRelated(cached.relatedVideos.length === 8)
       return
     }
-    
+
     try {
       setLoadingRelated(true)
       const response = await videoAPI.getWatchNextVideos(id, 8)
@@ -330,7 +330,7 @@ const VideoPlayer = () => {
         setRelatedVideos(videosData)
         setRelatedVideosPage(1)
         setHasMoreRelated(videosData.length === 8)
-        
+
         // Update cache with related videos
         const existingCache = getCachedVideoData(id)
         if (existingCache) {
@@ -349,13 +349,13 @@ const VideoPlayer = () => {
 
   const loadMoreRelatedVideos = async () => {
     if (!hasMoreRelated || loadingMoreRelated) return
-    
+
     setLoadingMoreRelated(true)
     try {
       const response = await videoAPI.getAllVideosWithOwnerDetails(relatedVideosPage + 1, 8)
       const videosData = response?.data?.data || response?.data || []
       const filteredVideos = videosData.filter(v => v._id !== id && !relatedVideos.some(rv => rv._id === v._id))
-      
+
       if (filteredVideos.length > 0) {
         setRelatedVideos(prev => [...prev, ...filteredVideos])
         setRelatedVideosPage(prev => prev + 1)
@@ -369,11 +369,11 @@ const VideoPlayer = () => {
       setLoadingMoreRelated(false)
     }
   }
-  
+
   // Intersection Observer for infinite scroll
   useEffect(() => {
     if (!relatedVideosRef.current || currentPlaylist) return
-    
+
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMoreRelated && !loadingMoreRelated) {
@@ -382,10 +382,10 @@ const VideoPlayer = () => {
       },
       { threshold: 0.5 }
     )
-    
+
     const sentinel = relatedVideosRef.current.querySelector('.load-more-sentinel')
     if (sentinel) observer.observe(sentinel)
-    
+
     return () => observer.disconnect()
   }, [hasMoreRelated, loadingMoreRelated, relatedVideos, currentPlaylist])
 
@@ -397,7 +397,7 @@ const VideoPlayer = () => {
       try {
         const response = await likeAPI.getLikedVideos()
         const likedVideos = response?.data?.data || response?.data || []
-        
+
         const isVideoLiked = likedVideos.some(item => {
           const video = item.likedVideo || item
           return video._id === videoId || video.video?._id === videoId
@@ -408,7 +408,7 @@ const VideoPlayer = () => {
         // If we can't get liked videos, we'll rely on the video data itself
         setIsLiked(false)
       }
-      
+
     } catch (error) {
       setIsLiked(false)
     }
@@ -420,7 +420,7 @@ const VideoPlayer = () => {
       try {
         const response = await subscriptionAPI.getSubscribedChannels(user._id)
         const subscriptions = response?.data?.data || response?.data || []
-        
+
         const isSubscribedToChannel = subscriptions.some(sub => {
           const channel = sub.subscribedChannel || sub.channel || sub
           return channel._id === channelId || channel === channelId
@@ -430,7 +430,7 @@ const VideoPlayer = () => {
       } catch (error) {
         setIsSubscribed(false)
       }
-      
+
     } catch (error) {
       setIsSubscribed(false)
     }
@@ -440,7 +440,7 @@ const VideoPlayer = () => {
     try {
       const response = await playlistAPI.checkVideoInPlaylists(videoId)
       const data = response?.data?.data || response?.data
-      
+
       if (data) {
         setIsSaved(data.isSaved || false)
         setSavedPlaylists(data.playlists || [])
@@ -463,10 +463,10 @@ const VideoPlayer = () => {
     }
 
     setActionLoading(prev => ({ ...prev, like: true }))
-    
+
     try {
       const response = await likeAPI.toggleVideoLike(id)
-      
+
       // Update like status based on response or toggle current state
       const newLikeStatus = response?.data?.isLiked !== undefined
         ? response.data.isLiked
@@ -478,25 +478,25 @@ const VideoPlayer = () => {
 
       setIsLiked(newLikeStatus)
       setLikesCount(newLikesCount)
-      
+
       // Update cache
       const cached = getCachedVideoData(id)
       if (cached) {
         cacheVideoData(id, { ...cached, isLiked: newLikeStatus, likesCount: newLikesCount })
       }
-      
+
       toast.remove()
       toast.success(newLikeStatus ? "Video liked!" : "Like removed")
-      
+
     } catch (error) {
-      
+
       let errorMessage = "Failed to like video"
       if (error.response?.status === 401) {
         errorMessage = "Please login to like videos"
       } else if (error.response?.status === 404) {
         errorMessage = "Video not found"
       }
-      
+
       toast.remove()
       toast.error(errorMessage)
     } finally {
@@ -510,7 +510,7 @@ const VideoPlayer = () => {
       toast.error("Please login to subscribe")
       return
     }
-    
+
     if (!video?.owner?._id) {
       toast.remove()
       toast.error("Channel info missing")
@@ -525,32 +525,32 @@ const VideoPlayer = () => {
 
     try {
       const response = await subscriptionAPI.toggleSubscription(video.owner._id)
-      
+
       // Update subscription status based on response or toggle current state
       const newSubscriptionStatus = response?.data?.subscribed !== undefined
         ? response.data.subscribed
         : !isSubscribed
 
       setIsSubscribed(newSubscriptionStatus)
-      
+
       // Update cache
       const cached = getCachedVideoData(id)
       if (cached) {
         cacheVideoData(id, { ...cached, isSubscribed: newSubscriptionStatus })
       }
-      
+
       toast.remove()
       toast.success(newSubscriptionStatus ? "Subscribed!" : "Unsubscribed")
-      
+
     } catch (error) {
-      
+
       let errorMessage = "Failed to subscribe"
       if (error.response?.status === 401) {
         errorMessage = "Please login to subscribe"
       } else if (error.response?.status === 404) {
         errorMessage = "Channel not found"
       }
-      
+
       toast.remove()
       toast.error(errorMessage)
     } finally {
@@ -570,7 +570,7 @@ const VideoPlayer = () => {
     }
 
     setActionLoading(prev => ({ ...prev, watchLater: true }))
-    
+
     try {
       // Check if video is already in Watch Later before making API call
       const watchLaterPlaylist = savedPlaylists.find(p => p.name === 'Watch Later')
@@ -579,7 +579,7 @@ const VideoPlayer = () => {
         toast.error("Video is already in Watch Later")
         return
       }
-      
+
       await videoAPI.addToWatchLater(id)
       toast.remove()
       toast.success("Added to Watch Later!")
@@ -605,7 +605,7 @@ const VideoPlayer = () => {
     }
 
     setActionLoading(prev => ({ ...prev, saveToPlaylist: true }))
-    
+
     try {
       setShowPlaylistModal(true)
     } catch (error) {
@@ -620,7 +620,7 @@ const VideoPlayer = () => {
     setShowPlaylistModal(false)
     // Refresh save status after modal closes to update UI
     if (user && id) {
-      checkSaveStatus(id).catch(() => {})
+      checkSaveStatus(id).catch(() => { })
     }
   }
 
@@ -629,7 +629,7 @@ const VideoPlayer = () => {
       navigator.share({
         title: video.title,
         url: window.location.href,
-      }).catch(() => {})
+      }).catch(() => { })
     } else {
       navigator.clipboard.writeText(window.location.href)
         .then(() => {
@@ -664,19 +664,19 @@ const VideoPlayer = () => {
     if (avatarError) return getFallbackAvatar()
     const avatar = video.owner?.avatar
     if (!avatar) return getFallbackAvatar()
-    
+
     let imageUrl = ""
     if (typeof avatar === 'string') {
       imageUrl = avatar
     } else {
       imageUrl = avatar.url || avatar.secure_url || ""
     }
-    
+
     // Check if it's a valid URL
     if (!imageUrl || imageUrl.trim() === "") {
       return getFallbackAvatar()
     }
-    
+
     return imageUrl
   }
 
@@ -684,19 +684,19 @@ const VideoPlayer = () => {
     if (thumbnailError) return "/default-thumbnail.jpg"
     const thumbnail = video.thumbnail
     if (!thumbnail) return "/default-thumbnail.jpg"
-    
+
     let imageUrl = ""
     if (typeof thumbnail === 'string') {
       imageUrl = thumbnail
     } else {
       imageUrl = thumbnail.url || thumbnail.secure_url || ""
     }
-    
+
     // Check if it's a valid URL
     if (!imageUrl || imageUrl.trim() === "") {
       return "/default-thumbnail.jpg"
     }
-    
+
     return imageUrl
   }
 
@@ -707,7 +707,7 @@ const VideoPlayer = () => {
     }
 
     let videoUrl = null
-    
+
     // Handle different possible URL structures from Cloudinary or other sources
     if (typeof videoFile === 'string') {
       // Direct string URL (like Cloudinary URL)
@@ -715,7 +715,7 @@ const VideoPlayer = () => {
     } else if (typeof videoFile === 'object') {
       // Object with URL properties
       videoUrl = videoFile.url || videoFile.secure_url || videoFile.path || videoFile.src
-      
+
       // If still no URL found, check if it's a nested object
       if (!videoUrl && videoFile.videoFile) {
         const nestedFile = videoFile.videoFile
@@ -726,7 +726,7 @@ const VideoPlayer = () => {
         }
       }
     }
-    
+
     // Validate URL format
     if (videoUrl && !videoUrl.startsWith('http')) {
       // If it's a relative path, you might need to construct the full URL
@@ -737,7 +737,7 @@ const VideoPlayer = () => {
         return null
       }
     }
-    
+
     if (!videoUrl) {
       toast.remove()
       toast.error('Video URL could not be resolved. Please check video file configuration.')
@@ -813,11 +813,10 @@ const VideoPlayer = () => {
             <button
               onClick={handleWatchLater}
               disabled={actionLoading.watchLater}
-              className={`flex items-center gap-2 px-4 py-[22px] h-[36px] rounded-full transition-colors ${
-                actionLoading.watchLater
+              className={`flex items-center gap-2 px-4 py-[22px] h-[36px] rounded-full transition-colors ${actionLoading.watchLater
                   ? "bg-gray-600 text-gray-400 cursor-not-allowed"
                   : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-              }`}
+                }`}
             >
               <Clock size={20} />
               <span className="hidden sm:inline">{actionLoading.watchLater ? "..." : "Watch Later"}</span>
@@ -825,11 +824,10 @@ const VideoPlayer = () => {
             <button
               onClick={handleSaveToPlaylist}
               disabled={actionLoading.saveToPlaylist}
-              className={`flex items-center gap-2 px-4 py-[22px] h-[36px] rounded-full transition-colors ${
-                actionLoading.saveToPlaylist
+              className={`flex items-center gap-2 px-4 py-[22px] h-[36px] rounded-full transition-colors ${actionLoading.saveToPlaylist
                   ? "bg-gray-600 text-gray-400 cursor-not-allowed"
                   : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-              }`}
+                }`}
               title={isSaved ? `Saved in ${savedPlaylists.length} playlist${savedPlaylists.length === 1 ? '' : 's'}` : 'Save to playlist'}
             >
               <Plus size={20} className={isSaved ? "fill-current" : ""} />
@@ -872,6 +870,26 @@ const VideoPlayer = () => {
               isSubscribed={isSubscribed}
               onSubscriptionChange={(newStatus) => {
                 setIsSubscribed(newStatus);
+                // Update local video state for subscriber count
+                setVideo(prev => {
+                  if (!prev) return prev;
+                  return {
+                    ...prev,
+                    owner: {
+                      ...prev.owner,
+                      subscribersCount: newStatus
+                        ? (prev.owner.subscribersCount || 0) + 1
+                        : Math.max((prev.owner.subscribersCount || 1) - 1, 0)
+                    }
+                  };
+                });
+
+                // Update cache
+                const cached = getCachedVideoData(id);
+                if (cached) {
+                  cacheVideoData(id, { ...cached, isSubscribed: newStatus });
+                }
+
                 // Update localStorage
                 if (video?.owner?._id) {
                   localStorage.setItem(`subscribed_${video.owner._id}`, newStatus.toString());
@@ -908,16 +926,15 @@ const VideoPlayer = () => {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setAutoPlayNext(!autoPlayNext)}
-                    className={`p-2 rounded-full transition-colors ${
-                      autoPlayNext
+                    className={`p-2 rounded-full transition-colors ${autoPlayNext
                         ? 'bg-blue-600 text-white'
                         : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
-                    }`}
+                      }`}
                     title="Auto-play next video"
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M8 5v14l11-7z"/>
-                      <path d="M3 5v14l11-7z" opacity="0.5"/>
+                      <path d="M8 5v14l11-7z" />
+                      <path d="M3 5v14l11-7z" opacity="0.5" />
                     </svg>
                   </button>
                 </div>
@@ -944,11 +961,10 @@ const VideoPlayer = () => {
                         const newUrl = `/watch/${video._id}?playlist=${currentPlaylist._id}&index=${index}`
                         navigate(newUrl)
                       }}
-                      className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors duration-200 ${
-                        index === currentVideoIndex
+                      className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors duration-200 ${index === currentVideoIndex
                           ? 'bg-blue-900/50 border border-blue-500'
                           : 'bg-[#1a1a1a] hover:bg-[#2a2a2a]'
-                      }`}
+                        }`}
                       style={{ minHeight: '82px', maxHeight: '82px' }}
                     >
                       <div className="relative flex-shrink-0 overflow-hidden rounded bg-gray-800" style={{ width: '106px', height: '64px' }}>
@@ -960,36 +976,35 @@ const VideoPlayer = () => {
                             e.target.src = '/default-thumbnail.jpg'
                           }}
                         />
-                        
+
                         {/* Video number indicator */}
                         <div className="absolute top-0.5 left-0.5 bg-black/80 text-white text-xs px-1 py-0.5 rounded font-medium">
                           {index + 1}
                         </div>
-                        
+
                         {/* Duration badge */}
                         {video.duration && (
                           <div className="absolute bottom-0.5 right-0.5 bg-black/80 text-white text-xs px-1 py-0.5 rounded font-medium">
                             {Math.floor(video.duration / 60)}:{String(Math.floor(video.duration % 60)).padStart(2, '0')}
                           </div>
                         )}
-                        
+
                         {/* Playing indicator */}
                         {index === currentVideoIndex && (
                           <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                             <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center shadow-lg">
                               <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
-                                <path d="M8 5v14l11-7z"/>
+                                <path d="M8 5v14l11-7z" />
                               </svg>
                             </div>
                           </div>
                         )}
                       </div>
-                      
+
                       <div className="flex-1 min-w-0 flex flex-col justify-center" style={{ height: '64px' }}>
                         <h5
-                          className={`text-sm font-medium leading-tight mb-1 ${
-                            index === currentVideoIndex ? 'text-blue-300' : 'text-white'
-                          }`}
+                          className={`text-sm font-medium leading-tight mb-1 ${index === currentVideoIndex ? 'text-blue-300' : 'text-white'
+                            }`}
                           style={{
                             display: '-webkit-box',
                             WebkitLineClamp: 2,

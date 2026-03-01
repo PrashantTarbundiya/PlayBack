@@ -4,9 +4,9 @@ import { subscriptionAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
-const SubscriptionDropdown = ({ 
-  channelId, 
-  isSubscribed, 
+const SubscriptionDropdown = ({
+  channelId,
+  isSubscribed,
   onSubscriptionChange,
   className = "",
   size = "default" // "small", "default", "large"
@@ -76,8 +76,8 @@ const SubscriptionDropdown = ({
     setLoading(true);
     try {
       const response = await subscriptionAPI.toggleSubscription(channelId);
-      const newSubscriptionStatus = response?.data?.subscribed !== undefined
-        ? response.data.subscribed
+      const newSubscriptionStatus = response?.data?.data?.subscribed !== undefined
+        ? response.data.data.subscribed
         : !isSubscribed;
 
       // Update parent component
@@ -113,21 +113,21 @@ const SubscriptionDropdown = ({
     setNotificationPreference(preference);
     localStorage.setItem(`notification_pref_${channelId}`, preference);
     setIsOpen(false);
-    
+
     // Show feedback based on preference
     const messages = {
       all: "You'll get all notifications from this channel",
       personalised: "You'll get personalized notifications",
       none: "Notifications turned off for this channel"
     };
-    
+
     toast.remove()
     toast.success(messages[preference]);
   };
 
   const getNotificationIcon = () => {
     if (!isSubscribed) return <Bell size={config.icon} />;
-    
+
     switch (notificationPreference) {
       case 'all':
         return <Bell size={config.icon} />;
@@ -143,7 +143,7 @@ const SubscriptionDropdown = ({
   const getButtonText = () => {
     if (loading) return "Loading...";
     if (!isSubscribed) return "Subscribe";
-    
+
     switch (notificationPreference) {
       case 'all':
         return "Subscribed";
@@ -160,11 +160,11 @@ const SubscriptionDropdown = ({
     if (loading) {
       return "bg-gray-600 text-gray-400 cursor-not-allowed";
     }
-    
+
     if (!isSubscribed) {
       return "bg-red-600 hover:bg-red-700 text-white hover:shadow-lg hover:shadow-red-500/30";
     }
-    
+
     return "bg-gray-700 hover:bg-gray-600 text-white shadow-lg shadow-gray-500/20";
   };
 
@@ -195,9 +195,9 @@ const SubscriptionDropdown = ({
           {getButtonText()}
         </span>
         {isSubscribed && (
-          <ChevronDown 
-            size={config.icon - 2} 
-            className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} 
+          <ChevronDown
+            size={config.icon - 2}
+            className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
           />
         )}
       </button>
@@ -209,9 +209,8 @@ const SubscriptionDropdown = ({
           <div className="py-1">
             <button
               onClick={() => handleNotificationPreferenceChange('all')}
-              className={`w-full px-3 py-2 text-left hover:bg-gray-700 transition-colors flex items-center gap-2 text-sm ${
-                notificationPreference === 'all' ? 'bg-gray-700 text-white' : 'text-gray-300'
-              }`}
+              className={`w-full px-3 py-2 text-left hover:bg-gray-700 transition-colors flex items-center gap-2 text-sm ${notificationPreference === 'all' ? 'bg-gray-700 text-white' : 'text-gray-300'
+                }`}
             >
               <Bell size={14} />
               <span className="font-medium">All</span>
@@ -219,9 +218,8 @@ const SubscriptionDropdown = ({
 
             <button
               onClick={() => handleNotificationPreferenceChange('personalised')}
-              className={`w-full px-3 py-2 text-left hover:bg-gray-700 transition-colors flex items-center gap-2 text-sm ${
-                notificationPreference === 'personalised' ? 'bg-gray-700 text-white' : 'text-gray-300'
-              }`}
+              className={`w-full px-3 py-2 text-left hover:bg-gray-700 transition-colors flex items-center gap-2 text-sm ${notificationPreference === 'personalised' ? 'bg-gray-700 text-white' : 'text-gray-300'
+                }`}
             >
               <Settings size={14} />
               <span className="font-medium">Personalised</span>
@@ -229,9 +227,8 @@ const SubscriptionDropdown = ({
 
             <button
               onClick={() => handleNotificationPreferenceChange('none')}
-              className={`w-full px-3 py-2 text-left hover:bg-gray-700 transition-colors flex items-center gap-2 text-sm ${
-                notificationPreference === 'none' ? 'bg-gray-700 text-white' : 'text-gray-300'
-              }`}
+              className={`w-full px-3 py-2 text-left hover:bg-gray-700 transition-colors flex items-center gap-2 text-sm ${notificationPreference === 'none' ? 'bg-gray-700 text-white' : 'text-gray-300'
+                }`}
             >
               <BellOff size={14} />
               <span className="font-medium">None</span>
