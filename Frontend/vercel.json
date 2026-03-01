@@ -6,6 +6,10 @@
       "destination": "/api/sitemap"
     },
     {
+      "source": "/sitemap.txt",
+      "destination": "/api/sitemap"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
