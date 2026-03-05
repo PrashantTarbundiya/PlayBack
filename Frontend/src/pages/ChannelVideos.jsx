@@ -11,6 +11,7 @@ import {
 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import toast from "react-hot-toast"
+import SEO from "../components/SEO/SEO"
 
 const ChannelVideos = () => {
   const { username } = useParams()
@@ -56,10 +57,17 @@ const ChannelVideos = () => {
 
 
   if (loading) {
-    return (
+  return (
+    <>
+      <SEO
+        title="Channel Videos"
+        description="Browse videos from this channel on PlayBack."
+        url="/channel"
+      />
       <div className="flex items-center justify-center min-h-screen bg-[#0f0f0f] text-white">
         <p className="text-gray-400 text-lg">Loading channel...</p>
       </div>
+    </>
     )
   }
 
@@ -80,6 +88,12 @@ const ChannelVideos = () => {
   }
 
   return (
+    <>
+      <SEO
+        title="Channel Videos"
+        description="Browse videos from this channel on PlayBack."
+        url="/channel"
+      />
     <div className="min-h-screen bg-[#0f0f0f] text-white">
       {/* Header */}
       <div className="bg-[#1c1c1c] border-b border-gray-800">
@@ -168,6 +182,7 @@ const ChannelVideos = () => {
         )}
       </div>
     </div>
+    </>
   )
 }
 

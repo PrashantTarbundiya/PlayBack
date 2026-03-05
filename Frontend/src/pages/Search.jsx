@@ -5,6 +5,7 @@ import { useSearchParams } from "react-router-dom"
 import VideoCard from "../components/VideoCard/VideoCard"
 import { videoAPI } from "../services/api"
 import { VideoGridSkeleton } from "../components/Skeleton/Skeleton"
+import SEO from "../components/SEO/SEO"
 
 const Search = () => {
   const [searchParams] = useSearchParams()
@@ -27,12 +28,12 @@ const Search = () => {
     try {
       setLoading(true)
       const res = await videoAPI.searchVideos(query, pageNum, 50)
-      
+
       // Handle paginated response structure
       const data = res.data?.data
       let newVideos = []
       let hasNextPage = false
-      
+
       if (Array.isArray(data)) {
         newVideos = data
       } else if (data?.docs && Array.isArray(data.docs)) {
@@ -41,13 +42,13 @@ const Search = () => {
       } else if (res.data && Array.isArray(res.data)) {
         newVideos = res.data
       }
-      
+
       if (reset) {
         setVideos(newVideos)
       } else {
         setVideos(prev => [...prev, ...newVideos])
       }
-      
+
       setHasMore(hasNextPage && newVideos.length >= 50)
     } catch (err) {
       console.error('Search error:', err)
@@ -68,51 +69,59 @@ const Search = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0f0f0f] text-white p-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-1">Search results for "{query}"</h2>
-          <p className="text-sm text-gray-400">{videos.length} results found</p>
-        </div>
+    <>
+      <SEO
+        title={query ? `Search: ${query}` : "Search"}
+        description={query ? `Search results for "${query}" on PlayBack.` : "Search for videos on PlayBack."}
+        url={`/search${query ? `?q=${encodeURIComponent(query)}` : ''}`}
+        keywords={`search videos, ${query || ''}, PlayBack search`}
+      />
+      <div className="min-h-screen bg-[#0f0f0f] text-white p-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold mb-1">Search results for "{query}"</h2>
+            <p className="text-sm text-gray-400">{videos.length} results found</p>
+          </div>
 
-        {loading && page === 1 ? (
-          <VideoGridSkeleton count={12} />
-        ) : videos.length > 0 ? (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {videos.map((video) => (
-                <VideoCard key={video._id} video={video} />
-              ))}
-            </div>
-            
-            {/* Load More Button */}
-            {hasMore && (
-              <div className="flex justify-center mt-8">
-                <button
-                  onClick={loadMore}
-                  disabled={loading}
-                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white rounded-lg transition-colors flex items-center gap-2"
-                >
-                  {loading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
-                      Loading...
-                    </>
-                  ) : (
-                    'Load More'
-                  )}
-                </button>
+          {loading && page === 1 ? (
+            <VideoGridSkeleton count={12} />
+          ) : videos.length > 0 ? (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {videos.map((video) => (
+                  <VideoCard key={video._id} video={video} />
+                ))}
               </div>
-            )}
-          </div>
-        ) : (
-          <div className="text-center py-10">
-            <h3 className="text-lg font-semibold mb-2">No results found</h3>
-            <p className="text-gray-400">Try different keywords or check your spelling</p>
-          </div>
-        )}
+
+              {/* Load More Button */}
+              {hasMore && (
+                <div className="flex justify-center mt-8">
+                  <button
+                    onClick={loadMore}
+                    disabled={loading}
+                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white rounded-lg transition-colors flex items-center gap-2"
+                  >
+                    {loading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                        Loading...
+                      </>
+                    ) : (
+                      'Load More'
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-10">
+              <h3 className="text-lg font-semibold mb-2">No results found</h3>
+              <p className="text-gray-400">Try different keywords or check your spelling</p>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   )
 }
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { History, Clock, ThumbsUp, PlaySquare, List, Video } from "lucide-react"
 import { useAuth } from "../contexts/AuthContext"
+import SEO from "../components/SEO/SEO"
 
 const Library = () => {
   const { user } = useAuth()
@@ -45,7 +46,13 @@ const Library = () => {
   ]
 
   if (!user) {
-    return (
+  return (
+    <>
+      <SEO
+        title="Library"
+        description="Your personal video library on PlayBack."
+        url="/library"
+      />
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
         <div className="text-6xl mb-4">📚</div>
         <h2 className="text-2xl font-bold mb-2 text-white">Sign in to see your library</h2>
@@ -57,10 +64,17 @@ const Library = () => {
           Sign In
         </Link>
       </div>
+    </>
     )
   }
 
   return (
+    <>
+      <SEO
+        title="Library"
+        description="Your personal video library on PlayBack."
+        url="/library"
+      />
     <div className="min-h-screen bg-[#0f0f0f] text-white p-6">
       <div className="flex items-center gap-3 mb-6">
         <div className="p-3 bg-purple-600 rounded-full">
@@ -116,6 +130,7 @@ const Library = () => {
         </div>
       </div>
     </div>
+    </>
   )
 }
 

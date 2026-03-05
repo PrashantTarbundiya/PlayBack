@@ -8,6 +8,7 @@ import LoadingButton from "../components/LoadingButton"
 import OAuthButtons from "../components/OAuthButtons"
 import { Mail, Lock, ArrowRight } from "lucide-react"
 import toast from "react-hot-toast"
+import SEO from "../components/SEO/SEO"
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -119,105 +120,111 @@ const Login = () => {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden">
-        <div className="p-8 text-center border-b border-gray-700">
-          <div className="mb-4">
-            <h1 className="text-3xl font-bold text-red-500">PlayBack</h1>
-          </div>
-          <h2 className="text-2xl font-bold text-white mb-2">Welcome Back</h2>
-          <p className="text-gray-400">Sign in to continue to your account</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
-          {/* OAuth Buttons at the top */}
-          <div className="space-y-3">
-            <OAuthButtons loading={loading} />
-            
-            {/* Divider */}
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-600"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-3 bg-gray-800 text-gray-400">Or continue with email</span>
-              </div>
+    <>
+      <SEO
+        title="Login"
+        description="Sign in to your PlayBack account to watch, upload, and share videos."
+        url="/login"
+      />
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden">
+          <div className="p-8 text-center border-b border-gray-700">
+            <div className="mb-4">
+              <h1 className="text-3xl font-bold text-red-500">PlayBack</h1>
             </div>
+            <h2 className="text-2xl font-bold text-white mb-2">Welcome Back</h2>
+            <p className="text-gray-400">Sign in to continue to your account</p>
           </div>
 
-          <FormInput
-            label="Email Address"
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            error={errors.email}
-            placeholder="Enter your email"
-            required
-            disabled={loading}
-          />
+          <form onSubmit={handleSubmit} className="p-8 space-y-6">
+            {/* OAuth Buttons at the top */}
+            <div className="space-y-3">
+              <OAuthButtons loading={loading} />
 
-          <FormInput
-            label="Password"
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            error={errors.password}
-            placeholder="Enter your password"
-            required
-            disabled={loading}
-          />
-
-          <div className="flex items-center justify-between">
-            <label className="flex items-center space-x-2 cursor-pointer">
+              {/* Divider */}
               <div className="relative">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  disabled={loading}
-                  className="sr-only"
-                />
-                <div className={`w-4 h-4 border-2 rounded transition-colors duration-200 ${
-                  rememberMe
-                    ? 'bg-blue-600 border-blue-600'
-                    : 'border-gray-400 bg-transparent'
-                }`}>
-                  {rememberMe && (
-                    <svg className="w-3 h-3 text-white absolute top-0.5 left-0.5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  )}
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-600"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-3 bg-gray-800 text-gray-400">Or continue with email</span>
                 </div>
               </div>
-              <span className="text-sm text-gray-300">Remember me</span>
-            </label>
-            <Link to="/forgot-password" className="text-sm text-blue-400 hover:text-blue-300 transition-colors duration-200">
-              Forgot password?
-            </Link>
+            </div>
+
+            <FormInput
+              label="Email Address"
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              error={errors.email}
+              placeholder="Enter your email"
+              required
+              disabled={loading}
+            />
+
+            <FormInput
+              label="Password"
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              error={errors.password}
+              placeholder="Enter your password"
+              required
+              disabled={loading}
+            />
+
+            <div className="flex items-center justify-between">
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    disabled={loading}
+                    className="sr-only"
+                  />
+                  <div className={`w-4 h-4 border-2 rounded transition-colors duration-200 ${rememberMe
+                    ? 'bg-blue-600 border-blue-600'
+                    : 'border-gray-400 bg-transparent'
+                    }`}>
+                    {rememberMe && (
+                      <svg className="w-3 h-3 text-white absolute top-0.5 left-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+                <span className="text-sm text-gray-300">Remember me</span>
+              </label>
+              <Link to="/forgot-password" className="text-sm text-blue-400 hover:text-blue-300 transition-colors duration-200">
+                Forgot password?
+              </Link>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+            >
+              {loading ? "Signing In..." : "Sign In"}
+              <ArrowRight size={18} />
+            </button>
+          </form>
+
+          <div className="p-8 pt-0 text-center border-t border-gray-700">
+            <p className="text-gray-400">
+              Don't have an account?{" "}
+              <Link to="/register" className="text-blue-400 hover:text-blue-300 font-medium transition-colors duration-200">
+                Create one here
+              </Link>
+            </p>
           </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
-          >
-            {loading ? "Signing In..." : "Sign In"}
-            <ArrowRight size={18} />
-          </button>
-        </form>
-
-        <div className="p-8 pt-0 text-center border-t border-gray-700">
-          <p className="text-gray-400">
-            Don't have an account?{" "}
-            <Link to="/register" className="text-blue-400 hover:text-blue-300 font-medium transition-colors duration-200">
-              Create one here
-            </Link>
-          </p>
         </div>
       </div>
-    </div>
+    </>
   )
 }
 

@@ -5,6 +5,7 @@ import { authAPI } from "../services/api"
 import { useAuth } from "../contexts/AuthContext"
 import { Link } from "react-router-dom"
 import { VideoGridSkeleton } from "../components/Skeleton/Skeleton"
+import SEO from "../components/SEO/SEO"
 
 const History = () => {
   const [history, setHistory] = useState([])
@@ -55,7 +56,13 @@ const History = () => {
   }) : []
 
   if (!user) {
-    return (
+  return (
+    <>
+      <SEO
+        title="Watch History"
+        description="View your video watch history on PlayBack."
+        url="/history"
+      />
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
         <div className="text-6xl mb-4">📺</div>
         <h2 className="text-2xl font-bold mb-2 text-white">Sign in to see your history</h2>
@@ -67,6 +74,7 @@ const History = () => {
           Sign In
         </Link>
       </div>
+    </>
     )
   }
 
@@ -90,6 +98,12 @@ const History = () => {
   }
 
   return (
+    <>
+      <SEO
+        title="Watch History"
+        description="View your video watch history on PlayBack."
+        url="/history"
+      />
     <div className="min-h-screen bg-[#0f0f0f] text-white p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
@@ -166,6 +180,7 @@ const History = () => {
         </div>
       )}
     </div>
+    </>
   )
 }
 

@@ -6,6 +6,7 @@ import { playlistAPI } from "../services/api"
 import { useAuth } from "../contexts/AuthContext"
 import { formatDistanceToNow } from "date-fns"
 import { InlineLoader } from "../components/Skeleton/LoadingScreen"
+import SEO from "../components/SEO/SEO"
 
 const BrowsePlaylists = () => {
   const [playlists, setPlaylists] = useState([])
@@ -79,7 +80,13 @@ const BrowsePlaylists = () => {
   }
 
   if (!user) {
-    return (
+  return (
+    <>
+      <SEO
+        title="Browse Playlists"
+        description="Discover public playlists from the PlayBack community."
+        url="/browse-playlists"
+      />
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
         <div className="text-6xl mb-4">🎵</div>
         <h2 className="text-2xl font-bold mb-2 text-white">Sign in to browse playlists</h2>
@@ -91,10 +98,17 @@ const BrowsePlaylists = () => {
           Sign In
         </Link>
       </div>
+    </>
     )
   }
 
   return (
+    <>
+      <SEO
+        title="Browse Playlists"
+        description="Discover public playlists from the PlayBack community."
+        url="/browse-playlists"
+      />
     <div className="min-h-screen bg-[#0f0f0f] text-white p-4 sm:p-6">
       <div className="mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold mb-2">Browse Public Playlists</h1>
@@ -253,6 +267,7 @@ const BrowsePlaylists = () => {
         </div>
       )}
     </div>
+    </>
   )
 }
 

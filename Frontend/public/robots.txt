@@ -1,4 +1,13 @@
 User-agent: *
 Allow: /
+Disallow: /settings
+Disallow: /dashboard
+Disallow: /upload
+Disallow: /history
+Disallow: /watch-later
+Disallow: /liked
+Disallow: /notifications
+
+Crawl-delay: 1
 
 Sitemap: /sitemap.xml

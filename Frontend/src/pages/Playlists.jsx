@@ -7,6 +7,7 @@ import { useAuth } from "../contexts/AuthContext"
 import VideoCard from "../components/VideoCard/VideoCard"
 import { VideoGridSkeleton } from "../components/Skeleton/Skeleton"
 import { CenteredLoader } from "../components/Skeleton/LoadingScreen"
+import SEO from "../components/SEO/SEO"
 
 const Playlists = () => {
   const [playlists, setPlaylists] = useState([])
@@ -51,34 +52,34 @@ const Playlists = () => {
   const fetchPlaylists = async () => {
     try {
       setLoading(true)
-      
+
       // Get both user's own playlists and saved playlists
       const [userPlaylistsResponse, savedPlaylistsResponse] = await Promise.all([
         videoAPI.getUserPlaylistsForSelection(),
         playlistAPI.getSavedPlaylists().catch(() => ({ data: { data: [] } })) // Handle if endpoint doesn't exist
       ])
-      
+
       const userPlaylists = userPlaylistsResponse || []
       const savedPlaylists = savedPlaylistsResponse?.data?.data || []
-      
+
       // Filter out system playlists from user's own playlists
       const filteredUserPlaylists = userPlaylists.filter(
         playlist => playlist.name !== "Watch Later" &&
-                   playlist.name.toLowerCase() !== "watch later" &&
-                   playlist.name !== "Watch History" &&
-                   playlist.name.toLowerCase() !== "watch history" &&
-                   !playlist.name.toLowerCase().includes("history")
+          playlist.name.toLowerCase() !== "watch later" &&
+          playlist.name !== "Watch History" &&
+          playlist.name.toLowerCase() !== "watch history" &&
+          !playlist.name.toLowerCase().includes("history")
       )
-      
+
       // Mark saved playlists
       const markedSavedPlaylists = savedPlaylists.map(playlist => ({
         ...playlist,
         isSaved: true
       }))
-      
+
       // Combine both arrays
       const allPlaylists = [...filteredUserPlaylists, ...markedSavedPlaylists]
-      
+
       setPlaylists(allPlaylists)
     } catch (error) {
       toast.remove()
@@ -104,7 +105,7 @@ const Playlists = () => {
         isPublic: newPlaylistPrivacy === "public",
         visibility: newPlaylistPrivacy
       })
-      
+
       const playlist = newPlaylist.data?.data
       if (playlist) {
         setPlaylists(prev => [playlist, ...prev])
@@ -128,7 +129,7 @@ const Playlists = () => {
     const message = isSaved
       ? `Are you sure you want to remove "${playlistName}" from your saved playlists?`
       : `Are you sure you want to delete "${playlistName}"?`
-    
+
     if (!confirm(message)) {
       return
     }
@@ -162,7 +163,7 @@ const Playlists = () => {
 
       // Toggle between public and private
       const newVisibility = currentVisibility === 'public' ? 'private' : 'public'
-      
+
       // Update playlist visibility via API call with required fields
       await playlistAPI.updatePlaylist(playlistId, {
         name: playlist.name,
@@ -170,14 +171,14 @@ const Playlists = () => {
         visibility: newVisibility,
         isPublic: newVisibility === 'public'
       })
-      
+
       // Update local state
       setPlaylists(prev => prev.map(p =>
         p._id === playlistId
           ? { ...p, visibility: newVisibility, isPublic: newVisibility === 'public' }
           : p
       ))
-      
+
       toast.remove()
       toast.success(`Playlist is now ${newVisibility}`)
     } catch (error) {
@@ -217,8 +218,8 @@ const Playlists = () => {
 
     // Check if user is the owner of the playlist
     const isOwner = selectedPlaylist.owner === user._id ||
-                   (selectedPlaylist.owner && selectedPlaylist.owner._id === user._id) ||
-                   selectedPlaylist.isSaved !== true
+      (selectedPlaylist.owner && selectedPlaylist.owner._id === user._id) ||
+      selectedPlaylist.isSaved !== true
 
     if (!isOwner) {
       toast.remove()
@@ -232,16 +233,16 @@ const Playlists = () => {
     setRemovingVideo(videoId)
     try {
       await playlistAPI.removeVideoFromPlaylist(videoId, selectedPlaylist._id)
-      
+
       // Update the playlist videos state to remove the video
       setPlaylistVideos(prev => prev.filter(video => video._id !== videoId))
-      
+
       // Update the selected playlist's video count
       setSelectedPlaylist(prev => ({
         ...prev,
         totalVideos: (prev.totalVideos || playlistVideos.length) - 1
       }))
-      
+
       toast.remove()
       toast.success(`Removed "${videoTitle}" from playlist`)
     } catch (error) {
@@ -316,8 +317,8 @@ const Playlists = () => {
             {playlistVideos.map((video, index) => {
               // Check if user is the owner of the playlist
               const isOwner = selectedPlaylist.owner === user._id ||
-                             (selectedPlaylist.owner && selectedPlaylist.owner._id === user._id) ||
-                             selectedPlaylist.isSaved !== true
+                (selectedPlaylist.owner && selectedPlaylist.owner._id === user._id) ||
+                selectedPlaylist.isSaved !== true
 
               return (
                 <div key={video._id} className="relative group">
@@ -330,11 +331,10 @@ const Playlists = () => {
                     <button
                       onClick={() => handleRemoveVideoFromPlaylist(video._id, video.title)}
                       disabled={removingVideo === video._id}
-                      className={`absolute top-2 right-2 p-2 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100 ${
-                        removingVideo === video._id
+                      className={`absolute top-2 right-2 p-2 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100 ${removingVideo === video._id
                           ? 'bg-gray-600 cursor-not-allowed'
                           : 'bg-red-600 hover:bg-red-700'
-                      } text-white shadow-lg`}
+                        } text-white shadow-lg`}
                       title="Remove from playlist"
                     >
                       {removingVideo === video._id ? (
@@ -369,278 +369,283 @@ const Playlists = () => {
   })
 
   return (
-    <div className="min-h-screen bg-[#0f0f0f] text-white p-4 sm:p-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold">Playlists</h1>
-        <button
-          onClick={() => setShowCreateForm(true)}
-          className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base"
-        >
-          <Plus size={18} className="sm:w-5 sm:h-5" />
-          <span className="hidden sm:inline">Create Playlist</span>
-          <span className="sm:hidden">Create</span>
-        </button>
-      </div>
-
-      {/* Filter Tabs */}
-      <div className="flex gap-1 mb-6 bg-[#1f1f1f] p-1 rounded-lg w-full sm:w-fit">
-        <button
-          onClick={() => setActiveFilter("your")}
-          className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-md font-medium transition-colors text-sm sm:text-base flex-1 sm:flex-none ${
-            activeFilter === "your"
-              ? "bg-blue-600 text-white"
-              : "text-gray-400 hover:text-white hover:bg-[#2a2a2a]"
-          }`}
-        >
-          <Users size={14} className="sm:w-4 sm:h-4" />
-          <span className="hidden sm:inline">Your Playlists</span>
-          <span className="sm:hidden">Your</span>
-        </button>
-        <button
-          onClick={() => setActiveFilter("saved")}
-          className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-md font-medium transition-colors text-sm sm:text-base flex-1 sm:flex-none ${
-            activeFilter === "saved"
-              ? "bg-blue-600 text-white"
-              : "text-gray-400 hover:text-white hover:bg-[#2a2a2a]"
-          }`}
-        >
-          <Bookmark size={14} className="sm:w-4 sm:h-4" />
-          <span className="hidden sm:inline">Saved Playlists</span>
-          <span className="sm:hidden">Saved</span>
-        </button>
-      </div>
-
-      {/* Create Playlist Form */}
-      {showCreateForm && (
-        <div className="mb-6 p-4 sm:p-6 bg-[#1f1f1f] rounded-lg border border-[#333]">
-          <h3 className="text-lg font-semibold mb-4">Create New Playlist</h3>
-          <form onSubmit={handleCreatePlaylist} className="space-y-4">
-            <div>
-              <input
-                type="text"
-                placeholder="Playlist name"
-                value={newPlaylistName}
-                onChange={(e) => setNewPlaylistName(e.target.value)}
-                className="w-full bg-[#121212] text-white border border-[#333] rounded-lg p-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                required
-              />
-            </div>
-            <div>
-              <textarea
-                placeholder="Description (optional)"
-                value={newPlaylistDescription}
-                onChange={(e) => setNewPlaylistDescription(e.target.value)}
-                rows="3"
-                className="w-full bg-[#121212] text-white border border-[#333] rounded-lg p-3 resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Privacy</label>
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="privacy"
-                    value="public"
-                    checked={newPlaylistPrivacy === "public"}
-                    onChange={(e) => setNewPlaylistPrivacy(e.target.value)}
-                    className="mr-2 text-blue-600 focus:ring-blue-500"
-                  />
-                  <Globe size={16} className="mr-1" />
-                  <span className="text-gray-300">Public</span>
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="privacy"
-                    value="private"
-                    checked={newPlaylistPrivacy === "private"}
-                    onChange={(e) => setNewPlaylistPrivacy(e.target.value)}
-                    className="mr-2 text-blue-600 focus:ring-blue-500"
-                  />
-                  <Lock size={16} className="mr-1" />
-                  <span className="text-gray-300">Private</span>
-                </label>
-              </div>
-              <p className="text-xs text-gray-500 mt-1">
-                {newPlaylistPrivacy === "public"
-                  ? "Anyone can view this playlist"
-                  : "Only you can view this playlist"
-                }
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setShowCreateForm(false)}
-                className="px-4 py-2 text-gray-400 bg-gray-700 rounded hover:bg-gray-600 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={creating}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 transition-colors"
-              >
-                {creating ? "Creating..." : "Create Playlist"}
-              </button>
-            </div>
-          </form>
+    <>
+      <SEO
+        title="Playlists"
+        description="Browse and manage your playlists on PlayBack."
+        url="/playlists"
+      />
+      <div className="min-h-screen bg-[#0f0f0f] text-white p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold">Playlists</h1>
+          <button
+            onClick={() => setShowCreateForm(true)}
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base"
+          >
+            <Plus size={18} className="sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline">Create Playlist</span>
+            <span className="sm:hidden">Create</span>
+          </button>
         </div>
-      )}
 
-      {/* Playlists Grid */}
-      {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-          {Array.from({ length: 8 }).map((_, index) => (
-            <div key={index} className="bg-[#1e1e1e] rounded-lg p-3 sm:p-4 animate-pulse">
-              <div className="bg-[#2a2a2a] rounded h-24 sm:h-32 mb-3 sm:mb-4"></div>
-              <div className="bg-[#2a2a2a] rounded h-3 sm:h-4 w-3/4 mb-2"></div>
-              <div className="bg-[#2a2a2a] rounded h-2 sm:h-3 w-1/2"></div>
-            </div>
-          ))}
+        {/* Filter Tabs */}
+        <div className="flex gap-1 mb-6 bg-[#1f1f1f] p-1 rounded-lg w-full sm:w-fit">
+          <button
+            onClick={() => setActiveFilter("your")}
+            className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-md font-medium transition-colors text-sm sm:text-base flex-1 sm:flex-none ${activeFilter === "your"
+                ? "bg-blue-600 text-white"
+                : "text-gray-400 hover:text-white hover:bg-[#2a2a2a]"
+              }`}
+          >
+            <Users size={14} className="sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">Your Playlists</span>
+            <span className="sm:hidden">Your</span>
+          </button>
+          <button
+            onClick={() => setActiveFilter("saved")}
+            className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-md font-medium transition-colors text-sm sm:text-base flex-1 sm:flex-none ${activeFilter === "saved"
+                ? "bg-blue-600 text-white"
+                : "text-gray-400 hover:text-white hover:bg-[#2a2a2a]"
+              }`}
+          >
+            <Bookmark size={14} className="sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">Saved Playlists</span>
+            <span className="sm:hidden">Saved</span>
+          </button>
         </div>
-      ) : filteredPlaylists.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-          {filteredPlaylists.map((playlist) => (
-            <div
-              key={playlist._id}
-              className="bg-[#1f1f1f] rounded-lg overflow-hidden hover:bg-[#2a2a2a] transition-colors border border-[#333] cursor-pointer relative"
-              onClick={() => handlePlaylistClick(playlist)}
-            >
-              <div className="aspect-video bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center relative">
-                <Play size={48} className="text-white opacity-80" />
-                <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded">
-                  {playlist.totalVideos || 0} videos
-                </div>
-                <div className="absolute top-2 left-2">
-                  {playlist.isPublic !== false ? (
-                    <Globe size={16} className="text-white opacity-80" />
-                  ) : (
-                    <Lock size={16} className="text-white opacity-80" />
-                  )}
-                </div>
+
+        {/* Create Playlist Form */}
+        {showCreateForm && (
+          <div className="mb-6 p-4 sm:p-6 bg-[#1f1f1f] rounded-lg border border-[#333]">
+            <h3 className="text-lg font-semibold mb-4">Create New Playlist</h3>
+            <form onSubmit={handleCreatePlaylist} className="space-y-4">
+              <div>
+                <input
+                  type="text"
+                  placeholder="Playlist name"
+                  value={newPlaylistName}
+                  onChange={(e) => setNewPlaylistName(e.target.value)}
+                  className="w-full bg-[#121212] text-white border border-[#333] rounded-lg p-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  required
+                />
               </div>
-              
-              <div className="p-3 sm:p-4 overflow-visible">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-semibold text-white truncate flex-1 text-sm sm:text-base">
-                    {playlist.name}
-                  </h3>
-                  <div
-                    className="relative overflow-visible"
-                    ref={(el) => dropdownRefs.current[playlist._id] = el}
-                  >
-                    <button
-                      className="p-1 rounded-full hover:bg-[#333] transition-colors touch-manipulation"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setShowDropdown(showDropdown === playlist._id ? null : playlist._id)
-                      }}
+              <div>
+                <textarea
+                  placeholder="Description (optional)"
+                  value={newPlaylistDescription}
+                  onChange={(e) => setNewPlaylistDescription(e.target.value)}
+                  rows="3"
+                  className="w-full bg-[#121212] text-white border border-[#333] rounded-lg p-3 resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Privacy</label>
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="privacy"
+                      value="public"
+                      checked={newPlaylistPrivacy === "public"}
+                      onChange={(e) => setNewPlaylistPrivacy(e.target.value)}
+                      className="mr-2 text-blue-600 focus:ring-blue-500"
+                    />
+                    <Globe size={16} className="mr-1" />
+                    <span className="text-gray-300">Public</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="privacy"
+                      value="private"
+                      checked={newPlaylistPrivacy === "private"}
+                      onChange={(e) => setNewPlaylistPrivacy(e.target.value)}
+                      className="mr-2 text-blue-600 focus:ring-blue-500"
+                    />
+                    <Lock size={16} className="mr-1" />
+                    <span className="text-gray-300">Private</span>
+                  </label>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {newPlaylistPrivacy === "public"
+                    ? "Anyone can view this playlist"
+                    : "Only you can view this playlist"
+                  }
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateForm(false)}
+                  className="px-4 py-2 text-gray-400 bg-gray-700 rounded hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={creating}
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                >
+                  {creating ? "Creating..." : "Create Playlist"}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* Playlists Grid */}
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <div key={index} className="bg-[#1e1e1e] rounded-lg p-3 sm:p-4 animate-pulse">
+                <div className="bg-[#2a2a2a] rounded h-24 sm:h-32 mb-3 sm:mb-4"></div>
+                <div className="bg-[#2a2a2a] rounded h-3 sm:h-4 w-3/4 mb-2"></div>
+                <div className="bg-[#2a2a2a] rounded h-2 sm:h-3 w-1/2"></div>
+              </div>
+            ))}
+          </div>
+        ) : filteredPlaylists.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+            {filteredPlaylists.map((playlist) => (
+              <div
+                key={playlist._id}
+                className="bg-[#1f1f1f] rounded-lg overflow-hidden hover:bg-[#2a2a2a] transition-colors border border-[#333] cursor-pointer relative"
+                onClick={() => handlePlaylistClick(playlist)}
+              >
+                <div className="aspect-video bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center relative">
+                  <Play size={48} className="text-white opacity-80" />
+                  <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded">
+                    {playlist.totalVideos || 0} videos
+                  </div>
+                  <div className="absolute top-2 left-2">
+                    {playlist.isPublic !== false ? (
+                      <Globe size={16} className="text-white opacity-80" />
+                    ) : (
+                      <Lock size={16} className="text-white opacity-80" />
+                    )}
+                  </div>
+                </div>
+
+                <div className="p-3 sm:p-4 overflow-visible">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-semibold text-white truncate flex-1 text-sm sm:text-base">
+                      {playlist.name}
+                    </h3>
+                    <div
+                      className="relative overflow-visible"
+                      ref={(el) => dropdownRefs.current[playlist._id] = el}
                     >
-                      <MoreVertical size={14} className="text-gray-400 sm:w-4 sm:h-4" />
-                    </button>
-                    {showDropdown === playlist._id && (
-                      <div className="absolute right-0 top-full mt-1 bg-[#1f1f1f] border border-[#333] rounded shadow-xl text-sm w-40 sm:w-48 z-[100] min-w-max transform-gpu">
-                        {playlist.isSaved ? (
-                          // Options for saved playlists
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleDeletePlaylist(playlist._id, playlist.name, true)
-                              setShowDropdown(null)
-                            }}
-                            className="flex items-center gap-2 px-4 py-2 text-red-400 hover:bg-[#2a2a2a] transition-colors w-full text-left"
-                          >
-                            <Trash2 size={14} />
-                            Remove from Saved
-                          </button>
-                        ) : (
-                          // Options for own playlists
-                          <>
+                      <button
+                        className="p-1 rounded-full hover:bg-[#333] transition-colors touch-manipulation"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setShowDropdown(showDropdown === playlist._id ? null : playlist._id)
+                        }}
+                      >
+                        <MoreVertical size={14} className="text-gray-400 sm:w-4 sm:h-4" />
+                      </button>
+                      {showDropdown === playlist._id && (
+                        <div className="absolute right-0 top-full mt-1 bg-[#1f1f1f] border border-[#333] rounded shadow-xl text-sm w-40 sm:w-48 z-[100] min-w-max transform-gpu">
+                          {playlist.isSaved ? (
+                            // Options for saved playlists
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
-                                handleTogglePlaylistVisibility(
-                                  playlist._id,
-                                  playlist.isPublic !== false ? 'public' : 'private'
-                                )
-                                setShowDropdown(null)
-                              }}
-                              className="flex items-center gap-2 px-4 py-2 text-white hover:bg-[#2a2a2a] transition-colors w-full text-left"
-                            >
-                              {playlist.isPublic !== false ? (
-                                <>
-                                  <Lock size={14} />
-                                  Make Private
-                                </>
-                              ) : (
-                                <>
-                                  <Globe size={14} />
-                                  Make Public
-                                </>
-                              )}
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleDeletePlaylist(playlist._id, playlist.name, false)
+                                handleDeletePlaylist(playlist._id, playlist.name, true)
                                 setShowDropdown(null)
                               }}
                               className="flex items-center gap-2 px-4 py-2 text-red-400 hover:bg-[#2a2a2a] transition-colors w-full text-left"
                             >
                               <Trash2 size={14} />
-                              Delete
+                              Remove from Saved
                             </button>
-                          </>
-                        )}
-                      </div>
-                    )}
+                          ) : (
+                            // Options for own playlists
+                            <>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleTogglePlaylistVisibility(
+                                    playlist._id,
+                                    playlist.isPublic !== false ? 'public' : 'private'
+                                  )
+                                  setShowDropdown(null)
+                                }}
+                                className="flex items-center gap-2 px-4 py-2 text-white hover:bg-[#2a2a2a] transition-colors w-full text-left"
+                              >
+                                {playlist.isPublic !== false ? (
+                                  <>
+                                    <Lock size={14} />
+                                    Make Private
+                                  </>
+                                ) : (
+                                  <>
+                                    <Globe size={14} />
+                                    Make Public
+                                  </>
+                                )}
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleDeletePlaylist(playlist._id, playlist.name, false)
+                                  setShowDropdown(null)
+                                }}
+                                className="flex items-center gap-2 px-4 py-2 text-red-400 hover:bg-[#2a2a2a] transition-colors w-full text-left"
+                              >
+                                <Trash2 size={14} />
+                                Delete
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-                
-                {playlist.description && (
-                  <p className="text-gray-400 text-xs sm:text-sm mb-3 line-clamp-2">
-                    {playlist.description}
-                  </p>
-                )}
-                
-                <div className="flex items-center justify-between text-xs text-gray-500">
-                  <span>{playlist.totalVideos || 0} videos</span>
-                  <div className="flex items-center gap-1">
-                    {playlist.isPublic !== false ? (
-                      <>
-                        <Globe size={10} className="sm:w-3 sm:h-3" />
-                        <span className="hidden sm:inline">Public</span>
-                        <span className="sm:hidden">Pub</span>
-                      </>
-                    ) : (
-                      <>
-                        <Lock size={10} className="sm:w-3 sm:h-3" />
-                        <span className="hidden sm:inline">Private</span>
-                        <span className="sm:hidden">Priv</span>
-                      </>
-                    )}
+
+                  {playlist.description && (
+                    <p className="text-gray-400 text-xs sm:text-sm mb-3 line-clamp-2">
+                      {playlist.description}
+                    </p>
+                  )}
+
+                  <div className="flex items-center justify-between text-xs text-gray-500">
+                    <span>{playlist.totalVideos || 0} videos</span>
+                    <div className="flex items-center gap-1">
+                      {playlist.isPublic !== false ? (
+                        <>
+                          <Globe size={10} className="sm:w-3 sm:h-3" />
+                          <span className="hidden sm:inline">Public</span>
+                          <span className="sm:hidden">Pub</span>
+                        </>
+                      ) : (
+                        <>
+                          <Lock size={10} className="sm:w-3 sm:h-3" />
+                          <span className="hidden sm:inline">Private</span>
+                          <span className="sm:hidden">Priv</span>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">📝</div>
-          <h3 className="text-xl font-semibold mb-2 text-white">No playlists yet</h3>
-          <p className="text-gray-400 mb-6">Create your first playlist to organize your favorite videos</p>
-          <button
-            onClick={() => setShowCreateForm(true)}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Create Your First Playlist
-          </button>
-        </div>
-      )}
-    </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">📝</div>
+            <h3 className="text-xl font-semibold mb-2 text-white">No playlists yet</h3>
+            <p className="text-gray-400 mb-6">Create your first playlist to organize your favorite videos</p>
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Create Your First Playlist
+            </button>
+          </div>
+        )}
+      </div>
+    </>
   )
 }
 

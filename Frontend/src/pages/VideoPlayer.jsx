@@ -782,6 +782,27 @@ const VideoPlayer = () => {
           image={getThumbnailUrl()}
           url={`/watch/${video._id}`}
           type="video.other"
+          jsonLd={{
+            "@context": "https://schema.org",
+            "@type": "VideoObject",
+            "name": video.title,
+            "description": video.description?.substring(0, 300) || "Watch this video on PlayBack",
+            "thumbnailUrl": getThumbnailUrl(),
+            "uploadDate": video.createdAt,
+            "duration": video.duration ? `PT${Math.floor(video.duration / 60)}M${Math.floor(video.duration % 60)}S` : undefined,
+            "contentUrl": getVideoUrl(),
+            "embedUrl": `https://playback.vercel.app/watch/${video._id}`,
+            "interactionStatistic": {
+              "@type": "InteractionCounter",
+              "interactionType": "https://schema.org/WatchAction",
+              "userInteractionCount": video.views || 0
+            },
+            "author": {
+              "@type": "Person",
+              "name": video.owner?.fullName || video.owner?.username || "Unknown",
+              "url": `https://playback.vercel.app/profile/${video.owner?.username}`
+            }
+          }}
         />
       )}
       <div className="flex flex-col lg:flex-row gap-6 p-4 text-white bg-[#0f0f0f] min-h-screen">

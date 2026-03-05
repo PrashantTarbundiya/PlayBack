@@ -6,6 +6,7 @@ import { playlistAPI, videoAPI } from "../services/api"
 import { useAuth } from "../contexts/AuthContext"
 import { Link } from "react-router-dom"
 import { toast } from "react-hot-toast"
+import SEO from "../components/SEO/SEO"
 
 const WatchLater = () => {
   const [videos, setVideos] = useState([])
@@ -100,7 +101,13 @@ const WatchLater = () => {
   ) : []
 
   if (!user) {
-    return (
+  return (
+    <>
+      <SEO
+        title="Watch Later"
+        description="Videos saved for later viewing on PlayBack."
+        url="/watch-later"
+      />
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
         <div className="text-6xl mb-4">⏰</div>
         <h2 className="text-2xl font-bold mb-2 text-white">Sign in to see your Watch Later</h2>
@@ -112,6 +119,7 @@ const WatchLater = () => {
           Sign In
         </Link>
       </div>
+    </>
     )
   }
 
@@ -133,6 +141,12 @@ const WatchLater = () => {
   }
 
   return (
+    <>
+      <SEO
+        title="Watch Later"
+        description="Videos saved for later viewing on PlayBack."
+        url="/watch-later"
+      />
     <div className="min-h-screen bg-[#0f0f0f] text-white p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
@@ -220,6 +234,7 @@ const WatchLater = () => {
         </div>
       )}
     </div>
+    </>
   )
 }
 

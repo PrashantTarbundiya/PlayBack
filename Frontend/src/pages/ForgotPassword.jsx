@@ -8,6 +8,7 @@ import { Mail, ArrowLeft, Shield, Clock } from "lucide-react"
 import toast from "react-hot-toast"
 import { authAPI } from "../services/api"
 import OTPInput from "../components/OTPInput"
+import SEO from "../components/SEO/SEO"
 
 const ForgotPassword = () => {
   const [step, setStep] = useState(1)
@@ -25,7 +26,7 @@ const ForgotPassword = () => {
 
   const validateEmail = () => {
     const newErrors = {}
-    
+
     if (!formData.email) {
       newErrors.email = "Email is required"
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
@@ -203,168 +204,175 @@ const ForgotPassword = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden">
-        <div className="p-8 text-center border-b border-gray-700">
-          <div className="mb-4">
-            <h1 className="text-3xl font-bold text-red-500">PlayBack</h1>
+    <>
+      <SEO
+        title="Forgot Password"
+        description="Reset your PlayBack account password."
+        url="/forgot-password"
+      />
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden">
+          <div className="p-8 text-center border-b border-gray-700">
+            <div className="mb-4">
+              <h1 className="text-3xl font-bold text-red-500">PlayBack</h1>
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2">
+              {step === 1 ? "Forgot Password" : "Reset Password"}
+            </h2>
+            <p className="text-gray-400">
+              {step === 1
+                ? "Enter your email to receive an OTP"
+                : "Enter the OTP and your new password"
+              }
+            </p>
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">
-            {step === 1 ? "Forgot Password" : "Reset Password"}
-          </h2>
-          <p className="text-gray-400">
-            {step === 1 
-              ? "Enter your email to receive an OTP" 
-              : "Enter the OTP and your new password"
-            }
-          </p>
-        </div>
 
-        {step === 1 ? (
-          <form onSubmit={handleSendOTP} className="p-8 space-y-6">
-            <div className="flex items-center justify-center mb-6">
-              <div className="p-4 bg-blue-600 rounded-full">
-                <Mail size={32} className="text-white" />
-              </div>
-            </div>
-
-            <FormInput
-              label="Email Address"
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              error={errors.email}
-              placeholder="Enter your registered email"
-              required
-              disabled={loading}
-            />
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
-            >
-              {loading ? "Sending OTP..." : "Send OTP"}
-              <Mail size={18} />
-            </button>
-
-            <div className="text-center">
-              <Link 
-                to="/login" 
-                className="inline-flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors duration-200"
-              >
-                <ArrowLeft size={16} />
-                Back to Login
-              </Link>
-            </div>
-          </form>
-        ) : (
-          <form onSubmit={handleResetPassword} className="p-8 space-y-6">
-            <div className="flex items-center justify-center mb-6">
-              <div className="p-4 bg-green-600 rounded-full">
-                <Shield size={32} className="text-white" />
-              </div>
-            </div>
-
-            <div className="text-center mb-6">
-              <p className="text-sm text-gray-400 mb-2">
-                OTP sent to: <span className="text-white font-medium">{formData.email}</span>
-              </p>
-              <div className="space-y-2">
-                {otpTimer > 0 && (
-                  <div className="flex items-center justify-center gap-2 text-sm text-yellow-400">
-                    <Clock size={16} />
-                    <span>OTP expires in {formatTime(otpTimer)}</span>
-                  </div>
-                )}
-                <div className="text-sm text-gray-400">
-                  <span className="text-blue-400">{remainingAttempts}</span> attempts remaining today
+          {step === 1 ? (
+            <form onSubmit={handleSendOTP} className="p-8 space-y-6">
+              <div className="flex items-center justify-center mb-6">
+                <div className="p-4 bg-blue-600 rounded-full">
+                  <Mail size={32} className="text-white" />
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-300">
-                Enter Verification Code
-              </label>
-              <OTPInput
-                length={6}
-                onComplete={handleOTPChange}
-                value={formData.otp}
+              <FormInput
+                label="Email Address"
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                error={errors.email}
+                placeholder="Enter your registered email"
+                required
                 disabled={loading}
-                error={!!errors.otp}
               />
-              {errors.otp && (
-                <span className="text-red-400 text-sm block text-center">{errors.otp}</span>
-              )}
-            </div>
 
-            <FormInput
-              label="New Password"
-              type="password"
-              name="newPassword"
-              value={formData.newPassword}
-              onChange={handleChange}
-              error={errors.newPassword}
-              placeholder="Enter new password"
-              required
-              disabled={loading}
-            />
-
-            <FormInput
-              label="Confirm New Password"
-              type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              error={errors.confirmPassword}
-              placeholder="Confirm new password"
-              required
-              disabled={loading}
-            />
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
-            >
-              {loading ? "Resetting Password..." : "Reset Password"}
-              <Shield size={18} />
-            </button>
-
-            <div className="flex items-center justify-between text-sm">
               <button
-                type="button"
-                onClick={() => setStep(1)}
-                className="text-blue-400 hover:text-blue-300 transition-colors duration-200 flex items-center gap-1"
+                type="submit"
+                disabled={loading}
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
               >
-                <ArrowLeft size={16} />
-                Change Email
+                {loading ? "Sending OTP..." : "Send OTP"}
+                <Mail size={18} />
               </button>
-              
-              <button
-                type="button"
-                onClick={handleResendOTP}
-                disabled={loading || resendTimer > 0}
-                className="text-blue-400 hover:text-blue-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-              >
-                {resendTimer > 0 ? `Resend in ${formatTime(resendTimer)}` : "Resend OTP"}
-              </button>
-            </div>
-          </form>
-        )}
 
-        <div className="p-8 pt-0 text-center border-t border-gray-700">
-          <p className="text-gray-400">
-            Remember your password?{" "}
-            <Link to="/login" className="text-blue-400 hover:text-blue-300 font-medium transition-colors duration-200">
-              Sign in here
-            </Link>
-          </p>
+              <div className="text-center">
+                <Link
+                  to="/login"
+                  className="inline-flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors duration-200"
+                >
+                  <ArrowLeft size={16} />
+                  Back to Login
+                </Link>
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={handleResetPassword} className="p-8 space-y-6">
+              <div className="flex items-center justify-center mb-6">
+                <div className="p-4 bg-green-600 rounded-full">
+                  <Shield size={32} className="text-white" />
+                </div>
+              </div>
+
+              <div className="text-center mb-6">
+                <p className="text-sm text-gray-400 mb-2">
+                  OTP sent to: <span className="text-white font-medium">{formData.email}</span>
+                </p>
+                <div className="space-y-2">
+                  {otpTimer > 0 && (
+                    <div className="flex items-center justify-center gap-2 text-sm text-yellow-400">
+                      <Clock size={16} />
+                      <span>OTP expires in {formatTime(otpTimer)}</span>
+                    </div>
+                  )}
+                  <div className="text-sm text-gray-400">
+                    <span className="text-blue-400">{remainingAttempts}</span> attempts remaining today
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-300">
+                  Enter Verification Code
+                </label>
+                <OTPInput
+                  length={6}
+                  onComplete={handleOTPChange}
+                  value={formData.otp}
+                  disabled={loading}
+                  error={!!errors.otp}
+                />
+                {errors.otp && (
+                  <span className="text-red-400 text-sm block text-center">{errors.otp}</span>
+                )}
+              </div>
+
+              <FormInput
+                label="New Password"
+                type="password"
+                name="newPassword"
+                value={formData.newPassword}
+                onChange={handleChange}
+                error={errors.newPassword}
+                placeholder="Enter new password"
+                required
+                disabled={loading}
+              />
+
+              <FormInput
+                label="Confirm New Password"
+                type="password"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                error={errors.confirmPassword}
+                placeholder="Confirm new password"
+                required
+                disabled={loading}
+              />
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+              >
+                {loading ? "Resetting Password..." : "Reset Password"}
+                <Shield size={18} />
+              </button>
+
+              <div className="flex items-center justify-between text-sm">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="text-blue-400 hover:text-blue-300 transition-colors duration-200 flex items-center gap-1"
+                >
+                  <ArrowLeft size={16} />
+                  Change Email
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleResendOTP}
+                  disabled={loading || resendTimer > 0}
+                  className="text-blue-400 hover:text-blue-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                >
+                  {resendTimer > 0 ? `Resend in ${formatTime(resendTimer)}` : "Resend OTP"}
+                </button>
+              </div>
+            </form>
+          )}
+
+          <div className="p-8 pt-0 text-center border-t border-gray-700">
+            <p className="text-gray-400">
+              Remember your password?{" "}
+              <Link to="/login" className="text-blue-400 hover:text-blue-300 font-medium transition-colors duration-200">
+                Sign in here
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
 

@@ -6,6 +6,7 @@ import { playlistAPI } from "../services/api"
 import { useAuth } from "../contexts/AuthContext"
 import VideoCard from "../components/VideoCard/VideoCard"
 import { formatDistanceToNow } from "date-fns"
+import SEO from "../components/SEO/SEO"
 
 const PlaylistDetail = () => {
   const { id } = useParams()
@@ -160,11 +161,18 @@ const PlaylistDetail = () => {
   const canSave = user && playlist && playlist.isPublic !== false && !isOwner
 
   if (loading) {
-    return (
+  return (
+    <>
+      <SEO
+        title="Playlist"
+        description="Watch videos from this playlist on PlayBack."
+        url="/playlist"
+      />
       <div className="flex items-center justify-center min-h-[70vh] text-gray-300">
         <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-400 border-t-transparent mr-3" />
         <span>Loading playlist...</span>
       </div>
+    </>
     )
   }
 
@@ -182,6 +190,12 @@ const PlaylistDetail = () => {
   }
 
   return (
+    <>
+      <SEO
+        title="Playlist"
+        description="Watch videos from this playlist on PlayBack."
+        url="/playlist"
+      />
     <div className="min-h-screen bg-[#0f0f0f] text-white p-4 sm:p-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
@@ -382,6 +396,7 @@ const PlaylistDetail = () => {
         </div>
       )}
     </div>
+    </>
   )
 }
 

@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { videoAPI } from '../services/api'
 import VideoCard from '../components/VideoCard/VideoCard'
 import { ChevronDown, Grid, List } from 'lucide-react'
+import SEO from "../components/SEO/SEO"
 
 const Categories = () => {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -105,6 +106,12 @@ const Categories = () => {
   }
 
   return (
+    <>
+      <SEO
+        title="Categories"
+        description="Browse videos by category on PlayBack."
+        url="/categories"
+      />
     <div className="min-h-screen bg-[#0f0f0f] text-white">
       <div className="max-w-[1400px] mx-auto px-6 py-6">
         {/* Header */}
@@ -211,6 +218,7 @@ const Categories = () => {
         )}
       </div>
     </div>
+    </>
   )
 }
 

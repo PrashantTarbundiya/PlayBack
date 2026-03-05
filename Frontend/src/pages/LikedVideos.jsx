@@ -5,6 +5,7 @@ import { VideoGridSkeleton } from "../components/Skeleton/Skeleton"
 import { likeAPI } from "../services/api"
 import { useAuth } from "../contexts/AuthContext"
 import { Link } from "react-router-dom"
+import SEO from "../components/SEO/SEO"
 
 const LikedVideos = () => {
   const [videos, setVideos] = useState([])
@@ -45,7 +46,13 @@ const LikedVideos = () => {
   ) : []
 
   if (!user) {
-    return (
+  return (
+    <>
+      <SEO
+        title="Liked Videos"
+        description="Videos you have liked on PlayBack."
+        url="/liked"
+      />
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
         <div className="text-6xl mb-4">❤️</div>
         <h2 className="text-2xl font-bold mb-2 text-white">Sign in to see your liked videos</h2>
@@ -57,6 +64,7 @@ const LikedVideos = () => {
           Sign In
         </Link>
       </div>
+    </>
     )
   }
 
@@ -78,6 +86,12 @@ const LikedVideos = () => {
   }
 
   return (
+    <>
+      <SEO
+        title="Liked Videos"
+        description="Videos you have liked on PlayBack."
+        url="/liked"
+      />
     <div className="min-h-screen bg-[#0f0f0f] text-white p-6">
       <div className="flex items-center gap-3 mb-6">
         <div className="p-3 bg-red-600 rounded-full">
@@ -149,6 +163,7 @@ const LikedVideos = () => {
         </div>
       )}
     </div>
+    </>
   )
 }
 

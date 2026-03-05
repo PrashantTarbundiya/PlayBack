@@ -6,6 +6,7 @@ import { authAPI } from "../services/api"
 import { User, Mail, Lock, Camera, Save } from "lucide-react"
 import toast from "react-hot-toast"
 import VideoPreviewSettings from "../components/Settings/VideoPreviewSettings"
+import SEO from "../components/SEO/SEO"
 
 const Settings = () => {
   const { user: currentUser, updateUser } = useAuth()
@@ -137,14 +138,27 @@ const Settings = () => {
   }
 
   if (!currentUser) {
-    return (
+  return (
+    <>
+      <SEO
+        title="Settings"
+        description="Manage your PlayBack account settings and preferences."
+        url="/settings"
+      />
       <div className="flex items-center justify-center min-h-screen bg-[#0f0f0f] text-white">
         <p className="text-red-500 text-lg">Please login to access settings</p>
       </div>
+    </>
     )
   }
 
   return (
+    <>
+      <SEO
+        title="Settings"
+        description="Manage your PlayBack account settings and preferences."
+        url="/settings"
+      />
     <div className="min-h-screen bg-[#0f0f0f] text-white p-6 md:p-10">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-2xl md:text-3xl font-bold mb-8">Account Settings</h1>
@@ -312,6 +326,7 @@ const Settings = () => {
         </div>
       </div>
     </div>
+    </>
   )
 }
 

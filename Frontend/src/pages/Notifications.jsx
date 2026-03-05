@@ -5,6 +5,7 @@ import { Link } from "react-router-dom"
 import { formatDistanceToNow } from "date-fns"
 import { Bell, Video, MessageSquare, Check, CheckCheck, Trash2, Filter } from "lucide-react"
 import { useNotifications } from "../contexts/NotificationContext"
+import SEO from "../components/SEO/SEO"
 
 const Notifications = () => {
   const [filter, setFilter] = useState("all") 
@@ -78,6 +79,12 @@ const Notifications = () => {
   ]
 
   return (
+    <>
+      <SEO
+        title="Notifications"
+        description="View your notifications on PlayBack."
+        url="/notifications"
+      />
     <div className="min-h-screen bg-[#0f0f0f] text-white">
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Header */}
@@ -273,6 +280,7 @@ const Notifications = () => {
         )}
       </div>
     </div>
+    </>
   )
 }
 

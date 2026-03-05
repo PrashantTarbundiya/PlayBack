@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Heart, MessageCircle, MoreHorizontal, Edit2, Trash2, Send, LogIn } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import SEO from "../components/SEO/SEO"
 
 const Tweets = () => {
   const { user } = useAuth();
@@ -236,7 +237,13 @@ const Tweets = () => {
   };
 
   if (loading) {
-    return (
+  return (
+    <>
+      <SEO
+        title="Community Posts"
+        description="Read and share community posts on PlayBack."
+        url="/tweets"
+      />
       <div className="min-h-screen bg-[#0f0f0f] text-white">
         <div className="max-w-2xl mx-auto p-4">
           {/* Header */}
@@ -282,10 +289,17 @@ const Tweets = () => {
           </div>
         </div>
       </div>
+    </>
     );
   }
 
   return (
+    <>
+      <SEO
+        title="Community Posts"
+        description="Read and share community posts on PlayBack."
+        url="/tweets"
+      />
     <div className="min-h-screen bg-[#0f0f0f] text-white">
       <div className="max-w-2xl mx-auto p-4">
         {/* Header */}
@@ -513,6 +527,7 @@ const Tweets = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

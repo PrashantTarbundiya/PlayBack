@@ -10,6 +10,7 @@ import toast from "react-hot-toast"
 import { authAPI } from "../services/api"
 import OTPInput from "../components/OTPInput"
 import OAuthButtons from "../components/OAuthButtons"
+import SEO from "../components/SEO/SEO"
 
 const Register = () => {
   const [step, setStep] = useState(1)
@@ -144,7 +145,7 @@ const Register = () => {
         email: formData.email,
         otp: formData.otp
       })
-      
+
       setStep(4)
       toast.remove()
       toast.success("OTP verified successfully!")
@@ -164,7 +165,7 @@ const Register = () => {
       const response = await authAPI.sendOTP({ email: formData.email })
       setOtpSent(true)
       setCooldownTime(150) // Set 2.5 minutes (150 seconds) cooldown
-      
+
       toast.remove()
       toast.success('OTP sent to your email!')
     } catch (error) {
@@ -203,7 +204,7 @@ const Register = () => {
       form.append("email", formData.email)
       form.append("password", formData.password)
       form.append("otp", formData.otp)
-      
+
       // Only append images if they are provided
       if (formData.avatar) {
         form.append("avatar", formData.avatar)
@@ -222,305 +223,312 @@ const Register = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden">
-        <div className="p-8 text-center border-b border-gray-700">
-          <div className="mb-4">
-            <h1 className="text-3xl font-bold text-red-500">PlayBack</h1>
+    <>
+      <SEO
+        title="Register"
+        description="Create a PlayBack account to start uploading and sharing your videos with the world."
+        url="/register"
+      />
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden">
+          <div className="p-8 text-center border-b border-gray-700">
+            <div className="mb-4">
+              <h1 className="text-3xl font-bold text-red-500">PlayBack</h1>
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2">Create Account</h2>
+            <p className="text-gray-400">Join PlayBack and start sharing your videos</p>
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">Create Account</h2>
-          <p className="text-gray-400">Join PlayBack and start sharing your videos</p>
-        </div>
 
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
-          {step === 1 && (
-            <>
-              {/* OAuth Buttons at the top */}
-              <div className="space-y-3">
-                <OAuthButtons loading={loading} />
-                
-                {/* Divider */}
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-600"></div>
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-3 bg-gray-800 text-gray-400">Or create account with email</span>
+          <form onSubmit={handleSubmit} className="p-8 space-y-6">
+            {step === 1 && (
+              <>
+                {/* OAuth Buttons at the top */}
+                <div className="space-y-3">
+                  <OAuthButtons loading={loading} />
+
+                  {/* Divider */}
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-600"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-3 bg-gray-800 text-gray-400">Or create account with email</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <FormInput
-                label="Full Name"
-                name="fullName"
-                value={formData.fullName}
-                onChange={handleChange}
-                error={errors.fullName}
-                placeholder="Enter full name"
-                required
-              />
-              <FormInput
-                label="Username"
-                name="username"
-                value={formData.username}
-                onChange={handleChange}
-                error={errors.username}
-                placeholder="Choose a username"
-                required
-              />
-              <FormInput
-                label="Email"
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                error={errors.email}
-                placeholder="Enter email"
-                required
-              />
-              <div className="space-y-2">
                 <FormInput
-                  label="Password"
-                  type="password"
-                  name="password"
-                  value={formData.password}
+                  label="Full Name"
+                  name="fullName"
+                  value={formData.fullName}
                   onChange={handleChange}
-                  error={errors.password}
-                  placeholder="Create a strong password"
+                  error={errors.fullName}
+                  placeholder="Enter full name"
                   required
                 />
-                {formData.password && (
-                  <div className="space-y-2">
-                    <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
-                      <div
-                        className="h-full transition-all duration-300 rounded-full"
-                        style={{
-                          width: `${(passwordStrength / 5) * 100}%`,
-                          backgroundColor:
-                            passwordStrength >= 4
-                              ? "#10b981"
-                              : passwordStrength >= 2
-                              ? "#f59e0b"
-                              : "#ef4444",
-                        }}
-                      />
-                    </div>
-                    <span className="text-sm text-gray-400">
-                      Strength: {["Very Weak", "Weak", "Fair", "Good", "Strong"][passwordStrength]}
-                    </span>
-                  </div>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={handleNextStep}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
-              >
-                Continue <ArrowRight size={18} />
-              </button>
-            </>
-          )}
-
-          {step === 2 && (
-            <>
-              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 mb-6">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="text-yellow-500 mt-1" size={20} />
-                  <div>
-                    <h3 className="text-yellow-500 font-medium mb-2">Development Phase Disclaimer</h3>
-                    <div className="text-sm text-gray-300 space-y-2">
-                      <p>⚠️ This platform is currently in development phase.</p>
-                      <p>📹 Upload limit: Maximum 100 videos per user</p>
-                      <p>🔄 Data may be reset during updates</p>
-                      <p>🐛 You may encounter bugs and issues</p>
-                      <p>🚀 Features are being actively developed</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={acceptedDisclaimer}
-                    onChange={(e) => setAcceptedDisclaimer(e.target.checked)}
-                    className="mt-1 w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 rounded focus:ring-blue-500"
+                <FormInput
+                  label="Username"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleChange}
+                  error={errors.username}
+                  placeholder="Choose a username"
+                  required
+                />
+                <FormInput
+                  label="Email"
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  error={errors.email}
+                  placeholder="Enter email"
+                  required
+                />
+                <div className="space-y-2">
+                  <FormInput
+                    label="Password"
+                    type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    error={errors.password}
+                    placeholder="Create a strong password"
+                    required
                   />
-                  <span className="text-sm text-gray-300">
-                    I understand and accept that this platform is in development phase and agree to the limitations mentioned above.
-                  </span>
-                </label>
-                {errors.disclaimer && <span className="text-red-400 text-sm">{errors.disclaimer}</span>}
-              </div>
-
-              <div className="flex justify-between items-center gap-4 mt-6">
-                <button
-                  type="button"
-                  className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
-                  onClick={() => setStep(1)}
-                >
-                  <ArrowLeft size={18} />
-                  Back
-                </button>
+                  {formData.password && (
+                    <div className="space-y-2">
+                      <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
+                        <div
+                          className="h-full transition-all duration-300 rounded-full"
+                          style={{
+                            width: `${(passwordStrength / 5) * 100}%`,
+                            backgroundColor:
+                              passwordStrength >= 4
+                                ? "#10b981"
+                                : passwordStrength >= 2
+                                  ? "#f59e0b"
+                                  : "#ef4444",
+                          }}
+                        />
+                      </div>
+                      <span className="text-sm text-gray-400">
+                        Strength: {["Very Weak", "Weak", "Fair", "Good", "Strong"][passwordStrength]}
+                      </span>
+                    </div>
+                  )}
+                </div>
                 <button
                   type="button"
                   onClick={handleNextStep}
-                  disabled={!acceptedDisclaimer}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
                 >
                   Continue <ArrowRight size={18} />
                 </button>
-              </div>
-            </>
-          )}
+              </>
+            )}
 
-          {step === 3 && (
-            <>
-              <div className="text-center mb-6">
-                <Shield className="mx-auto mb-4 text-blue-500" size={48} />
-                <h3 className="text-xl font-bold text-white mb-2">Email Verification</h3>
-                <p className="text-gray-400">
-                  {otpSent
-                    ? "We've sent a verification code to your email address"
-                    : "Sending verification code to your email..."
-                  }
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-300">
-                    Enter Verification Code
-                  </label>
-                  <OTPInput
-                    length={6}
-                    onComplete={handleOTPChange}
-                    value={formData.otp}
-                    disabled={verifyingOtp}
-                    error={!!errors.otp}
-                  />
-                  {errors.otp && (
-                    <span className="text-red-400 text-sm block text-center">{errors.otp}</span>
-                  )}
+            {step === 2 && (
+              <>
+                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 mb-6">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="text-yellow-500 mt-1" size={20} />
+                    <div>
+                      <h3 className="text-yellow-500 font-medium mb-2">Development Phase Disclaimer</h3>
+                      <div className="text-sm text-gray-300 space-y-2">
+                        <p>⚠️ This platform is currently in development phase.</p>
+                        <p>📹 Upload limit: Maximum 100 videos per user</p>
+                        <p>🔄 Data may be reset during updates</p>
+                        <p>🐛 You may encounter bugs and issues</p>
+                        <p>🚀 Features are being actively developed</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="flex justify-between items-center">
-                  <div className="text-sm text-gray-400">
-                    {otpSent && (
-                      <span className="text-green-400">✓ OTP Sent!</span>
+                <div className="space-y-4">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={acceptedDisclaimer}
+                      onChange={(e) => setAcceptedDisclaimer(e.target.checked)}
+                      className="mt-1 w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-300">
+                      I understand and accept that this platform is in development phase and agree to the limitations mentioned above.
+                    </span>
+                  </label>
+                  {errors.disclaimer && <span className="text-red-400 text-sm">{errors.disclaimer}</span>}
+                </div>
+
+                <div className="flex justify-between items-center gap-4 mt-6">
+                  <button
+                    type="button"
+                    className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                    onClick={() => setStep(1)}
+                  >
+                    <ArrowLeft size={18} />
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNextStep}
+                    disabled={!acceptedDisclaimer}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                  >
+                    Continue <ArrowRight size={18} />
+                  </button>
+                </div>
+              </>
+            )}
+
+            {step === 3 && (
+              <>
+                <div className="text-center mb-6">
+                  <Shield className="mx-auto mb-4 text-blue-500" size={48} />
+                  <h3 className="text-xl font-bold text-white mb-2">Email Verification</h3>
+                  <p className="text-gray-400">
+                    {otpSent
+                      ? "We've sent a verification code to your email address"
+                      : "Sending verification code to your email..."
+                    }
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-300">
+                      Enter Verification Code
+                    </label>
+                    <OTPInput
+                      length={6}
+                      onComplete={handleOTPChange}
+                      value={formData.otp}
+                      disabled={verifyingOtp}
+                      error={!!errors.otp}
+                    />
+                    {errors.otp && (
+                      <span className="text-red-400 text-sm block text-center">{errors.otp}</span>
                     )}
                   </div>
-                  <div className="text-sm text-gray-400">
-                    Didn't receive? {" "}
-                    <button
-                      type="button"
-                      onClick={sendOTP}
-                      disabled={otpLoading || cooldownTime > 0}
-                      className="text-blue-400 hover:text-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {otpLoading
-                        ? "Sending..."
-                        : cooldownTime > 0
-                          ? `Resend in ${formatTime(cooldownTime)}`
-                          : "Resend"
-                      }
-                    </button>
+
+                  <div className="flex justify-between items-center">
+                    <div className="text-sm text-gray-400">
+                      {otpSent && (
+                        <span className="text-green-400">✓ OTP Sent!</span>
+                      )}
+                    </div>
+                    <div className="text-sm text-gray-400">
+                      Didn't receive? {" "}
+                      <button
+                        type="button"
+                        onClick={sendOTP}
+                        disabled={otpLoading || cooldownTime > 0}
+                        className="text-blue-400 hover:text-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {otpLoading
+                          ? "Sending..."
+                          : cooldownTime > 0
+                            ? `Resend in ${formatTime(cooldownTime)}`
+                            : "Resend"
+                        }
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="flex justify-between items-center gap-4 mt-6">
-                <button
-                  type="button"
-                  className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
-                  onClick={() => setStep(2)}
-                >
-                  <ArrowLeft size={18} />
-                  Back
-                </button>
-                <button
-                  type="button"
-                  onClick={handleNextStep}
-                  disabled={!formData.otp || formData.otp.length !== 6 || verifyingOtp}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
-                >
-                  {verifyingOtp ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
-                      Verifying...
-                    </>
-                  ) : (
-                    <>
-                      Verify OTP <ArrowRight size={18} />
-                    </>
-                  )}
-                </button>
-              </div>
-            </>
-          )}
+                <div className="flex justify-between items-center gap-4 mt-6">
+                  <button
+                    type="button"
+                    className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                    onClick={() => setStep(2)}
+                  >
+                    <ArrowLeft size={18} />
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNextStep}
+                    disabled={!formData.otp || formData.otp.length !== 6 || verifyingOtp}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                  >
+                    {verifyingOtp ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
+                        Verifying...
+                      </>
+                    ) : (
+                      <>
+                        Verify OTP <ArrowRight size={18} />
+                      </>
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
 
-          {step === 4 && (
-            <>
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-300">Upload Avatar (Optional)</label>
-                <p className="text-xs text-gray-400 mb-2">If not provided, a default avatar will be generated based on your name</p>
-                <input
-                  type="file"
-                  name="avatar"
-                  accept="image/*"
-                  onChange={handleChange}
-                  disabled={loading}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white file:bg-gray-700 file:border-0 file:px-4 file:py-2 file:rounded file:text-white file:cursor-pointer hover:border-gray-500 transition-colors duration-200"
-                />
-                {errors.avatar && <span className="text-red-400 text-sm">{errors.avatar}</span>}
-              </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-300">Upload Cover Image (Optional)</label>
-                <p className="text-xs text-gray-400 mb-2">If not provided, a default cover image will be used</p>
-                <input
-                  type="file"
-                  name="coverImage"
-                  accept="image/*"
-                  onChange={handleChange}
-                  disabled={loading}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white file:bg-gray-700 file:border-0 file:px-4 file:py-2 file:rounded file:text-white file:cursor-pointer hover:border-gray-500 transition-colors duration-200"
-                />
-                {errors.coverImage && <span className="text-red-400 text-sm">{errors.coverImage}</span>}
-              </div>
+            {step === 4 && (
+              <>
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-300">Upload Avatar (Optional)</label>
+                  <p className="text-xs text-gray-400 mb-2">If not provided, a default avatar will be generated based on your name</p>
+                  <input
+                    type="file"
+                    name="avatar"
+                    accept="image/*"
+                    onChange={handleChange}
+                    disabled={loading}
+                    className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white file:bg-gray-700 file:border-0 file:px-4 file:py-2 file:rounded file:text-white file:cursor-pointer hover:border-gray-500 transition-colors duration-200"
+                  />
+                  {errors.avatar && <span className="text-red-400 text-sm">{errors.avatar}</span>}
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-300">Upload Cover Image (Optional)</label>
+                  <p className="text-xs text-gray-400 mb-2">If not provided, a default cover image will be used</p>
+                  <input
+                    type="file"
+                    name="coverImage"
+                    accept="image/*"
+                    onChange={handleChange}
+                    disabled={loading}
+                    className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white file:bg-gray-700 file:border-0 file:px-4 file:py-2 file:rounded file:text-white file:cursor-pointer hover:border-gray-500 transition-colors duration-200"
+                  />
+                  {errors.coverImage && <span className="text-red-400 text-sm">{errors.coverImage}</span>}
+                </div>
 
-              <div className="flex justify-between items-center gap-4 mt-6">
-                <button
-                  type="button"
-                  className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
-                  onClick={() => setStep(3)}
-                  disabled={loading}
-                >
-                  <ArrowLeft size={18} />
-                  Back
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
-                >
-                  {loading ? "Creating..." : "Create Account"} <ArrowRight size={18} />
-                </button>
-              </div>
-            </>
-          )}
-        </form>
+                <div className="flex justify-between items-center gap-4 mt-6">
+                  <button
+                    type="button"
+                    className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                    onClick={() => setStep(3)}
+                    disabled={loading}
+                  >
+                    <ArrowLeft size={18} />
+                    Back
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                  >
+                    {loading ? "Creating..." : "Create Account"} <ArrowRight size={18} />
+                  </button>
+                </div>
+              </>
+            )}
+          </form>
 
-        <div className="p-8 pt-0 text-center border-t border-gray-700">
-          <p className="text-gray-400">
-            Already have an account?{" "}
-            <Link to="/login" className="text-blue-400 hover:text-blue-300 font-medium transition-colors duration-200">
-              Sign in here
-            </Link>
-          </p>
+          <div className="p-8 pt-0 text-center border-t border-gray-700">
+            <p className="text-gray-400">
+              Already have an account?{" "}
+              <Link to="/login" className="text-blue-400 hover:text-blue-300 font-medium transition-colors duration-200">
+                Sign in here
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
 
