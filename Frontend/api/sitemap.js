@@ -118,37 +118,27 @@ export default async function handler(req, res) {
         const description = escapeXml(
           video.description || video.title || "Video on PlayBack"
         );
-        const thumbnailUrl = video.thumbnail?.url || "";
-        const videoFileUrl = video.videoFile?.url || "";
         const hasDuration = video.duration && !isNaN(video.duration);
         const publicationDate = video.createdAt
           ? new Date(video.createdAt).toISOString()
           : "";
 
-        // Build <video:video> block only if we have a video URL
-        let videoTag = "";
-        if (videoFileUrl) {
-          videoTag = `
+        const videoTag = `
     <video:video>
       <video:title>${title}</video:title>
-      <video:description>${description}</video:description>${thumbnailUrl
-              ? `
-      <video:thumbnail_loc>${escapeXml(thumbnailUrl)}</video:thumbnail_loc>`
-              : ""
-            }
-      <video:content_loc>${escapeXml(videoFileUrl)}</video:content_loc>${hasDuration
-              ? `
+      <video:description>${description}</video:description>
+      <video:player_loc>${FRONTEND_URL}/watch/${video._id}</video:player_loc>${hasDuration
+            ? `
       <video:duration>${Math.floor(video.duration)}</video:duration>`
-              : ""
-            }${publicationDate
-              ? `
+            : ""
+          }${publicationDate
+            ? `
       <video:publication_date>${publicationDate}</video:publication_date>`
-              : ""
-            }
+            : ""
+          }
       <video:family_friendly>yes</video:family_friendly>
       <video:live>no</video:live>
     </video:video>`;
-        }
 
         return `
   <url>
