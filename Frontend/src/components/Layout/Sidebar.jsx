@@ -5,6 +5,7 @@ import {
   Home,
   TrendingUp as Trending,
   Library,
+  Youtube,
   MessageSquare,
   History,
   Clock,
@@ -25,17 +26,18 @@ const Sidebar = ({ isOpen, onClose }) => {
     { icon: Home, label: "Home", path: "/" },
     { icon: Trending, label: "Trending", path: "/trending" },
     { icon: Library, label: "Library", path: "/library" },
+    { icon: Youtube, label: "Subscriptions", path: "/subscriptions" },
     { icon: MessageSquare, label: "Tweets", path: "/tweets" },
   ]
 
   const userMenuItems = user
     ? [
-        { icon: History, label: "History", path: "/history" },
-        { icon: Clock, label: "Watch Later", path: "/watch-later" },
-        { icon: ThumbsUp, label: "Liked Videos", path: "/liked" },
-        { icon: PlaySquare, label: "Your Videos", path: `/profile/${user.username}` },
-        { icon: List, label: "Playlists", path: "/playlists" },
-      ]
+      { icon: History, label: "History", path: "/history" },
+      { icon: Clock, label: "Watch Later", path: "/watch-later" },
+      { icon: ThumbsUp, label: "Liked Videos", path: "/liked" },
+      { icon: PlaySquare, label: "Your Videos", path: `/profile/${user.username}` },
+      { icon: List, label: "Playlists", path: "/playlists" },
+    ]
     : []
 
   const settingsMenuItems = [

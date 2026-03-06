@@ -5,6 +5,7 @@ import { Outlet } from "react-router-dom"
 import { useResponsive } from "../../hooks/useResponsive"
 import Header from "./Header"
 import Sidebar from "./Sidebar"
+import BottomNavbar from "./BottomNavbar"
 import MiniPlayer from "../MiniPlayer/MiniPlayer"
 
 const Layout = memo(() => {
@@ -26,13 +27,12 @@ const Layout = memo(() => {
 
   // Memoize the main className to prevent unnecessary recalculations
   const mainClassName = useMemo(() => {
-    return `transition-all duration-300 ease-out ${
-      isMobile
-        ? 'ml-0'
+    return `transition-all duration-300 ease-out ${isMobile
+        ? 'ml-0 pb-16'
         : sidebarOpen
-        ? 'ml-60'
-        : 'ml-[72px]'
-    }`
+          ? 'ml-60'
+          : 'ml-[72px]'
+      }`
   }, [sidebarOpen, isMobile])
 
   return (
@@ -53,6 +53,9 @@ const Layout = memo(() => {
 
       {/* Mini Player - Rendered at layout level for global access */}
       <MiniPlayer />
+
+      {/* Mobile Bottom Navbar */}
+      <BottomNavbar />
     </div>
   )
 })

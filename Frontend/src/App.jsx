@@ -35,6 +35,7 @@ const Notifications = lazy(() => import("./pages/Notifications"))
 const Categories = lazy(() => import("./pages/Categories"))
 const BrowsePlaylists = lazy(() => import("./pages/BrowsePlaylists"))
 const PlaylistDetail = lazy(() => import("./pages/PlaylistDetail"))
+const Subscriptions = lazy(() => import("./pages/Subscriptions"))
 
 // Loading component for Suspense
 const PageLoader = () => <LoadingScreen message="Loading page..." />
@@ -96,6 +97,11 @@ const App = memo(() => {
                         <Route path="settings" element={<Settings />} />
                         <Route path="browse-playlists" element={<BrowsePlaylists />} />
                         <Route path="playlist/:id" element={<PlaylistDetail />} />
+                        <Route path="subscriptions" element={
+                          <ProtectedRoute>
+                            <Subscriptions />
+                          </ProtectedRoute>
+                        } />
 
                         {/* Fallback route */}
                         <Route path="*" element={<Navigate to="/" replace />} />
