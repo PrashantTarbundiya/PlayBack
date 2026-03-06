@@ -10,4 +10,5 @@ Disallow: /notifications
 
 Crawl-delay: 1
 
-Sitemap: /sitemap.xml
+Sitemap: http://play-back-frontend.vercel.app/sitemap.xml
+
