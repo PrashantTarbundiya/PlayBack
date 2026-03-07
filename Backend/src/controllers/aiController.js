@@ -230,7 +230,7 @@ const askQuestion = asyncHandler(async (req, res) => {
     try {
         const model = genAI.getGenerativeModel({
             model: "gemini-3-flash-preview",
-            generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
+            generationConfig: { temperature: 0.7, maxOutputTokens: 8192 }
         });
         const videoFile = video.duration > 600 ? null : await getVideoFileForAnalysis(videoUrl);
 

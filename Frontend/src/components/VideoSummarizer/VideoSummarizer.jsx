@@ -425,11 +425,11 @@ const VideoSummarizer = ({ videoId, videoTitle }) => {
                   ) : (
                     conversation.map((msg, index) => (
                       <div key={index} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[80%] p-3 rounded-lg text-sm ${msg.type === 'user'
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-800 text-gray-300 border border-gray-700'
+                        <div className={`${msg.type === 'user' ? 'max-w-[80%]' : 'max-w-[90%]'} p-3 rounded-lg text-sm ${msg.type === 'user'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-800 text-gray-300 border border-gray-700'
                           }`}>
-                          <div className="leading-relaxed whitespace-pre-wrap">
+                          <div className="leading-relaxed whitespace-pre-wrap break-words">
                             {msg.content}
                           </div>
                         </div>
