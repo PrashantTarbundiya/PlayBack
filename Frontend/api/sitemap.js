@@ -123,8 +123,11 @@ export default async function handler(req, res) {
           ? new Date(video.createdAt).toISOString()
           : "";
 
+        const thumbnailUrl = video.thumbnail?.url || `${FRONTEND_URL}/logo.png`;
+
         const videoTag = `
     <video:video>
+      <video:thumbnail_loc>${escapeXml(thumbnailUrl)}</video:thumbnail_loc>
       <video:title>${title}</video:title>
       <video:description>${description}</video:description>
       <video:player_loc>${FRONTEND_URL}/watch/${video._id}</video:player_loc>${hasDuration
