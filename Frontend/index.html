@@ -4,34 +4,116 @@
 <head>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/png" href="/PlayBack.png" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="google-site-verification" content="jiH9VZTLETnwSVmJLlWKcn-RWikbwMspiYhiVWhYvGM" />
-  <meta name="description"
-    content="PlayBack - Discover, watch, and share your favorite videos. Join the community today!" />
-  <meta name="keywords"
-    content="video, sharing, PlayBack, Playback, play back, playback app, streaming, community, watch videos, video platform" />
+  <link rel="apple-touch-icon" href="/PlayBack.png" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#0f0f0f" />
+  <meta name="google-site-verification" content="jiH9VZTLETnwSVmJLlWKcn-RWikbwMspiYhiVWhYvGM" />
 
-  <!-- Open Graph / Facebook (fallback for SSR) -->
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://playback.vercel.app/" />
-  <meta property="og:title" content="PlayBack - Video Sharing Platform" />
-  <meta property="og:description"
-    content="Discover, watch, and share your favorite videos. Join the PlayBack community today!" />
-  <meta property="og:image" content="https://playback.vercel.app/PlayBack.png" />
+  <!-- DNS Prefetching -->
+  <link rel="dns-prefetch" href="//res.cloudinary.com" />
+  <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+  <link rel="dns-prefetch" href="//fonts.gstatic.com" />
+
+  <!-- Preconnects -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- Web Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+
+  <!-- Primary SEO Meta Tags -->
+  <title>PlayBack - Discover, Watch, and Share Videos</title>
+  <meta name="description"
+    content="PlayBack is the ultimate video sharing platform. Discover trending content, watch high-quality videos, upload your own creations, and join an active community of creators and viewers." />
+  <meta name="keywords"
+    content="PlayBack, video sharing, streaming, watch videos, video platform, community, content creators, trending videos, upload videos, HD video, vlog, indie creators" />
+  <meta name="author" content="PlayBack Team" />
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+  <meta name="language" content="English">
+  <meta name="revisit-after" content="1 days">
+  <meta name="rating" content="general" />
+
+  <link rel="canonical" href="http://play-back-frontend.vercel.app/" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="video.other" />
+  <meta property="og:url" content="http://play-back-frontend.vercel.app/" />
   <meta property="og:site_name" content="PlayBack" />
+  <meta property="og:title" content="PlayBack - Discover, Watch, and Share Videos" />
+  <meta property="og:description"
+    content="Discover trending content, watch high-quality videos, upload your own creations, and join an active community of creators." />
+  <meta property="og:image" content="http://play-back-frontend.vercel.app/PlayBack.png" />
+  <meta property="og:image:secure_url" content="https://play-back-frontend.vercel.app/PlayBack.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="PlayBack Logo" />
+  <meta property="og:locale" content="en_US" />
 
-  <!-- Twitter Card (fallback for SSR) -->
+  <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="PlayBack - Video Sharing Platform" />
+  <meta name="twitter:url" content="http://play-back-frontend.vercel.app/" />
+  <meta name="twitter:title" content="PlayBack - Discover, Watch, and Share Videos" />
   <meta name="twitter:description"
-    content="Discover, watch, and share your favorite videos. Join the PlayBack community today!" />
-  <meta name="twitter:image" content="https://playback.vercel.app/PlayBack.png" />
+    content="Discover trending content, watch high-quality videos, upload your own creations, and join an active community." />
+  <meta name="twitter:image" content="http://play-back-frontend.vercel.app/PlayBack.png" />
+  <meta name="twitter:image:alt" content="PlayBack Logo" />
 
-  <!-- Canonical URL -->
-  <link rel="canonical" href="https://playback.vercel.app/" />
+  <!-- Apple Specific -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PlayBack">
 
-  <title>PlayBack - Video Sharing Platform</title>
+  <!-- Schema.org markup -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "http://play-back-frontend.vercel.app/#website",
+          "url": "http://play-back-frontend.vercel.app/",
+          "name": "PlayBack",
+          "alternateName": ["PlayBack App", "Play back"],
+          "description": "PlayBack is the ultimate video sharing platform. Discover trending content, watch high-quality videos, and join an active community.",
+          "publisher": {
+            "@type": "Organization",
+            "name": "PlayBack",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "http://play-back-frontend.vercel.app/PlayBack.png",
+              "width": 512,
+              "height": 512
+            }
+          },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "http://play-back-frontend.vercel.app/search?q={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "CollectionPage",
+          "@id": "http://play-back-frontend.vercel.app/#webpage",
+          "url": "http://play-back-frontend.vercel.app/",
+          "name": "Home - PlayBack",
+          "isPartOf": {
+            "@id": "http://play-back-frontend.vercel.app/#website"
+          },
+          "about": {
+            "@id": "http://play-back-frontend.vercel.app/#website"
+          },
+          "description": "Discover trending content, watch high-quality videos, and join an active community of creators and viewers."
+        }
+      ]
+    }
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">

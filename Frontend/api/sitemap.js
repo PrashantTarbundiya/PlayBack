@@ -125,12 +125,23 @@ export default async function handler(req, res) {
 
         const thumbnailUrl = video.thumbnail?.url || `${FRONTEND_URL}/logo.png`;
 
+        let rawVideoUrl = "";
+        if (video.videoFile) {
+          rawVideoUrl = typeof video.videoFile === "string"
+            ? video.videoFile
+            : (video.videoFile.url || video.videoFile.secure_url || "");
+        }
+
+        const locTag = rawVideoUrl
+          ? `      <video:content_loc>${escapeXml(rawVideoUrl)}</video:content_loc>`
+          : `      <video:player_loc>${FRONTEND_URL}/watch/${video._id}</video:player_loc>`;
+
         const videoTag = `
     <video:video>
       <video:thumbnail_loc>${escapeXml(thumbnailUrl)}</video:thumbnail_loc>
       <video:title>${title}</video:title>
       <video:description>${description}</video:description>
-      <video:player_loc>${FRONTEND_URL}/watch/${video._id}</video:player_loc>${hasDuration
+${locTag}${hasDuration
             ? `
       <video:duration>${Math.floor(video.duration)}</video:duration>`
             : ""
