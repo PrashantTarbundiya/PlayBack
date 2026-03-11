@@ -12,8 +12,9 @@ import {
     getSavedPlaylists,
     getPublicPlaylists,
     checkVideoInUserPlaylists,
+    searchPlaylists
 } from "../controllers/playlistController.js"
-import {verifyJWT} from "../middlewares/authMiddleware.js"
+import { verifyJWT } from "../middlewares/authMiddleware.js"
 
 const router = Router();
 
@@ -22,6 +23,7 @@ router.use(verifyJWT);
 router.route("/").post(createPlaylist)
 router.route("/public").get(getPublicPlaylists)
 router.route("/saved").get(getSavedPlaylists)
+router.route("/search").get(searchPlaylists)
 
 // Specific routes must come before parameterized routes
 router.route("/check/:videoId").get(checkVideoInUserPlaylists);

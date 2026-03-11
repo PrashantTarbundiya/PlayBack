@@ -4,7 +4,7 @@ import { userModel } from "../models/userModel.js"
 import { deleteOnCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js"
 import { getDefaultImages, FALLBACK_IMAGES } from "../utils/defaultImages.js"
 import { apiResponse } from "../utils/apiResponse.js"
-import { videoModel} from "../models/videoModel.js"
+import { videoModel } from "../models/videoModel.js"
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose"
 import { generateOTP, sendOTPEmail, sendRegistrationOTPEmail, sendPasswordResetConfirmationEmail } from "../utils/emailService.js"
@@ -45,7 +45,7 @@ const sendRegistrationOTP = asyncHandler(async (req, res) => {
     const now = new Date();
     const twoAndHalfMinutesAgo = new Date(now.getTime() - 2.5 * 60 * 1000);
     const existingOTP = registrationOTPStore.get(email.toLowerCase());
-    
+
     if (existingOTP && existingOTP.lastSent && existingOTP.lastSent > twoAndHalfMinutesAgo) {
         const timeRemaining = Math.ceil((existingOTP.lastSent.getTime() + 2.5 * 60 * 1000 - now.getTime()) / 1000);
         throw new apiErrors(429, `Please wait ${timeRemaining} seconds before requesting a new OTP.`);
@@ -65,7 +65,7 @@ const sendRegistrationOTP = asyncHandler(async (req, res) => {
     // Try to send OTP via email, but don't fail if email service is not configured
     try {
         const emailResult = await sendRegistrationOTPEmail(email, otp, "New User");
-        
+
         if (!emailResult.success) {
             console.warn("Email service failed, but continuing for development:", emailResult.error);
         }
@@ -82,7 +82,7 @@ const sendRegistrationOTP = asyncHandler(async (req, res) => {
 
 const verifyRegistrationOTP = (email, providedOtp) => {
     const storedData = registrationOTPStore.get(email.toLowerCase());
-    
+
     if (!storedData) {
         return false;
     }
@@ -115,7 +115,7 @@ const verifyRegistrationOTPOnly = asyncHandler(async (req, res) => {
     // Re-store the OTP for actual registration (since verifyRegistrationOTP deletes it)
     const newOtp = generateOTP();
     const otpExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes
-    
+
     registrationOTPStore.set(email.toLowerCase(), {
         otp: newOtp,
         expiry: otpExpiry,
@@ -156,7 +156,7 @@ const registerUser = asyncHandler(async (req, res) => {
     if (!storedData || (!storedData.verified && !verifyRegistrationOTP(email, otp))) {
         throw new apiErrors(400, "Invalid or expired OTP");
     }
-    
+
     // Clear the OTP data after successful registration
     registrationOTPStore.delete(email.toLowerCase());
 
@@ -398,13 +398,13 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 
     const user = await userModel.findByIdAndUpdate(
         req.user._id,
-        { 
-            $set: { 
-                avatar: uploadedAvatar.secure_url 
-            } 
+        {
+            $set: {
+                avatar: uploadedAvatar.secure_url
+            }
         },
-        { 
-            new: true 
+        {
+            new: true
         }
     ).select("-password -refreshToken");
 
@@ -413,10 +413,10 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
         .json(
             new apiResponse(
                 200,
-                user, 
+                user,
                 "Avatar updated successfully"
-        )
-    );
+            )
+        );
 });
 
 const updateUserCoverImage = asyncHandler(async (req, res) => {
@@ -648,7 +648,7 @@ const addToWatchHistory = asyncHandler(async (req, res) => {
 
     // Check if video exists
     const video = await videoModel.findById(videoId);
-    
+
     if (!video) {
         throw new apiErrors(404, "Video not found");
     }
@@ -690,7 +690,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
     // Find user by email
     const user = await userModel.findOne({ email: email.toLowerCase() });
-    
+
     if (!user) {
         throw new apiErrors(404, "User with this email does not exist");
     }
@@ -698,7 +698,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
     // Check if user has exceeded maximum attempts (3 attempts per day)
     const now = new Date();
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    
+
     // Reset attempts if last attempt was more than 24 hours ago
     if (!user.resetPasswordLastAttempt || user.resetPasswordLastAttempt < oneDayAgo) {
         user.resetPasswordAttempts = 0;
@@ -721,7 +721,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
     // Send OTP email
     const emailResult = await sendOTPEmail(user.email, otp, user.fullName);
-    
+
     if (!emailResult.success) {
         throw new apiErrors(500, "Failed to send OTP email. Please try again.");
     }
@@ -748,7 +748,7 @@ const verifyOTPAndResetPassword = asyncHandler(async (req, res) => {
 
     // Find user by email
     const user = await userModel.findOne({ email: email.toLowerCase() });
-    
+
     if (!user) {
         throw new apiErrors(404, "User not found");
     }
@@ -773,7 +773,7 @@ const verifyOTPAndResetPassword = asyncHandler(async (req, res) => {
     user.resetPasswordAttempts = 0; // Reset attempts counter
     user.resetPasswordLastAttempt = undefined;
     user.refreshToken = undefined; // Invalidate all sessions
-    
+
     await user.save({ validateBeforeSave: true });
 
     // Send confirmation email
@@ -793,7 +793,7 @@ const resendOTP = asyncHandler(async (req, res) => {
 
     // Find user by email
     const user = await userModel.findOne({ email: email.toLowerCase() });
-    
+
     if (!user) {
         throw new apiErrors(404, "User with this email does not exist");
     }
@@ -802,7 +802,7 @@ const resendOTP = asyncHandler(async (req, res) => {
     const now = new Date();
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const twoMinutesAgo = new Date(now.getTime() - 2 * 60 * 1000); // 2 minutes ago
-    
+
     // Reset attempts if last attempt was more than 24 hours ago
     if (!user.resetPasswordLastAttempt || user.resetPasswordLastAttempt < oneDayAgo) {
         user.resetPasswordAttempts = 0;
@@ -831,7 +831,7 @@ const resendOTP = asyncHandler(async (req, res) => {
 
     // Send OTP email
     const emailResult = await sendOTPEmail(user.email, otp, user.fullName);
-    
+
     if (!emailResult.success) {
         throw new apiErrors(500, "Failed to send OTP email. Please try again.");
     }
@@ -849,7 +849,7 @@ const resendOTP = asyncHandler(async (req, res) => {
 const oauthSuccess = asyncHandler(async (req, res) => {
     try {
         const user = req.user;
-        
+
         if (!user) {
             return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=oauth_failed`);
         }
@@ -928,7 +928,7 @@ const unlinkOAuthAccount = asyncHandler(async (req, res) => {
     // Remove OAuth provider data
     const updateData = {};
     updateData[providerField] = undefined;
-    
+
     // If this was the primary provider, change to local
     if (user.provider === provider) {
         updateData.provider = 'local';
@@ -942,6 +942,87 @@ const unlinkOAuthAccount = asyncHandler(async (req, res) => {
 
     return res.status(200).json(
         new apiResponse(200, updatedUser, `${provider} account unlinked successfully`)
+    );
+});
+
+const searchUsers = asyncHandler(async (req, res) => {
+    const { q, page = 1, limit = 20 } = req.query;
+    const query = q || req.query.query;
+
+    if (!query) {
+        throw new apiErrors(400, "Search query is required");
+    }
+
+    const pipeline = [
+        {
+            $match: {
+                $or: [
+                    { username: { $regex: query, $options: 'i' } },
+                    { fullName: { $regex: query, $options: 'i' } }
+                ]
+            }
+        },
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "channel",
+                as: "subscribers"
+            }
+        },
+        {
+            $addFields: {
+                subscribersCount: { $size: "$subscribers" },
+                isSubscribed: {
+                    $cond: {
+                        if: {
+                            $and: [
+                                { $ne: [req.user?._id, null] },
+                                { $in: [req.user?._id, "$subscribers.subscriber"] }
+                            ]
+                        },
+                        then: true,
+                        else: false
+                    }
+                }
+            }
+        },
+        {
+            $sort: { subscribersCount: -1 } // Sort by Most Subscribed
+        },
+        {
+            $project: {
+                fullName: 1,
+                username: 1,
+                avatar: 1,
+                coverImage: 1,
+                subscribersCount: 1,
+                isSubscribed: 1
+            }
+        }
+    ];
+
+    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+    const limitObj = parseInt(limit, 10);
+
+    pipeline.push({ $skip: skip });
+    pipeline.push({ $limit: limitObj });
+
+    const users = await userModel.aggregate(pipeline);
+
+    // Create a pagination-like response structure
+    const paginatedResponse = {
+        docs: users,
+        totalDocs: users.length, // This is just for this page, a real count would need a separate query
+        limit: limitObj,
+        page: parseInt(page, 10),
+        totalPages: 1, // Simplified
+        hasNextPage: users.length === limitObj, // Simplified assumption
+        hasPrevPage: parseInt(page, 10) > 1,
+    };
+
+    return res.status(200).json(
+        new apiResponse(200, paginatedResponse, "Users fetched successfully")
     );
 });
 
@@ -966,5 +1047,6 @@ export {
     oauthSuccess,
     oauthFailure,
     linkOAuthAccount,
-    unlinkOAuthAccount
+    unlinkOAuthAccount,
+    searchUsers
 }

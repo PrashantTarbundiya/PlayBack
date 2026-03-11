@@ -21,8 +21,10 @@ import {
     oauthSuccess,
     oauthFailure,
     linkOAuthAccount,
-    unlinkOAuthAccount } from "../controllers/userController.js";
-import {upload} from "../middlewares/multer.js"
+    unlinkOAuthAccount,
+    searchUsers
+} from "../controllers/userController.js";
+import { upload } from "../middlewares/multer.js"
 import { verifyJWT } from "../middlewares/authMiddleware.js";
 import passport from "../config/passport.js";
 
@@ -31,43 +33,45 @@ const router = Router();
 router.route("/register").post(
     upload.fields([
         {
-            name : "avatar",
-            maxCount : 1
+            name: "avatar",
+            maxCount: 1
         },
         {
-            name : "coverImage",
-            maxCount : 1
+            name: "coverImage",
+            maxCount: 1
         }
     ]),
     registerUser)
 
 router.route("/login").post(loginUser);
 
-router.route("/logout").post(verifyJWT,logoutUser);
+router.route("/logout").post(verifyJWT, logoutUser);
 
 router.route("/refresh-token").post(refreshAccessToken);
 
-router.route("/change-password").post(verifyJWT,changeCurrentPassword);
+router.route("/change-password").post(verifyJWT, changeCurrentPassword);
 
-router.route("/current-user").get(verifyJWT,getCurrentUser);
+router.route("/current-user").get(verifyJWT, getCurrentUser);
 
-router.route("/update-account").patch(verifyJWT,updateAccountDetails);
+router.route("/update-account").patch(verifyJWT, updateAccountDetails);
 
-router.route("/avatar").patch(verifyJWT,upload.single("avatar"),updateUserAvatar);
+router.route("/avatar").patch(verifyJWT, upload.single("avatar"), updateUserAvatar);
 
-router.route("/cover-image").patch(verifyJWT,upload.single("coverImage"),updateUserCoverImage);
+router.route("/cover-image").patch(verifyJWT, upload.single("coverImage"), updateUserCoverImage);
 
-router.route("/channel/:username").get(verifyJWT,getUserChannelProfile);
+router.route("/channel/:username").get(verifyJWT, getUserChannelProfile);
 
-router.route("/history").get(verifyJWT,getWatchHistory);
+router.route("/history").get(verifyJWT, getWatchHistory);
 
-router.route("/history/:videoId").patch(verifyJWT,addToWatchHistory);
+router.route("/history/:videoId").patch(verifyJWT, addToWatchHistory);
 
 router.route("/forgot-password").post(forgotPassword);
 router.route("/reset-password").post(verifyOTPAndResetPassword);
 router.route("/resend-otp").post(resendOTP);
 router.route("/send-otp").post(sendRegistrationOTP);
 router.route("/verify-otp").post(verifyRegistrationOTPOnly);
+
+router.route("/search").get(searchUsers);
 
 // OAuth2 Routes
 // Google OAuth

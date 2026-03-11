@@ -478,17 +478,17 @@ const Profile = () => {
                 <div className="flex-1">
                   <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold">{user.fullName}</h1>
                   <p className="text-gray-400 text-lg">@{user.username}</p>
-                  <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-gray-400">
-                    <span className="flex items-center gap-1">
-                      <Users size={16} />
+                  <div className="flex flex-wrap items-center gap-2 md:gap-4 mt-3 text-xs md:text-sm text-gray-400">
+                    <span className="flex items-center gap-1 whitespace-nowrap">
+                      <Users size={16} className="w-3 h-3 md:w-4 md:h-4" />
                       {user.subscribersCount || 0} subscribers
                     </span>
-                    <span className="flex items-center gap-1">
-                      <VideoIcon size={16} />
+                    <span className="flex items-center gap-1 whitespace-nowrap">
+                      <VideoIcon size={16} className="w-3 h-3 md:w-4 md:h-4" />
                       {videos.length} videos
                     </span>
-                    <span className="flex items-center gap-1">
-                      <Calendar size={16} />
+                    <span className="flex items-center gap-1 whitespace-nowrap">
+                      <Calendar size={16} className="w-3 h-3 md:w-4 md:h-4" />
                       Joined {user.createdAt ? formatDistanceToNow(new Date(user.createdAt)) + " ago" : "recently"}
                     </span>
                   </div>
@@ -534,7 +534,7 @@ const Profile = () => {
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`py-4 px-2 border-b-2 font-medium transition whitespace-nowrap ${activeTab === tab
+                  className={`py-4 px-2 border-b-2 font-medium transition whitespace-nowrap flex-shrink-0 ${activeTab === tab
                     ? 'text-blue-500 border-blue-500'
                     : 'text-gray-400 border-transparent hover:text-white'
                     }`}
@@ -542,25 +542,25 @@ const Profile = () => {
                   {tab === 'videos' && (
                     <>
                       <VideoIcon size={18} className="inline mr-2" />
-                      Videos ({videos.length})
+                      Videos
                     </>
                   )}
                   {tab === 'playlists' && (
                     <>
                       <List size={18} className="inline mr-2" />
-                      Playlists ({playlists.length})
+                      Playlists
                     </>
                   )}
                   {tab === 'tweets' && (
                     <>
                       <MessageCircle size={18} className="inline mr-2" />
-                      Tweets ({tweets.length})
+                      Tweets
                     </>
                   )}
                   {tab === 'subscriptions' && (
                     <>
                       <Users size={18} className="inline mr-2" />
-                      Subscriptions ({subscribedChannels.length})
+                      Subscriptions
                     </>
                   )}
                 </button>

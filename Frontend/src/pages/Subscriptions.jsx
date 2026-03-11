@@ -3,12 +3,24 @@ import { useAuth } from "../contexts/AuthContext"
 import { subscriptionAPI, authAPI } from "../services/api"
 import VideoCard from "../components/VideoCard/VideoCard"
 import LoadingScreen from "../components/Skeleton/LoadingScreen"
+import Skeleton, { VideoGridSkeleton, VideoCardSkeleton } from "../components/Skeleton/Skeleton"
 import { PlaySquare, BellOff } from "lucide-react"
 
 const Subscriptions = () => {
     const { user, loading: authLoading } = useAuth()
-    const [channels, setChannels] = useState([])
-    const [loading, setLoading] = useState(true)
+    
+    // Initialize state from sessionStorage if available
+    const [channels, setChannels] = useState(() => {
+        const cached = sessionStorage.getItem('subscription_channels')
+        return cached ? JSON.parse(cached) : []
+    })
+    
+    const [loading, setLoading] = useState(() => {
+        // If we have cached data, don't show the initial loading state
+        const hasCache = !!sessionStorage.getItem('subscription_channels')
+        return !hasCache
+    })
+    
     const [error, setError] = useState(null)
     const [activeChannelId, setActiveChannelId] = useState("all")
 
@@ -17,7 +29,11 @@ const Subscriptions = () => {
             if (!user?._id) return
 
             try {
-                setLoading(true)
+                // Only show loading if we don't already have channels
+                if (channels.length === 0) {
+                    setLoading(true)
+                }
+                
                 setError(null)
                 const response = await subscriptionAPI.getSubscribedChannels(user._id)
 
@@ -64,6 +80,14 @@ const Subscriptions = () => {
                 )
 
                 setChannels(enrichedChannels)
+                
+                // Cache the processed result in sessionStorage
+                try {
+                    sessionStorage.setItem('subscription_channels', JSON.stringify(enrichedChannels))
+                } catch (storageErr) {
+                    console.error("Error saving subscriptions to cache:", storageErr)
+                }
+                
             } catch (err) {
                 console.error("Error fetching subscriptions:", err)
                 setError(err.message || "Failed to load subscriptions")
@@ -97,7 +121,50 @@ const Subscriptions = () => {
     }
 
     if (authLoading || loading) {
-        return <LoadingScreen message="Loading subscriptions..." />
+        return (
+            <div className="min-h-screen bg-[#0f0f0f] text-white">
+                {/* Horizontal Channel Filter Bar Skeleton */}
+                <div className="sticky top-14 bg-[#0f0f0f] border-b border-[#222] z-40 px-4 sm:px-6 py-3">
+                    <div className="max-w-[1400px] mx-auto">
+                        <div className="flex gap-2 sm:gap-4 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                            <style dangerouslySetInnerHTML={{
+                                __html: `.scrollbar-hide::-webkit-scrollbar { display: none; }`
+                            }} />
+
+                            {/* "All" Filter Bubble Skeleton */}
+                            <div className="flex flex-col items-center gap-2 min-w-[70px] shrink-0 pointer-events-none">
+                                <div className="w-16 h-16 rounded-full flex items-center justify-center shadow-md border-2 border-transparent bg-[#1e1e1e]">
+                                    <Skeleton width="w-8" height="h-3" rounded="rounded" />
+                                </div>
+                                <Skeleton width="w-8" height="h-3" rounded="rounded" />
+                            </div>
+
+                            {/* Subscribed Channels Bubbles Skeleton */}
+                            {[...Array(8)].map((_, i) => (
+                                <div key={i} className="flex flex-col items-center gap-2 min-w-[70px] shrink-0 pointer-events-none">
+                                    <div className="w-16 h-16 rounded-full p-[3px] bg-transparent">
+                                        <Skeleton width="w-full" height="h-full" rounded="rounded-full" className="border-[3px] border-[#0f0f0f]" />
+                                    </div>
+                                    <Skeleton width="w-12" height="h-2" rounded="rounded" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Videos Content Skeleton */}
+                <div className="p-4 sm:p-6 w-full">
+                    <h1 className="text-xl md:text-2xl font-bold text-white mb-6 mt-2 max-w-[1400px] mx-auto">Latest Videos</h1>
+                    <div className="max-w-[1400px] mx-auto">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-5 w-full">
+                            {[...Array(9)].map((_, i) => (
+                                <VideoCardSkeleton key={i} />
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )
     }
 
     if (!user) {

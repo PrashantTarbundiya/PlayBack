@@ -107,7 +107,7 @@ const Header = ({ onMenuClick }) => {
             <>
               <Link
                 to="/upload"
-                className="p-2 rounded-full text-white transition-colors duration-200 flex items-center justify-center min-w-10 min-h-10 hover:bg-[#303030] focus-visible:bg-[#303030] focus-visible:outline-2 focus-visible:outline-[#3ea6ff]"
+                className="hidden sm:flex p-2 rounded-full text-white transition-colors duration-200 items-center justify-center min-w-10 min-h-10 hover:bg-[#303030] focus-visible:bg-[#303030] focus-visible:outline-2 focus-visible:outline-[#3ea6ff]"
                 aria-label="Upload video"
               >
                 <Upload size={20} />

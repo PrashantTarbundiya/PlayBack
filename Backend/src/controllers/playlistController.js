@@ -278,8 +278,8 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
     // Check if video is already in the playlist
     if (playlist.videos.includes(videoId)) {
         const isWatchLater = playlist.name === 'Watch Later' || playlist.name.toLowerCase() === 'watch later'
-        const message = isWatchLater 
-            ? "Video is already in Watch Later" 
+        const message = isWatchLater
+            ? "Video is already in Watch Later"
             : "Video is already in this playlist"
         throw new apiErrors(400, message)
     }
@@ -603,7 +603,7 @@ const checkVideoInUserPlaylists = asyncHandler(async (req, res) => {
     ])
 
     const isSaved = playlistsWithVideo.length > 0
-    
+
     return res.status(200)
         .json(
             new apiResponse(
@@ -745,6 +745,80 @@ const getSavedPlaylists = asyncHandler(async (req, res) => {
         )
 })
 
+const searchPlaylists = asyncHandler(async (req, res) => {
+    const { q, page = 1, limit = 20 } = req.query;
+    const query = q || req.query.query;
+
+    if (!query) {
+        throw new apiErrors(400, "Search query is required");
+    }
+
+    const playlists = await playlistModel.aggregate([
+        {
+            $match: {
+                isPublic: true,
+                $or: [
+                    { name: { $regex: query, $options: 'i' } },
+                    { description: { $regex: query, $options: 'i' } }
+                ]
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "ownerDetails",
+                pipeline: [
+                    {
+                        $project: {
+                            username: 1,
+                            fullName: 1,
+                            avatar: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $lookup: {
+                from: "videos",
+                localField: "videos",
+                foreignField: "_id",
+                as: "videos"
+            }
+        },
+        {
+            $addFields: {
+                totalVideos: { $size: "$videos" },
+                totalViews: { $sum: "$videos.views" },
+                ownerDetails: { $first: "$ownerDetails" }
+            }
+        },
+        {
+            $project: {
+                _id: 1,
+                name: 1,
+                description: 1,
+                totalVideos: 1,
+                totalViews: 1,
+                updatedAt: 1,
+                createdAt: 1,
+                ownerDetails: 1,
+                isPublic: 1,
+                visibility: 1
+            }
+        },
+        { $sort: { createdAt: -1 } },
+        { $skip: (page - 1) * limit },
+        { $limit: parseInt(limit, 10) }
+    ]);
+
+    return res.status(200).json(
+        new apiResponse(200, playlists, "Playlists fetched successfully")
+    );
+})
+
 export {
     createPlaylist,
     getUserPlaylists,
@@ -757,5 +831,6 @@ export {
     unsavePlaylist,
     getSavedPlaylists,
     getPublicPlaylists,
-    checkVideoInUserPlaylists
+    checkVideoInUserPlaylists,
+    searchPlaylists
 }

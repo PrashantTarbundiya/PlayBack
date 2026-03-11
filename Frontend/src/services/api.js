@@ -18,7 +18,7 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-  
+
   return config;
 }, Promise.reject);
 
@@ -97,6 +97,8 @@ export const authAPI = {
   resendOTP: (data) => api.post("/users/resend-otp", data),
   sendOTP: (data) => api.post("/users/send-otp", data),
   verifyOTP: (data) => api.post("/users/verify-otp", data),
+  searchUsers: (query, page = 1, limit = 20) =>
+    api.get(`/users/search?q=${encodeURIComponent(query)}&page=${page}&limit=${limit}`),
 };
 
 // === VIDEO APIs ===
@@ -143,21 +145,21 @@ export const videoAPI = {
     if (!token) {
       throw new Error('Please login to use Watch Later');
     }
-    
+
     try {
       // Get current user to find their ID
       const currentUser = await authAPI.getCurrentUser();
       const userId = currentUser.data?.data?._id || currentUser.data?._id;
-      
+
       if (!userId) {
         throw new Error('User ID not found');
       }
-      
+
       // Get user's own playlists
       const userPlaylists = await playlistAPI.getUserPlaylists(userId);
       const playlists = userPlaylists.data?.data || [];
       let watchLaterPlaylist = playlists.find(p => p.name === 'Watch Later');
-      
+
       if (!watchLaterPlaylist) {
         // Create Watch Later playlist for the current user (private by default)
         const newPlaylist = await playlistAPI.createPlaylist({
@@ -168,7 +170,7 @@ export const videoAPI = {
         });
         watchLaterPlaylist = newPlaylist.data?.data;
       }
-      
+
       if (watchLaterPlaylist) {
         // Add video to the user's own Watch Later playlist
         return await playlistAPI.addVideoToPlaylist(videoId, watchLaterPlaylist._id);
@@ -199,33 +201,33 @@ export const videoAPI = {
     if (!token) {
       throw new Error('Please login to view playlists');
     }
-    
+
     try {
       const currentUser = await authAPI.getCurrentUser();
       const userId = currentUser.data?.data?._id || currentUser.data?._id;
-      
+
       if (!userId) {
         throw new Error('User ID not found');
       }
-      
+
       const userPlaylists = await playlistAPI.getUserPlaylists(userId);
       const allPlaylists = userPlaylists.data?.data || [];
-      
+
       // Filter to only show owned playlists (not saved ones) and exclude system playlists
       const ownedPlaylists = allPlaylists.filter(playlist => {
         // Only include playlists owned by the current user (not saved playlists)
         const isOwned = playlist.owner === userId ||
-                       (playlist.owner && playlist.owner._id === userId) ||
-                       playlist.isSaved !== true;
-        
+          (playlist.owner && playlist.owner._id === userId) ||
+          playlist.isSaved !== true;
+
         // Exclude system playlists
         const isNotSystemPlaylist = playlist.name !== "Watch Later" &&
-                                   playlist.name !== "Watch History" &&
-                                   !playlist.name.toLowerCase().includes("history");
-        
+          playlist.name !== "Watch History" &&
+          !playlist.name.toLowerCase().includes("history");
+
         return isOwned && isNotSystemPlaylist;
       });
-      
+
       return ownedPlaylists;
     } catch (error) {
       console.error('Error getting user playlists:', error);
@@ -298,6 +300,8 @@ export const playlistAPI = {
     api.get(`/playlist/public?page=${page}&limit=${limit}`),
   checkVideoInPlaylists: (videoId) =>
     api.get(`/playlist/check/${videoId}`),
+  searchPlaylists: (query, page = 1, limit = 20) =>
+    api.get(`/playlist/search?q=${encodeURIComponent(query)}&page=${page}&limit=${limit}`),
 };
 
 // === AI APIs ===

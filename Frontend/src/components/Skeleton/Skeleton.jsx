@@ -16,9 +16,9 @@ const Skeleton = ({
 }
 
 // Video card skeleton
-export const VideoCardSkeleton = () => {
+export const VideoCardSkeleton = ({ className = '' }) => {
   return (
-    <div className="bg-[#0f0f0f] text-white w-full max-w-md rounded-lg overflow-hidden border border-[#222]">
+    <div className={`bg-[#0f0f0f] text-white w-full rounded overflow-hidden ${className}`}>
       {/* Thumbnail skeleton - larger and more prominent */}
       <div className="relative aspect-video bg-black overflow-hidden">
         <Skeleton className="w-full h-full" rounded="rounded-none" />
