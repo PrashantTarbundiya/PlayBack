@@ -4,6 +4,7 @@ import {
     deleteComment,
     getVideoComments,
     updateComment,
+    toggleCommentPin
 } from "../controllers/commentController.js"
 import {verifyJWT} from "../middlewares/authMiddleware.js"
 
@@ -16,5 +17,7 @@ router.route("/:videoId").get(getVideoComments)
 
 router.route("/c/:commentId").delete(deleteComment)
                             .patch(updateComment);
+
+router.route("/c/:commentId/pin").post(toggleCommentPin);
 
 export default router

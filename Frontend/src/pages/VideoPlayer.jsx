@@ -947,7 +947,13 @@ const VideoPlayer = () => {
 
           {/* Comments - Lazy Loaded */}
           {shouldLoadComments ? (
-            <CommentSection videoId={id} onTimeClick={handleTimeClick} />
+            <CommentSection 
+              videoId={id} 
+              onTimeClick={handleTimeClick} 
+              videoOwnerId={video.owner?._id || video.owner} 
+              videoOwnerName={video.owner?.fullName || video.owner?.username || "Channel Owner"}
+              videoOwnerAvatar={video.owner?.avatar}
+            />
           ) : (
             <div className="bg-gray-900 p-8 rounded-lg text-center">
               <div className="animate-pulse text-gray-500">Loading comments...</div>

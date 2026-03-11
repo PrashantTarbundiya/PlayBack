@@ -9,7 +9,7 @@ import {likeModel} from "../models/likeModel.js"
 
 const getVideoComments = asyncHandler(async (req, res) => {
     const {videoId} = req.params
-    const {page = 1, limit = 10} = req.query
+    const {page = 1, limit = 10, sortBy = 'newest'} = req.query
 
     if(!isValidObjectId(videoId)){
         throw new apiErrors(400,"Invalid videoId");
@@ -36,6 +36,14 @@ const getVideoComments = asyncHandler(async (req, res) => {
             }
         },
         {
+            $lookup: {
+                from: "videos",
+                localField: "video",
+                foreignField: "_id",
+                as: "videoDetails"
+            }
+        },
+        {
             $lookup : {
                 from : "likes",
                 localField : "_id",
@@ -51,6 +59,9 @@ const getVideoComments = asyncHandler(async (req, res) => {
                 owner : {
                     $first : "$owner"
                 },
+                videoOwner: {
+                    $first: "$videoDetails.owner"
+                },
                 isLiked : {
                     $cond :{
                         if : {
@@ -63,8 +74,23 @@ const getVideoComments = asyncHandler(async (req, res) => {
             }
         },
         {
+            $addFields: {
+                isHearted: {
+                    $cond: {
+                        if: {
+                            $in: ["$videoOwner", "$likes.likedBy"]
+                        },
+                        then: true,
+                        else: false
+                    }
+                }
+            }
+        },
+        {
             $sort : {
-                createdAt : -1
+                isPinned: -1, // Pinned comments always on top
+                ...(sortBy === 'top' ? { likesCount: -1 } : {}), // Then optionally sort by likes
+                createdAt : -1 // Then always by newest
             }
         },
         {
@@ -77,7 +103,9 @@ const getVideoComments = asyncHandler(async (req, res) => {
                     fullName: 1,
                     "avatar.url": 1
                 },
-                isLiked: 1
+                isLiked: 1,
+                isHearted: 1,
+                isPinned: 1
             }
         }
     ]);
@@ -271,9 +299,63 @@ const deleteComment = asyncHandler(async (req, res) => {
 
 })
 
+
+const toggleCommentPin = asyncHandler(async (req, res) => {
+    const { commentId } = req.params
+
+    const comment = await commentModel.findById(commentId).populate("video")
+
+    if (!comment) {
+        throw new apiErrors(404, "Comment not found")
+    }
+
+    if (!comment.video) {
+        throw new apiErrors(404, "Video not found")
+    }
+
+    // Only video owner can pin
+    if (comment.video.owner.toString() !== req.user?._id.toString()) {
+        throw new apiErrors(403, "Only video owner can pin comments")
+    }
+
+    const isCurrentlyPinned = comment.isPinned
+
+    // Unpin all comments on this video first
+    await commentModel.updateMany(
+        { video: comment.video._id },
+        { $set: { isPinned: false } }
+    )
+
+    // If it wasn't pinned before, pin it now (otherwise it remains unpinned)
+    let updatedComment = comment
+    if (!isCurrentlyPinned) {
+        updatedComment = await commentModel.findByIdAndUpdate(
+            commentId,
+            {
+                $set: {
+                    isPinned: true
+                }
+            },
+            { new: true }
+        )
+    } else {
+        // Just fetch the unpinned state of same comment
+        updatedComment = await commentModel.findById(commentId)
+    }
+
+    return res.status(200).json(
+        new apiResponse(
+            200,
+            updatedComment,
+            !isCurrentlyPinned ? "Comment pinned successfully" : "Comment unpinned successfully"
+        )
+    )
+})
+
 export {
     getVideoComments, 
     addComment, 
     updateComment,
-    deleteComment
+    deleteComment,
+    toggleCommentPin
 }

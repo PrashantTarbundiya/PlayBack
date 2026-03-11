@@ -238,14 +238,15 @@ export const videoAPI = {
 
 // === COMMENT APIs ===
 export const commentAPI = {
-  getVideoComments: (videoId, page = 1, limit = 20) =>
-    api.get(`/comments/${videoId}?page=${page}&limit=${limit}`),
+  getVideoComments: (videoId, page = 1, limit = 20, sortBy = 'newest') =>
+    api.get(`/comments/${videoId}?page=${page}&limit=${limit}&sortBy=${sortBy}`),
   addComment: (videoId, content) => api.post(`/comments/${videoId}`, { content }),
   updateComment: (commentId, content) =>
     api.patch(`/comments/c/${commentId}`, { content }),
   deleteComment: (commentId) => api.delete(`/comments/c/${commentId}`),
   // Add the missing toggleCommentLike function
   toggleCommentLike: (commentId) => api.post(`/likes/toggle/c/${commentId}`),
+  toggleCommentPin: (commentId) => api.post(`/comments/c/${commentId}/pin`),
 };
 
 // === LIKE APIs ===

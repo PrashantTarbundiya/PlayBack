@@ -13,7 +13,11 @@ const commentSchema = new Schema({
     owner :{
         type : mongoose.Schema.Types.ObjectId,
         ref : "User"
-    }  
+    },
+    isPinned: {
+        type: Boolean,
+        default: false
+    }
 },{timestamps : true});
 
 
