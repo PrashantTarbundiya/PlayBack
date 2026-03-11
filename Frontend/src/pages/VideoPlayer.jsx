@@ -62,6 +62,14 @@ const VideoPlayer = () => {
   const [savedPlaylists, setSavedPlaylists] = useState([])
   const [isPlaylistLoading, setIsPlaylistLoading] = useState(false)
 
+  const handleTimeClick = (timeInSeconds) => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = timeInSeconds;
+      videoRef.current.play().catch(() => {});
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   // Scroll to top when component mounts or video ID changes
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -939,7 +947,7 @@ const VideoPlayer = () => {
 
           {/* Comments - Lazy Loaded */}
           {shouldLoadComments ? (
-            <CommentSection videoId={id} />
+            <CommentSection videoId={id} onTimeClick={handleTimeClick} />
           ) : (
             <div className="bg-gray-900 p-8 rounded-lg text-center">
               <div className="animate-pulse text-gray-500">Loading comments...</div>

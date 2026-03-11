@@ -7,7 +7,7 @@ import { ThumbsUp, ThumbsDown, MoreVertical, Edit2, Trash2 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import toast from "react-hot-toast"
 
-const CommentSection = ({ videoId }) => {
+const CommentSection = ({ videoId, onTimeClick }) => {
   const [comments, setComments] = useState([])
   const [newComment, setNewComment] = useState("")
   const [loading, setLoading] = useState(false)
@@ -282,6 +282,45 @@ const CommentSection = ({ videoId }) => {
 
   const commentsArray = Array.isArray(comments) ? comments : []
 
+  const parseTimestamp = (timestamp) => {
+    const parts = timestamp.split(':').map(Number);
+    if (parts.length === 3) {
+      return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    } else if (parts.length === 2) {
+      return parts[0] * 60 + parts[1];
+    }
+    return 0;
+  };
+
+  const renderCommentContent = (content) => {
+    if (!content) return null;
+    
+    // Split by time format like 11:11 or 1:05:22
+    const timeRegex = /((?:(?:(?:[0-9]{1,2}):)?[0-5]?[0-9]:[0-5][0-9]))/g;
+    const parts = content.split(timeRegex);
+    
+    return parts.map((part, index) => {
+      if (/^(?:(?:(?:[0-9]{1,2}):)?[0-5]?[0-9]:[0-5][0-9])$/.test(part)) {
+        return (
+          <button
+            key={index}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (onTimeClick) {
+                onTimeClick(parseTimestamp(part));
+              }
+            }}
+            className="text-blue-400 hover:text-blue-300 hover:underline font-medium px-1 bg-blue-500/10 rounded transition-colors"
+          >
+            {part}
+          </button>
+        );
+      }
+      return <span key={index}>{part}</span>;
+    });
+  };
+
   return (
     <div className="mt-10">
       <h3 className="text-lg font-semibold text-white mb-4">
@@ -397,7 +436,7 @@ const CommentSection = ({ videoId }) => {
                     </div>
                   ) : (
                     <>
-                      <p className="text-white mt-1">{comment.content}</p>
+                      <div className="text-white mt-1 whitespace-pre-wrap leading-relaxed">{renderCommentContent(comment.content)}</div>
                       <div className="flex items-center gap-4 mt-2 text-gray-400 text-sm">
                         <button
                           onClick={() => handleLikeComment(comment._id)}
