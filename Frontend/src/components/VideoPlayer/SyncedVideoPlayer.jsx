@@ -1,13 +1,13 @@
 "use client"
 
 import { useRef, useState, useEffect, forwardRef, useImperativeHandle, useCallback } from "react"
-import { Play, Pause, Volume2, VolumeX, Maximize, SkipBack, SkipForward, Settings, Minimize, RotateCcw, Gauge, PlayCircle, PictureInPicture2 } from "lucide-react"
+import { Play, Pause, Volume2, VolumeX, Maximize, SkipBack, SkipForward, Settings, Minimize, RotateCcw, Gauge, PlayCircle, PictureInPicture2, Subtitles } from "lucide-react"
 import { useSyncedVideo } from "../../contexts/SyncedVideoContext"
 import { useNavigate } from 'react-router-dom';
 // Shared speed options
 const speedOptions = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
 
-const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, className = "" }, ref) => {
+const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, endScreenVideos = [], autoPlayEnabled = true, chapters = [], onChapterPillClick, className = "" }, ref) => {
   const {
     currentVideo,
     isPlaying,
@@ -53,6 +53,16 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, c
   const [autoplayNext, setAutoplayNext] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
   const [isSeeking, setIsSeeking] = useState(false)
+
+  // Hover Preview State
+  const [hoverTime, setHoverTime] = useState(0)
+  const [hoverPosition, setHoverPosition] = useState(0)
+  const [showHoverPreview, setShowHoverPreview] = useState(false)
+  const [hoverChapter, setHoverChapter] = useState(null)
+
+  // End Screen Auto-Play State
+  const [autoPlayTimer, setAutoPlayTimer] = useState(10)
+  const [isAutoPlaying, setIsAutoPlaying] = useState(false)
 
   // Detect mobile screen size
   useEffect(() => {
@@ -486,7 +496,37 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, c
 
   const handleSeekEnd = useCallback(() => {
     setIsSeeking(false)
+    setShowHoverPreview(false)
   }, [])
+
+  const handleProgressHover = (e) => {
+    if (!duration) return
+    const progressBar = e.currentTarget
+    const rect = progressBar.getBoundingClientRect()
+    // Calculate position taking bounding rect into account properly
+    let pos = (e.clientX || e.touches?.[0]?.clientX) - rect.left
+    
+    // Clamp position within bounds
+    pos = Math.max(0, Math.min(pos, rect.width))
+    const percentage = rect.width > 0 ? pos / rect.width : 0
+    
+    const time = percentage * duration
+    
+    // Find current chapter
+    const currentChapter = [...chapters].reverse().find(c => time >= c.time)
+    
+    setHoverTime(time)
+    setHoverPosition(pos)
+    setHoverChapter(currentChapter?.title || null)
+    setShowHoverPreview(true)
+  }
+
+  const handleProgressMouseLeave = () => {
+    if (!isSeeking) {
+      setShowHoverPreview(false)
+      setHoverChapter(null)
+    }
+  }
 
   // Event listeners
   useEffect(() => {
@@ -593,6 +633,41 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, c
 
   const navigate = useNavigate();
 
+  // End Screen Logic
+  const getIsEndScreenVisible = () => {
+    if (!duration || duration <= 0) return false;
+    const timeRemaining = duration - currentTime;
+    // Show end screen in the last 5 seconds AND keep it after video ends
+    return timeRemaining <= 5;
+  };
+  
+  const isEndScreenVisible = getIsEndScreenVisible();
+
+  // Handle End Screen Auto-play side effects
+  useEffect(() => {
+    if (isEndScreenVisible && endScreenVideos.length > 0 && autoPlayEnabled && !isAutoPlaying) {
+      setIsAutoPlaying(true);
+      setAutoPlayTimer(10);
+    } else if (!isEndScreenVisible) {
+      setIsAutoPlaying(false);
+      setAutoPlayTimer(10);
+    }
+    // Only reset if end screen disappears (user seeked back), NOT when autoplay is toggled mid-countdown
+  }, [isEndScreenVisible, endScreenVideos.length]);
+
+  useEffect(() => {
+    let interval;
+    if (isAutoPlaying && autoPlayEnabled && autoPlayTimer > 0) {
+      interval = setInterval(() => {
+        setAutoPlayTimer((prev) => prev - 1);
+      }, 1000);
+    } else if (isAutoPlaying && autoPlayEnabled && autoPlayTimer === 0) {
+      navigate(`/watch/${endScreenVideos[0]._id}`);
+      setIsAutoPlaying(false);
+    }
+    return () => clearInterval(interval);
+  }, [isAutoPlaying, autoPlayTimer, navigate, endScreenVideos, autoPlayEnabled]);
+
   return (
     <div
       ref={containerRef}
@@ -604,6 +679,124 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, c
       tabIndex={0}
       data-main-video-player
     >
+      {/* End Screen Overlay */}
+      {isEndScreenVisible && endScreenVideos.length > 0 && (
+        <div 
+          className="absolute inset-0 z-20 flex flex-col items-center justify-center"
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.92) 100%)',
+            animation: 'endScreenFadeIn 0.4s ease-out'
+          }}
+        >
+          {/* Circular Countdown Timer - Top Right */}
+          {autoPlayEnabled && isAutoPlaying && (
+            <div 
+              className="absolute top-2 right-2 sm:top-4 sm:right-4 flex items-center gap-1.5 sm:gap-2 z-30 group cursor-pointer" 
+              style={{ animation: 'endScreenFadeIn 0.4s ease-out' }}
+              onClick={() => {
+                setIsAutoPlaying(false);
+                navigate(`/watch/${endScreenVideos[0]._id}`);
+              }}
+              title="Skip to next video"
+            >
+              <span className="text-white/80 text-[10px] sm:text-xs font-medium">Up next in</span>
+              <div className="relative w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center bg-black/30 sm:bg-black/20 rounded-full hover:bg-white/10 transition-colors">
+                {/* Background ring */}
+                <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 44 44">
+                  <circle cx="22" cy="22" r="18" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="3" />
+                  <circle 
+                    cx="22" cy="22" r="18" 
+                    fill="none" 
+                    stroke="#3b82f6" 
+                    strokeWidth="3" 
+                    strokeLinecap="round"
+                    strokeDasharray={`${2 * Math.PI * 18}`}
+                    strokeDashoffset={`${2 * Math.PI * 18 * (autoPlayTimer / 10)}`}
+                    className="transition-all duration-1000 linear"
+                  />
+                </svg>
+                
+                {/* Timer text (Hidden on hover) */}
+                <span className="absolute inset-0 flex items-center justify-center text-white text-xs sm:text-sm font-bold group-hover:opacity-0 transition-opacity">
+                  {autoPlayTimer}
+                </span>
+
+                {/* Skip Icon (Shows on hover) */}
+                <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="text-white ml-0.5">
+                    <path d="M4 4v16l11-8L4 4zm13 0h2v16h-2V4z" />
+                  </svg>
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Replay Button */}
+          <button
+            className="mb-4 sm:mb-5 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 hover:bg-white/25 backdrop-blur-sm border border-white/20 flex items-center justify-center transition-all duration-200 hover:scale-110 group"
+            onClick={() => {
+              const video = mainVideoRef.current;
+              if (video) { video.currentTime = 0; video.play().catch(() => {}); }
+              setIsAutoPlaying(false);
+            }}
+            title="Replay"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:rotate-[-30deg] transition-transform duration-300">
+              <path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+            </svg>
+          </button>
+
+          <h3 className="text-white/90 text-xs sm:text-sm font-semibold uppercase tracking-widest mb-3 sm:mb-4">Up Next</h3>
+
+          <div className="flex gap-3 sm:gap-5 px-4 max-w-full">
+            {endScreenVideos.slice(0, 2).map((vid, idx) => (
+              <div
+                key={vid._id}
+                className="group cursor-pointer flex-shrink-0 relative"
+                onClick={() => {
+                  setIsAutoPlaying(false);
+                  navigate(`/watch/${vid._id}`);
+                }}
+                style={{ 
+                  animation: `endScreenSlideUp 0.5s ease-out ${idx * 0.12}s both`,
+                  width: 'clamp(140px, 22vw, 220px)'
+                }}
+              >
+                {/* Thumbnail */}
+                <div className="relative aspect-video rounded-xl overflow-hidden shadow-2xl ring-1 ring-white/10 group-hover:ring-2 group-hover:ring-white/40 transition-all duration-300 group-hover:shadow-white/10">
+                  <img
+                    src={vid.thumbnail?.url || vid.thumbnail || ''}
+                    alt={vid.title}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    onError={(e) => { e.target.src = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 320 180%22><rect fill=%22%23374151%22 width=%22320%22 height=%22180%22/><text x=%2250%25%22 y=%2250%25%22 fill=%22%239ca3af%22 font-size=%2214%22 text-anchor=%22middle%22 dy=%22.3em%22>Video</text></svg>'; }}
+                  />
+                  {/* Gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  {/* Play icon on hover */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg backdrop-blur-sm transform scale-75 group-hover:scale-100 transition-transform duration-300">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="#000"><path d="M8 5v14l11-7z"/></svg>
+                    </div>
+                  </div>
+                  {/* Duration badge */}
+                  {vid.duration && (
+                    <div className="absolute bottom-1.5 right-1.5 bg-black/80 text-white text-[10px] sm:text-xs px-1.5 py-0.5 rounded font-medium backdrop-blur-sm">
+                      {Math.floor(vid.duration / 60)}:{String(Math.floor(vid.duration % 60)).padStart(2, '0')}
+                    </div>
+                  )}
+                </div>
+                {/* Info */}
+                <p className="text-white text-xs sm:text-sm font-medium mt-2 line-clamp-2 leading-snug group-hover:text-white/90 transition-colors">{vid.title}</p>
+                <p className="text-gray-500 text-[10px] sm:text-xs mt-0.5 truncate">
+                  {vid.ownerDetails?.fullName || vid.owner?.fullName || vid.ownerDetails?.username || vid.owner?.username || ''}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Video element */}
       <video
         ref={mainVideoRef}
@@ -670,7 +863,7 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, c
                   e.stopPropagation()
                   setShowSettingsMenu(!showSettingsMenu)
                 }}
-                className="p-2 rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
+                className="p-2 rounded-full bg-black/50 text-white transition-colors hover:bg-black/70 relative"
                 aria-label="Settings"
               >
                 <Settings size={20} />
@@ -679,11 +872,11 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, c
                 <>
                   {/* Backdrop to close menu */}
                   <div
-                    className="fixed inset-0 bg-black/50 z-40"
+                    className="fixed inset-0 bg-black/50 z-[90]"
                     onClick={closeAllMenus}
                   />
                   {/* Bottom sheet on small screens */}
-                  <div className="fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur-sm rounded-t-lg pt-2 pb-3 overflow-y-auto z-50 border-t border-gray-700/50 shadow-2xl min-w-full max-h-64 transition-all duration-200">
+                  <div className="fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur-sm rounded-t-lg pt-2 pb-3 overflow-y-auto z-[100] border-t border-gray-700/50 shadow-2xl min-w-full max-h-64 transition-all duration-200">
                     {settingsView === 'main' && (
                       <>
                         {/* Playback Speed */}
@@ -870,14 +1063,42 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, c
           {/* Bottom - Progress Bar and Time */}
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent pt-4 px-2 pb-1">
             {/* Progress bar */}
-            <div className="w-full bg-white/20 cursor-pointer group h-1 progress-bar" 
-                 onMouseDown={handleSeekStart}
-                 onTouchStart={handleSeekStart}>
-              <div
-                className="h-full bg-red-500 transition-all duration-100 relative"
-                style={{ width: duration ? `${(currentTime / duration) * 100}%` : "0%" }}
-              >
-                <div className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity w-2.5 h-2.5"></div>
+            <div className="relative w-full">
+              {/* Hover Preview Tooltip */}
+              {showHoverPreview && (
+                <div 
+                  className="absolute bottom-5 transform -translate-x-1/2 flex items-center gap-1.5 bg-black/80 backdrop-blur-sm text-white font-medium px-2.5 py-1 rounded-sm shadow-sm pointer-events-none transition-opacity duration-100 z-30 whitespace-nowrap"
+                  style={{ left: `${Math.max(20, Math.min(hoverPosition, containerRef.current?.offsetWidth - 20))}px` }}
+                >
+                  <span className="text-xs">{formatTime(hoverTime)}</span>
+                  {hoverChapter && (
+                    <span className="text-xs text-gray-300 font-semibold truncate max-w-[120px]">
+                      • {hoverChapter}
+                    </span>
+                  )}
+                </div>
+              )}
+              <div className="w-full bg-white/20 cursor-pointer group h-1 progress-bar relative z-10" 
+                   onMouseDown={handleSeekStart}
+                   onTouchStart={handleSeekStart}
+                   onMouseMove={handleProgressHover}
+                   onMouseLeave={handleProgressMouseLeave}
+                   onTouchMove={handleProgressHover}
+                   onTouchEnd={handleProgressMouseLeave}>
+                <div
+                  className="h-full bg-red-500 transition-all duration-100 relative"
+                  style={{ width: duration ? `${(currentTime / duration) * 100}%` : "0%" }}
+                >
+                  <div className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity w-2.5 h-2.5 shadow-sm shadow-red-500/50"></div>
+                </div>
+                {/* Chapter Markers */}
+                {duration > 0 && chapters.map((chapter, idx) => (
+                  <div
+                    key={idx}
+                    className="absolute top-0 bottom-0 w-0.5 bg-black z-20"
+                    style={{ left: `${(chapter.time / duration) * 100}%` }}
+                  />
+                ))}
               </div>
             </div>
 
@@ -911,21 +1132,60 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, c
       ) : (
         // Desktop Controls Layout (Original)
       <div className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent transition-opacity duration-300 ${showControls ? "opacity-100" : "opacity-0"} ${isFullscreen ? 'pt-12 px-8 pb-8' : 'pt-8 px-4 pb-4'}`}>
-        {/* Progress bar */}
-        <div className={`w-full bg-white/20 cursor-pointer group progress-bar ${isFullscreen ? 'h-2 mb-6' : 'h-1.5 mb-4'}`} 
-             onMouseDown={handleSeekStart}
-             onTouchStart={handleSeekStart}>
-          <div
-            className="h-full bg-red-500 transition-all duration-100 relative"
-            style={{ width: duration ? `${(currentTime / duration) * 100}%` : "0%" }}
-          >
-            <div className={`absolute right-0 top-1/2 transform -translate-y-1/2 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity ${isFullscreen ? 'w-4 h-4' : 'w-3 h-3'}`}></div>
+        {/* Progress bar area */}
+        <div className="relative w-full">
+          {/* Hover Preview Tooltip */}
+          {showHoverPreview && (
+            <div 
+              className={`absolute transform -translate-x-1/2 bg-black/80 backdrop-blur-sm text-white font-medium rounded-sm shadow-md pointer-events-none transition-opacity duration-100 z-30 flex items-center gap-2 whitespace-nowrap ${isFullscreen ? 'bottom-8 px-3 py-1.5' : 'bottom-6 px-2.5 py-1'}`}
+              style={{ left: `${Math.max(30, Math.min(hoverPosition, (containerRef.current?.offsetWidth || hoverPosition) - 30))}px` }}
+            >
+              <span className={isFullscreen ? 'text-sm' : 'text-xs'}>{formatTime(hoverTime)}</span>
+              {hoverChapter && (
+                <span className={`font-semibold text-gray-300 truncate max-w-[200px] ${isFullscreen ? 'text-sm' : 'text-xs'}`}>
+                  • {hoverChapter}
+                </span>
+              )}
+            </div>
+          )}
+          
+          <div className={`w-full bg-white/20 cursor-pointer group progress-bar relative z-10 ${isFullscreen ? 'h-2 mb-6' : 'h-1.5 mb-4'}`} 
+               onMouseDown={handleSeekStart}
+               onTouchStart={handleSeekStart}
+               onMouseMove={handleProgressHover}
+               onMouseLeave={handleProgressMouseLeave}
+               onTouchMove={handleProgressHover}
+               onTouchEnd={handleProgressMouseLeave}>
+            
+            {/* Hover visual indicator on the bar itself */}
+            {showHoverPreview && (
+              <div 
+                className="absolute top-0 bottom-0 bg-white/40 pointer-events-none"
+                style={{ width: `${(hoverPosition / (containerRef.current?.offsetWidth || 1)) * 100}%` }}
+              ></div>
+            )}
+            
+            <div
+              className="h-full bg-red-500 transition-all duration-100 relative z-20"
+              style={{ width: duration ? `${(currentTime / duration) * 100}%` : "0%" }}
+            >
+              <div className={`absolute right-0 top-1/2 transform -translate-y-1/2 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-sm shadow-red-500/50 ${isFullscreen ? 'w-4 h-4' : 'w-3 h-3'}`}></div>
+            </div>
+            
+            {/* Chapter Markers */}
+            {duration > 0 && chapters.map((chapter, idx) => (
+              <div
+                key={idx}
+                className="absolute top-0 bottom-0 w-[2px] bg-black z-30 pointer-events-none"
+                style={{ left: `${(chapter.time / duration) * 100}%` }}
+              />
+            ))}
           </div>
         </div>
 
         <div className="flex items-center justify-between">
           {/* Left controls */}
-          <div className={`flex items-center ${isFullscreen ? 'gap-2' : 'gap-1'}`}>
+          <div className={`flex items-center ${isFullscreen ? 'gap-4' : 'gap-2'}`}>
             <button onClick={togglePlay} className={`rounded-full text-white transition-colors hover:bg-white/20 ${isFullscreen ? 'p-3' : 'p-2'}`} aria-label="Play/Pause">
               {isPlaying ? <Pause size={isFullscreen ? 28 : 20} /> : <Play size={isFullscreen ? 28 : 20} />}
             </button>
@@ -937,7 +1197,7 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, c
             </button>
             
             {/* Volume controls */}
-            <div className={`flex items-center group ${isFullscreen ? 'gap-3' : 'gap-2'}`}>
+            <div className={`flex items-center group ${isFullscreen ? 'gap-3' : 'gap-1.5'}`}>
               <button
                 onClick={toggleMute}
                 onMouseEnter={() => setShowVolumeSlider(true)}
@@ -968,21 +1228,46 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, c
             </div>
 
             {/* Time display */}
-            <span className={`text-white font-medium ${isFullscreen ? 'text-lg ml-4' : 'text-sm ml-2'}`}>
-              {formatTime(currentTime)} / {formatTime(duration)}
-            </span>
+            <div className={`flex items-center ${isFullscreen ? 'ml-6' : 'ml-4'} gap-4`}>
+              <span className={`text-white font-medium ${isFullscreen ? 'text-lg' : 'text-sm'}`}>
+                {formatTime(currentTime)} <span className="text-white/70 mx-0.5">/</span> {formatTime(duration)}
+              </span>
+              
+              {/* "In this video" Chapter Pill */}
+              {chapters && chapters.length > 0 && (
+                <button 
+                  onClick={onChapterPillClick}
+                  className={`hidden md:flex items-center gap-1.5 bg-white/10 hover:bg-white/20 transition-colors rounded-full text-white font-medium px-3 py-1.5 ${isFullscreen ? 'text-sm' : 'text-xs'}`}
+                >
+                  In this video
+                  <svg width="6" height="10" viewBox="0 0 6 10" fill="none" className="ml-0.5 opacity-80" aria-hidden="true">
+                    <path d="M1 1L5 5L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Right controls */}
-          <div className={`flex items-center ${isFullscreen ? 'gap-2' : 'gap-1'}`}>
+          <div className={`flex items-center ${isFullscreen ? 'gap-4' : 'gap-2'}`}>
+            {/* CC Button */}
+            <button className={`hidden md:block rounded-full text-white transition-colors hover:bg-white/20 relative ${isFullscreen ? 'p-2.5' : 'p-1.5'}`} aria-label="Subtitles/CC">
+              <Subtitles size={isFullscreen ? 24 : 18} />
+            </button>
+            
             {/* Settings button */}
             <div className="relative">
               <button
                 onClick={() => setShowSettingsMenu(!showSettingsMenu)}
-                className={`rounded-full text-white transition-colors hover:bg-white/20 ${isFullscreen ? 'p-2.5' : 'p-1.5'}`}
+                className={`rounded-full text-white transition-colors hover:bg-white/20 relative ${isFullscreen ? 'p-2.5' : 'p-1.5'}`}
                 aria-label="Settings"
               >
-                <Settings size={isFullscreen ? 24 : 18} />
+                <div className="relative flex items-center justify-center">
+                  <Settings size={isFullscreen ? 24 : 18} />
+                  <span className="absolute -top-[5px] -right-[6px] bg-[#cc0000] text-white text-[9px] font-bold rounded-sm tracking-tighter leading-none" style={{ padding: '2px 3px', transform: 'scale(0.85)' }}>
+                    HD
+                  </span>
+                </div>
               </button>
               {showSettingsMenu && (
                <div className={`absolute bottom-full right-0 mb-2 bg-gray-900/95 backdrop-blur-sm rounded-lg py-1 overflow-y-auto z-20 border border-gray-700/50 shadow-2xl ${isFullscreen ? 'min-w-[220px] max-w-[280px] max-h-64' : 'min-w-[180px] max-w-[220px] max-h-56'}`}>
@@ -1181,6 +1466,14 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, c
             cursor: pointer;
             border: none;
             box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+          }
+          @keyframes endScreenFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+          @keyframes endScreenSlideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
           }
         `
       }} />

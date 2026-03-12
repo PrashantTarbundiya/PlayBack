@@ -7,7 +7,7 @@ import { useNotifications } from "../../contexts/NotificationContext"
 import { useResponsive } from "../../hooks/useResponsive"
 import MobileSearch from "./MobileSearch"
 import NotificationDropdown from "../Notifications/NotificationDropdown"
-import { Search, Menu, Upload, Bell, User } from "lucide-react"
+import { Search, Menu, Upload, Bell, User, Mic, Plus } from "lucide-react"
 import playbackLogo from "../../assets/PlayBack.png"
 
 const Header = ({ onMenuClick }) => {
@@ -75,20 +75,26 @@ const Header = ({ onMenuClick }) => {
             <form className="flex h-10 w-full max-w-[500px]" onSubmit={handleSearch}>
               <input
                 type="text"
-                placeholder="Search videos..."
+                placeholder="Search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="flex-1 px-4 bg-[#121212] border border-[#303030] border-r-0 rounded-l-[20px] text-white text-base min-w-0 focus:outline-none focus:border-[#1976d2] focus:bg-[#1a1a1a] placeholder:text-[#aaa] text-selectable"
-                aria-label="Search videos"
+                aria-label="Search"
               />
               <button
                 type="submit"
-                className="w-16 h-10 bg-[#303030] border border-[#303030] rounded-r-[20px] text-white flex items-center justify-center transition-colors duration-200 flex-shrink-0 hover:bg-[#404040] focus-visible:bg-[#404040] focus-visible:outline-2 focus-visible:outline-[#3ea6ff]"
+                className="w-16 h-10 bg-[#222222] border border-[#303030] rounded-r-[20px] text-white flex items-center justify-center transition-colors duration-200 flex-shrink-0 hover:bg-[#303030] focus-visible:bg-[#303030] focus-visible:outline-2 focus-visible:outline-[#3ea6ff]"
                 aria-label="Search"
               >
                 <Search size={20} />
               </button>
             </form>
+            <button
+              className="ml-4 w-10 h-10 rounded-full bg-[#222222] hover:bg-[#303030] flex items-center justify-center text-white transition-colors duration-200 flex-shrink-0"
+              aria-label="Search with your voice"
+            >
+              <Mic size={20} />
+            </button>
           </div>
         )}
 
@@ -107,10 +113,11 @@ const Header = ({ onMenuClick }) => {
             <>
               <Link
                 to="/upload"
-                className="hidden sm:flex p-2 rounded-full text-white transition-colors duration-200 items-center justify-center min-w-10 min-h-10 hover:bg-[#303030] focus-visible:bg-[#303030] focus-visible:outline-2 focus-visible:outline-[#3ea6ff]"
-                aria-label="Upload video"
+                className="hidden sm:flex px-3 py-1.5 h-9 bg-[#222222] rounded-full text-white transition-colors duration-200 items-center justify-center gap-2 hover:bg-[#303030] hover:no-underline focus-visible:bg-[#303030] focus-visible:outline-2 focus-visible:outline-[#3ea6ff] font-medium text-sm"
+                aria-label="Upload"
               >
-                <Upload size={20} />
+                <Plus size={20} />
+                <span>Create</span>
               </Link>
               <div className="relative">
                 <button
@@ -122,8 +129,8 @@ const Header = ({ onMenuClick }) => {
                   <div className="relative">
                     <Bell size={20} />
                     {unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 font-medium text-selectable">
-                        {unreadCount > 99 ? '99+' : unreadCount}
+                      <span className="absolute -top-1 -right-1 bg-[#cc0000] text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 font-medium text-selectable border-2 border-[rgba(15,15,15,0.95)]">
+                        {unreadCount > 9 ? '9+' : unreadCount}
                       </span>
                     )}
                   </div>

@@ -1,13 +1,14 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { useParams, Link, useNavigate } from "react-router-dom"
-import { ThumbsUp, ThumbsDown, Share, Download, Clock, Plus } from "lucide-react"
+import { ThumbsUp, ThumbsDown, Share, Download, Clock, Plus, AlignLeft } from "lucide-react"
 import LikeButton from "../components/LikeButton/LikeButton"
 import SyncedVideoPlayer from "../components/VideoPlayer/SyncedVideoPlayer"
 import CommentSection from "../components/CommentSection/CommentSection"
 import VideoCard from "../components/VideoCard/VideoCard"
 import PlaylistModal from "../components/PlaylistModal/PlaylistModal"
+import TranscriptSidebar from "../components/VideoPlayer/TranscriptSidebar"
 import { videoAPI, likeAPI, subscriptionAPI, authAPI, playlistAPI } from "../services/api"
 import SubscriptionDropdown from "../components/SubscriptionDropdown/SubscriptionDropdown"
 import { useAuth } from "../contexts/AuthContext"
@@ -36,7 +37,8 @@ const VideoPlayer = () => {
     setPlaylistVideos,
     setCurrentVideoIndex,
     setAutoPlayNext,
-    handleVideoEnd
+    handleVideoEnd,
+    currentTime
   } = useSyncedVideo()
 
   const videoRef = useRef(null)
@@ -61,11 +63,13 @@ const VideoPlayer = () => {
   const [isSaved, setIsSaved] = useState(false)
   const [savedPlaylists, setSavedPlaylists] = useState([])
   const [isPlaylistLoading, setIsPlaylistLoading] = useState(false)
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false)
+  const [showTranscript, setShowTranscript] = useState(false)
 
   const handleTimeClick = (timeInSeconds) => {
     if (videoRef.current) {
       videoRef.current.currentTime = timeInSeconds;
-      videoRef.current.play().catch(() => {});
+      videoRef.current.play().catch(() => { });
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -119,6 +123,7 @@ const VideoPlayer = () => {
       setHasMoreRelated(true)
       setShouldLoadComments(false)
       setRelatedVideos([])
+      setIsDescriptionExpanded(false)
     }
   }, [id])
 
@@ -140,6 +145,31 @@ const VideoPlayer = () => {
       return () => clearTimeout(timer)
     }
   }, [video, loading])
+
+  // Parse Chapters from Description
+  const videoChapters = useMemo(() => {
+    if (!video?.description) return [];
+
+    // Match timestamps like 0:00, 01:23, 1:05:22 followed by a title
+    const timestampRegex = /(?:(\d{1,2}):)?(\d{1,2}):(\d{2})\s+-(?:\s+)?(.+)|(?:(\d{1,2}):)?(\d{1,2}):(\d{2})\s+(.+)/g;
+    const chapters = [];
+    let match;
+
+    while ((match = timestampRegex.exec(video.description)) !== null) {
+      // Handle both formats: "0:00 Title" and "0:00 - Title"
+      const hours = parseInt(match[1] || match[5] || '0', 10);
+      const minutes = parseInt(match[2] || match[6] || '0', 10);
+      const seconds = parseInt(match[3] || match[7] || '0', 10);
+      const title = (match[4] || match[8] || '').trim();
+
+      const timeInSeconds = (hours * 3600) + (minutes * 60) + seconds;
+
+      chapters.push({ time: timeInSeconds, title });
+    }
+
+    // Sort by time
+    return chapters.sort((a, b) => a.time - b.time);
+  }, [video?.description]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -652,6 +682,23 @@ const VideoPlayer = () => {
     }
   }
 
+  const handleShareChapter = (timeInSeconds) => {
+    const baseUrl = window.location.href.split('?')[0];
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.set('t', Math.floor(timeInSeconds));
+    const shareUrl = `${baseUrl}?${urlParams.toString()}`;
+
+    navigator.clipboard.writeText(shareUrl)
+      .then(() => {
+        toast.remove();
+        toast.success("Chapter link copied!");
+      })
+      .catch(() => {
+        toast.remove();
+        toast.error("Copy failed");
+      });
+  }
+
   const formatViews = (views) => {
     if (!views) return "0 views"
     if (views >= 1_000_000) return `${(views / 1_000_000).toFixed(1)}M views`
@@ -688,6 +735,41 @@ const VideoPlayer = () => {
 
     return imageUrl
   }
+  const parseTimestamp = (timestamp) => {
+    const parts = timestamp.split(':').map(Number);
+    if (parts.length === 3) {
+      return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    } else if (parts.length === 2) {
+      return parts[0] * 60 + parts[1];
+    }
+    return 0;
+  };
+
+  const renderDescriptionContent = (content) => {
+    if (!content) return "No description available";
+
+    const timeRegex = /((?:(?:(?:[0-9]{1,2}):)?[0-5]?[0-9]:[0-5][0-9]))/g;
+    const parts = content.split(timeRegex);
+
+    return parts.map((part, index) => {
+      if (/^(?:(?:(?:[0-9]{1,2}):)?[0-5]?[0-9]:[0-5][0-9])$/.test(part)) {
+        return (
+          <button
+            key={index}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleTimeClick(parseTimestamp(part));
+            }}
+            className="text-blue-400 hover:text-blue-300 hover:underline font-medium px-1 bg-blue-500/10 rounded transition-colors"
+          >
+            {part}
+          </button>
+        );
+      }
+      return <span key={index}>{part}</span>;
+    });
+  };
 
   const getThumbnailUrl = () => {
     if (thumbnailError) return "/default-thumbnail.jpg"
@@ -813,15 +895,19 @@ const VideoPlayer = () => {
           }}
         />
       )}
-      <div className="flex flex-col lg:flex-row gap-6 p-4 text-white bg-[#0f0f0f] min-h-screen">
+      <div className="flex flex-col lg:flex-row gap-6 p-4 text-white bg-[#0f0f0f] min-h-screen w-full overflow-hidden">
         {/* Main Video Section */}
-        <div className="flex-1 max-w-5xl">
+        <div className="flex-1 min-w-0">
           <div className="rounded-lg overflow-hidden">
             <SyncedVideoPlayer
               ref={videoRef}
               src={getVideoUrl()}
               poster={getThumbnailUrl()}
               onVideoEnd={handleVideoEnd}
+              endScreenVideos={relatedVideos.filter(v => v._id !== id).slice(0, 2)}
+              autoPlayEnabled={autoPlayNext}
+              chapters={videoChapters}
+              onChapterPillClick={() => setShowTranscript(true)}
               onError={(e) => {
                 toast.remove()
                 toast.error(`Video failed to load: ${getVideoUrl() || 'No video URL found'}. Please check if the video file exists and is accessible.`);
@@ -850,6 +936,15 @@ const VideoPlayer = () => {
                 <Share size={20} />
                 <span className="hidden sm:inline ">Share</span>
               </button>
+              {videoChapters.length > 0 && (
+                <button
+                  onClick={() => setShowTranscript(!showTranscript)}
+                  className={`hidden sm:flex items-center gap-2 px-4 py-[22px] h-[36px] rounded-full transition-colors ${showTranscript ? 'bg-blue-900/50 text-blue-400' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+                >
+                  <AlignLeft size={20} />
+                  <span className="hidden sm:inline">Transcript</span>
+                </button>
+              )}
               <button
                 onClick={handleWatchLater}
                 disabled={actionLoading.watchLater}
@@ -941,16 +1036,32 @@ const VideoPlayer = () => {
           </div>
 
           {/* Description */}
-          <div className="bg-gray-900 p-4 rounded-lg mb-6">
-            <p className="text-sm text-gray-300 whitespace-pre-wrap">{video.description || "No description available"}</p>
+          <div
+            className="bg-gray-900 p-4 rounded-xl mb-6 cursor-pointer hover:bg-gray-800 transition-colors"
+            onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+          >
+            <p className={`text-sm text-white whitespace-pre-wrap ${!isDescriptionExpanded ? 'line-clamp-2' : ''}`}>
+              {renderDescriptionContent(video.description)}
+            </p>
+            {video.description && (video.description.length > 120 || video.description.split('\n').length > 2) && (
+              <button
+                className="text-white font-semibold text-sm mt-2 focus:outline-none"
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent duplicate toggle event
+                  setIsDescriptionExpanded(!isDescriptionExpanded);
+                }}
+              >
+                {isDescriptionExpanded ? "Show less" : "Show more"}
+              </button>
+            )}
           </div>
 
           {/* Comments - Lazy Loaded */}
           {shouldLoadComments ? (
-            <CommentSection 
-              videoId={id} 
-              onTimeClick={handleTimeClick} 
-              videoOwnerId={video.owner?._id || video.owner} 
+            <CommentSection
+              videoId={id}
+              onTimeClick={handleTimeClick}
+              videoOwnerId={video.owner?._id || video.owner}
               videoOwnerName={video.owner?.fullName || video.owner?.username || "Channel Owner"}
               videoOwnerAvatar={video.owner?.avatar}
             />
@@ -961,8 +1072,21 @@ const VideoPlayer = () => {
           )}
         </div>
 
-        {/* Playlist/Related Videos Sidebar */}
-        <aside className="w-full lg:w-96 lg:min-w-96">
+        {/* Playlist/Related Videos/Transcript Sidebar */}
+        <aside className="w-full lg:w-96 lg:max-w-96 lg:flex-shrink-0 relative">
+          {showTranscript && videoChapters.length > 0 && (
+            <div className="hidden md:block lg:mb-6">
+              <TranscriptSidebar
+                chapters={videoChapters}
+                currentTime={currentTime}
+                onSeek={handleTimeClick}
+                onClose={() => setShowTranscript(false)}
+                videoThumbnail={getThumbnailUrl()}
+                onShareChapter={handleShareChapter}
+              />
+            </div>
+          )}
+
           {currentPlaylist ? (
             <div className="space-y-4">
               {/* Playlist Header */}
@@ -1076,7 +1200,25 @@ const VideoPlayer = () => {
             </div>
           ) : (
             <div>
-              <h3 className="text-lg font-semibold mb-4">Related Videos</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Related Videos</h3>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400 font-medium uppercase tracking-wider">Autoplay</span>
+                  <div className="flex items-center">
+                    <button
+                      onClick={() => setAutoPlayNext(!autoPlayNext)}
+                      className={`relative shrink-0 block w-[40px] h-[20px] min-w-[40px] max-w-[40px] min-h-[20px] max-h-[20px] p-0 m-0 border-none rounded-[10px] transition-colors duration-300 focus:outline-none ${autoPlayNext ? 'bg-blue-600' : 'bg-gray-600'
+                        }`}
+                      aria-label="Toggle Autoplay"
+                    >
+                      <div
+                        className={`absolute top-1/2 -translate-y-1/2 left-[2px] w-[16px] h-[16px] rounded-full bg-white shadow-sm transition-transform duration-300 ${autoPlayNext ? 'translate-x-[20px]' : 'translate-x-0'
+                          }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
               <div ref={relatedVideosRef} className="related-videos-container space-y-3">
                 {loadingRelated && relatedVideos.length === 0 ? (
                   <div className="flex justify-center py-8">
