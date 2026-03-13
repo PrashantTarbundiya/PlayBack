@@ -9,7 +9,7 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 30000,
+  timeout: 60000,
 });
 
 // Request interceptor
@@ -309,6 +309,13 @@ export const playlistAPI = {
 export const aiAPI = {
   summarizeVideo: (videoId) => api.get(`/ai/summarize/${videoId}`, { timeout: 120000 }),
   askQuestion: (videoId, question) => api.post(`/ai/ask/${videoId}`, { question }, { timeout: 60000 }),
+};
+
+// === TRANSCRIPTION APIs ===
+export const transcriptionAPI = {
+  getTranscription: (videoId, { noGenerate } = {}) => api.get(`/transcription/${videoId}${noGenerate ? '?noGenerate=true' : ''}`, { timeout: 300000 }),
+  regenerateTranscription: (videoId) => api.post(`/transcription/regenerate/${videoId}`, {}, { timeout: 300000 }),
+  updateTranscription: (videoId, transcription) => api.put(`/transcription/${videoId}`, { transcription }),
 };
 
 export default api;

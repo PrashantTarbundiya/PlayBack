@@ -9,7 +9,7 @@ import CommentSection from "../components/CommentSection/CommentSection"
 import VideoCard from "../components/VideoCard/VideoCard"
 import PlaylistModal from "../components/PlaylistModal/PlaylistModal"
 import TranscriptSidebar from "../components/VideoPlayer/TranscriptSidebar"
-import { videoAPI, likeAPI, subscriptionAPI, authAPI, playlistAPI } from "../services/api"
+import { videoAPI, likeAPI, subscriptionAPI, authAPI, playlistAPI, transcriptionAPI } from "../services/api"
 import SubscriptionDropdown from "../components/SubscriptionDropdown/SubscriptionDropdown"
 import { useAuth } from "../contexts/AuthContext"
 import { useSyncedVideo } from "../contexts/SyncedVideoContext"
@@ -65,6 +65,7 @@ const VideoPlayer = () => {
   const [isPlaylistLoading, setIsPlaylistLoading] = useState(false)
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false)
   const [showTranscript, setShowTranscript] = useState(false)
+  const [captionSegments, setCaptionSegments] = useState([])
 
   const handleTimeClick = (timeInSeconds) => {
     if (videoRef.current) {
@@ -78,6 +79,69 @@ const VideoPlayer = () => {
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [id])
+
+  // Fetch transcript for captions
+  useEffect(() => {
+    if (!id) return;
+    setCaptionSegments([]);
+    const fetchCaptions = async () => {
+      try {
+        const response = await transcriptionAPI.getTranscription(id);
+        const text = response.data.data?.transcription || response.data.transcription || '';
+        if (!text || text.startsWith('Transcription could not be generated')) return;
+        // Parse into segments
+        const lines = text.split('\n');
+        const rawSegments = [];
+        const lineRegex = /^\s*(?:[-*]\s*)?(?:\*\*)?[\[\(]?(\d{1,2}:\d{2}(?::\d{2})?)[\]\)]?(?:\*\*)?[\s\-–—:]*(.*)$/;
+        let currentSeg = null;
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
+          const match = trimmed.match(lineRegex);
+          if (match) {
+            const parts = match[1].split(':').map(Number);
+            const time = parts.length === 3 ? parts[0]*3600+parts[1]*60+parts[2] : parts[0]*60+parts[1];
+            if (!isNaN(time)) {
+              if (currentSeg) rawSegments.push(currentSeg);
+              currentSeg = { time, timeStr: match[1], text: match[2] || '' };
+              continue;
+            }
+          }
+          if (currentSeg) currentSeg.text += (currentSeg.text ? ' ' : '') + trimmed;
+        }
+        if (currentSeg) rawSegments.push(currentSeg);
+
+        // Split long segments into short subtitle lines (~8 words each)
+        const WORDS_PER_LINE = 8;
+        const captionLines = [];
+        for (let i = 0; i < rawSegments.length; i++) {
+          const seg = rawSegments[i];
+          const nextTime = rawSegments[i + 1]?.time ?? (seg.time + 10);
+          const words = seg.text.split(/\s+/).filter(w => w);
+          if (words.length <= WORDS_PER_LINE) {
+            captionLines.push({ time: seg.time, text: seg.text });
+          } else {
+            // Split into chunks and distribute time evenly
+            const chunks = [];
+            for (let j = 0; j < words.length; j += WORDS_PER_LINE) {
+              chunks.push(words.slice(j, j + WORDS_PER_LINE).join(' '));
+            }
+            const timeSpan = nextTime - seg.time;
+            chunks.forEach((chunk, idx) => {
+              captionLines.push({
+                time: seg.time + (timeSpan * idx / chunks.length),
+                text: chunk,
+              });
+            });
+          }
+        }
+        setCaptionSegments(captionLines);
+      } catch (err) {
+        // Captions are optional, don't show error
+      }
+    };
+    fetchCaptions();
+  }, [id]);
 
   useEffect(() => {
     if (id) {
@@ -912,6 +976,7 @@ const VideoPlayer = () => {
                 toast.remove()
                 toast.error(`Video failed to load: ${getVideoUrl() || 'No video URL found'}. Please check if the video file exists and is accessible.`);
               }}
+              transcriptSegments={captionSegments}
             />
           </div>
 
@@ -936,15 +1001,13 @@ const VideoPlayer = () => {
                 <Share size={20} />
                 <span className="hidden sm:inline ">Share</span>
               </button>
-              {videoChapters.length > 0 && (
-                <button
+              <button
                   onClick={() => setShowTranscript(!showTranscript)}
                   className={`hidden sm:flex items-center gap-2 px-4 py-[22px] h-[36px] rounded-full transition-colors ${showTranscript ? 'bg-blue-900/50 text-blue-400' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
                 >
                   <AlignLeft size={20} />
                   <span className="hidden sm:inline">Transcript</span>
                 </button>
-              )}
               <button
                 onClick={handleWatchLater}
                 disabled={actionLoading.watchLater}
@@ -1074,7 +1137,7 @@ const VideoPlayer = () => {
 
         {/* Playlist/Related Videos/Transcript Sidebar */}
         <aside className="w-full lg:w-96 lg:max-w-96 lg:flex-shrink-0 relative">
-          {showTranscript && videoChapters.length > 0 && (
+          {showTranscript && (
             <div className="hidden md:block lg:mb-6">
               <TranscriptSidebar
                 chapters={videoChapters}
@@ -1083,6 +1146,8 @@ const VideoPlayer = () => {
                 onClose={() => setShowTranscript(false)}
                 videoThumbnail={getThumbnailUrl()}
                 onShareChapter={handleShareChapter}
+                videoId={id}
+                isOwner={user && video?.owner?._id === user._id}
               />
             </div>
           )}

@@ -43,6 +43,7 @@ import playlistRouter from "./routes/playlistRoute.js"
 import dashboardRouter from "./routes/dashboardRoute.js"
 import notificationRouter from "./routes/notificationRoute.js"
 import aiRouter from "./routes/aiRoute.js"
+import transcriptionRouter from "./routes/transcriptionRoute.js"
 
 //routes declaration
 app.use("/api/v1/healthcheck", healthcheckRouter)
@@ -56,6 +57,7 @@ app.use("/api/v1/playlist", playlistRouter)
 app.use("/api/v1/dashboard", dashboardRouter)
 app.use("/api/v1/notifications", notificationRouter)
 app.use("/api/v1/ai", aiRouter)
+app.use("/api/v1/transcription", transcriptionRouter)
 
 
 app.use((err, req, res, next) => {

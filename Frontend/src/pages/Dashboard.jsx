@@ -13,6 +13,7 @@ import toast from "react-hot-toast"
 import { useNavigate } from "react-router-dom"
 import LoadingScreen from "../components/Skeleton/LoadingScreen"
 import EditVideoModal from "../components/EditVideoModal/EditVideoModal"
+import TranscriptModal from "../components/TranscriptModal/TranscriptModal"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell, AreaChart, Area, ComposedChart, Line, LineChart
@@ -24,6 +25,7 @@ const Dashboard = () => {
   const navigate = useNavigate()
   const [lastUpdate, setLastUpdate] = useState(new Date())
   const [period, setPeriod] = useState('30d')
+  const [timelineMetric, setTimelineMetric] = useState('both') // 'both', 'views', 'likes'
 
   const PERIODS = [
     { value: '7d', label: 'Last 7 Days' },
@@ -46,6 +48,8 @@ const Dashboard = () => {
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [selectedVideoToEdit, setSelectedVideoToEdit] = useState(null)
+  const [isTranscriptModalOpen, setIsTranscriptModalOpen] = useState(false)
+  const [selectedTranscriptVideo, setSelectedTranscriptVideo] = useState(null)
 
   // Initial data fetch
   useEffect(() => {
@@ -409,33 +413,37 @@ const Dashboard = () => {
                   ) : (
                     <div className="space-y-4">
                       {Array.isArray(videos) ? videos.slice(0, 5).map(video => (
-                        <div key={video._id} className="flex items-center bg-[#181818] p-4 rounded-lg hover:bg-[#202020] transition">
-                          <img
-                            src={video?.thumbnail?.url || "/placeholder.svg"}
-                            alt={video.title}
-                            className="w-20 h-12 object-cover rounded"
-                          />
-                          <div className="flex-1 ml-4">
-                            <h4 className="font-medium text-white">{video.title}</h4>
-                            <p className="text-sm text-gray-400">
-                              {video?.likesCount || video?.likes || video?.totalLikes || 0} likes • {video?.views || video?.viewsCount || video?.totalViews || 0} views
-                              {video?.createdAt && !isNaN(new Date(video.createdAt).getTime()) && (
-                                <> • {formatDistanceToNow(new Date(video.createdAt)) + " ago"}</>
-                              )}
-                            </p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className={`text-xs px-2 py-1 rounded ${video.isPublished
-                                ? 'bg-green-900 text-green-300'
-                                : 'bg-yellow-900 text-yellow-300'
-                                }`}>
-                                {video.isPublished ? 'Published' : 'Draft'}
-                              </span>
+                        <div key={video._id} className="bg-[#181818] p-3 sm:p-4 rounded-lg hover:bg-[#202020] transition">
+                          {/* Top row: thumbnail + info */}
+                          <div className="flex items-start gap-3 sm:gap-4">
+                            <img
+                              src={video?.thumbnail?.url || "/placeholder.svg"}
+                              alt={video.title}
+                              className="w-16 h-10 sm:w-20 sm:h-12 object-cover rounded flex-shrink-0"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-white text-sm sm:text-base truncate">{video.title}</h4>
+                              <p className="text-xs sm:text-sm text-gray-400 truncate">
+                                {video?.likesCount || video?.likes || video?.totalLikes || 0} likes • {video?.views || video?.viewsCount || video?.totalViews || 0} views
+                                {video?.createdAt && !isNaN(new Date(video.createdAt).getTime()) && (
+                                  <> • {formatDistanceToNow(new Date(video.createdAt)) + " ago"}</>
+                                )}
+                              </p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className={`text-xs px-2 py-0.5 rounded ${video.isPublished
+                                  ? 'bg-green-900 text-green-300'
+                                  : 'bg-yellow-900 text-yellow-300'
+                                  }`}>
+                                  {video.isPublished ? 'Published' : 'Draft'}
+                                </span>
+                              </div>
                             </div>
                           </div>
-                          <div className="flex gap-2">
+                          {/* Action buttons - wrap on mobile */}
+                          <div className="flex flex-wrap gap-2 mt-3 sm:mt-2 sm:justify-end">
                             <button
                               onClick={() => handleTogglePublish(video._id)}
-                              className={`text-sm px-3 py-1 rounded transition ${video.isPublished
+                              className={`text-xs sm:text-sm px-2.5 sm:px-3 py-1 rounded transition ${video.isPublished
                                 ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
                                 : 'bg-green-600 hover:bg-green-700 text-white'
                                 }`}
@@ -444,13 +452,22 @@ const Dashboard = () => {
                             </button>
                             <button
                               onClick={() => handleEditVideo(video)}
-                              className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition"
+                              className="text-xs sm:text-sm bg-blue-600 text-white px-2.5 sm:px-3 py-1 rounded hover:bg-blue-700 transition"
                             >
                               Edit
                             </button>
                             <button
+                              onClick={() => {
+                                setSelectedTranscriptVideo(video)
+                                setIsTranscriptModalOpen(true)
+                              }}
+                              className="text-xs sm:text-sm bg-purple-600 text-white px-2.5 sm:px-3 py-1 rounded hover:bg-purple-700 transition"
+                            >
+                              Transcript
+                            </button>
+                            <button
                               onClick={() => handleVideoDelete(video._id)}
-                              className="text-sm bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition"
+                              className="text-xs sm:text-sm bg-red-600 text-white px-2.5 sm:px-3 py-1 rounded hover:bg-red-700 transition"
                             >
                               Delete
                             </button>
@@ -520,23 +537,68 @@ const Dashboard = () => {
                 {/* Hero Chart: Channel Growth Timeline */}
                 {videos.length > 0 && (
                   <div className="bg-[#181818] p-6 rounded-lg w-full min-h-[400px] mt-6 border border-gray-800/50 shadow-xl shadow-blue-500/5 relative z-10">
-                    <div className="flex justify-between items-center mb-6">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                       <div>
                         <h4 className="text-xl font-bold text-white">
                           Channel Growth Timeline
                         </h4>
-                        <p className="text-sm text-gray-400">Total views and likes over {PERIODS.find(p => p.value === period)?.label.toLowerCase() || 'time'}</p>
+                        <p className="text-sm text-gray-400">Total {timelineMetric === 'views' ? 'views' : timelineMetric === 'likes' ? 'likes' : 'views and likes'} over {PERIODS.find(p => p.value === period)?.label.toLowerCase() || 'time'}</p>
                       </div>
 
-                      <select
-                        value={period}
-                        onChange={(e) => setPeriod(e.target.value)}
-                        className="bg-[#262626] border border-gray-700/50 rounded-lg px-3 py-2 text-sm font-medium hover:bg-[#333] cursor-pointer transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                      >
-                        {PERIODS.map(p => (
-                          <option key={p.value} value={p.value}>{p.label}</option>
-                        ))}
-                      </select>
+                      <div className="flex flex-wrap gap-2">
+                        {/* Metric Toggle Buttons */}
+                        <div className="flex gap-1 bg-[#262626] rounded-lg p-1">
+                          <button
+                            onClick={() => setTimelineMetric('both')}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                              timelineMetric === 'both'
+                                ? 'bg-blue-600 text-white'
+                                : 'text-gray-400 hover:text-white'
+                            }`}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M3 3v18h18" />
+                              <path d="M18 17V9" />
+                              <path d="M13 17V5" />
+                              <path d="M8 17v-3" />
+                            </svg>
+                            Both
+                          </button>
+                          <button
+                            onClick={() => setTimelineMetric('views')}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                              timelineMetric === 'views'
+                                ? 'bg-blue-600 text-white'
+                                : 'text-gray-400 hover:text-white'
+                            }`}
+                          >
+                            <Eye size={14} />
+                            Views
+                          </button>
+                          <button
+                            onClick={() => setTimelineMetric('likes')}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                              timelineMetric === 'likes'
+                                ? 'bg-blue-600 text-white'
+                                : 'text-gray-400 hover:text-white'
+                            }`}
+                          >
+                            <Heart size={14} />
+                            Likes
+                          </button>
+                        </div>
+
+                        {/* Period Selector */}
+                        <select
+                          value={period}
+                          onChange={(e) => setPeriod(e.target.value)}
+                          className="bg-[#262626] border border-gray-700/50 rounded-lg px-3 py-2 text-sm font-medium hover:bg-[#333] cursor-pointer transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        >
+                          {PERIODS.map(p => (
+                            <option key={p.value} value={p.value}>{p.label}</option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
 
                     <ResponsiveContainer width="100%" height={320}>
@@ -581,34 +643,38 @@ const Dashboard = () => {
                         />
                         <Legend verticalAlign="top" height={36} iconType="circle" wrapperStyle={{ paddingBottom: '20px' }} />
 
-                        <Area
-                          type="basis"
-                          dataKey="views"
-                          name="Views"
-                          stroke="#3b82f6"
-                          fillOpacity={1}
-                          fill="url(#colorViews)"
-                          strokeWidth={4}
-                          dot={{ r: 0 }}
-                          activeDot={{ r: 8, fill: '#3b82f6', stroke: '#fff', strokeWidth: 2 }}
-                          filter="url(#glow)"
-                          animationDuration={1500}
-                          animationEasing="ease-out"
-                        />
-                        <Area
-                          type="basis"
-                          dataKey="likes"
-                          name="Likes"
-                          stroke="#aaaaaa"
-                          fillOpacity={1}
-                          fill="url(#colorLikes)"
-                          strokeWidth={3}
-                          dot={{ r: 0 }}
-                          activeDot={{ r: 6, fill: '#aaaaaa', stroke: '#fff', strokeWidth: 2 }}
-                          animationDuration={1500}
-                          animationEasing="ease-out"
-                          strokeDasharray="5 5"
-                        />
+                        {(timelineMetric === 'both' || timelineMetric === 'views') && (
+                          <Area
+                            type="basis"
+                            dataKey="views"
+                            name="Views"
+                            stroke="#3b82f6"
+                            fillOpacity={1}
+                            fill="url(#colorViews)"
+                            strokeWidth={4}
+                            dot={{ r: 0 }}
+                            activeDot={{ r: 8, fill: '#3b82f6', stroke: '#fff', strokeWidth: 2 }}
+                            filter="url(#glow)"
+                            animationDuration={1500}
+                            animationEasing="ease-out"
+                          />
+                        )}
+                        {(timelineMetric === 'both' || timelineMetric === 'likes') && (
+                          <Area
+                            type="basis"
+                            dataKey="likes"
+                            name="Likes"
+                            stroke="#aaaaaa"
+                            fillOpacity={1}
+                            fill="url(#colorLikes)"
+                            strokeWidth={3}
+                            dot={{ r: 0 }}
+                            activeDot={{ r: 6, fill: '#aaaaaa', stroke: '#fff', strokeWidth: 2 }}
+                            animationDuration={1500}
+                            animationEasing="ease-out"
+                            strokeDasharray="5 5"
+                          />
+                        )}
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
@@ -747,6 +813,17 @@ const Dashboard = () => {
             />
           )
         }
+
+        {/* Transcript Modal */}
+        {isTranscriptModalOpen && selectedTranscriptVideo && (
+          <TranscriptModal
+            video={selectedTranscriptVideo}
+            onClose={() => {
+              setIsTranscriptModalOpen(false)
+              setSelectedTranscriptVideo(null)
+            }}
+          />
+        )}
       </div >
     </>
   )

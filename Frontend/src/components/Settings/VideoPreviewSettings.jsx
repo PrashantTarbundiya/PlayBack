@@ -37,13 +37,13 @@ const VideoPreviewSettings = () => {
           </div>
           <button
             onClick={() => handleToggle('enabled')}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+            className={`relative shrink-0 block w-[40px] h-[20px] min-w-[40px] max-w-[40px] min-h-[20px] max-h-[20px] p-0 m-0 border-none rounded-[10px] transition-colors duration-300 focus:outline-none ${
               settings.enabled ? 'bg-blue-600' : 'bg-gray-600'
             }`}
           >
             <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                settings.enabled ? 'translate-x-6' : 'translate-x-1'
+              className={`absolute top-1/2 -translate-y-1/2 left-[2px] w-[16px] h-[16px] rounded-full bg-white shadow-sm transition-transform duration-300 ${
+                settings.enabled ? 'translate-x-[20px]' : 'translate-x-0'
               }`}
             />
           </button>
@@ -76,14 +76,14 @@ const VideoPreviewSettings = () => {
           </div>
           <button
             onClick={() => handleToggle('autoMute')}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+            className={`relative shrink-0 block w-[40px] h-[20px] min-w-[40px] max-w-[40px] min-h-[20px] max-h-[20px] p-0 m-0 border-none rounded-[10px] transition-colors duration-300 focus:outline-none ${
               settings.autoMute ? 'bg-blue-600' : 'bg-gray-600'
             }`}
             disabled={!settings.enabled}
           >
             <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                settings.autoMute ? 'translate-x-6' : 'translate-x-1'
+              className={`absolute top-1/2 -translate-y-1/2 left-[2px] w-[16px] h-[16px] rounded-full bg-white shadow-sm transition-transform duration-300 ${
+                settings.autoMute ? 'translate-x-[20px]' : 'translate-x-0'
               }`}
             />
           </button>
@@ -96,14 +96,14 @@ const VideoPreviewSettings = () => {
           </div>
           <button
             onClick={() => handleToggle('showHoverIndicator')}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+            className={`relative shrink-0 block w-[40px] h-[20px] min-w-[40px] max-w-[40px] min-h-[20px] max-h-[20px] p-0 m-0 border-none rounded-[10px] transition-colors duration-300 focus:outline-none ${
               settings.showHoverIndicator ? 'bg-blue-600' : 'bg-gray-600'
             }`}
             disabled={!settings.enabled}
           >
             <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                settings.showHoverIndicator ? 'translate-x-6' : 'translate-x-1'
+              className={`absolute top-1/2 -translate-y-1/2 left-[2px] w-[16px] h-[16px] rounded-full bg-white shadow-sm transition-transform duration-300 ${
+                settings.showHoverIndicator ? 'translate-x-[20px]' : 'translate-x-0'
               }`}
             />
           </button>

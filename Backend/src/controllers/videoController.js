@@ -8,6 +8,7 @@ import { userModel } from "../models/userModel.js"
 import { likeModel } from "../models/likeModel.js"
 import { commentModel } from "../models/commentModel.js"
 import { createVideoNotification } from "./notificationController.js"
+import { generateTranscription } from "../utils/transcription.js"
 
 
 const getAllVideos = asyncHandler(async (req, res) => {
@@ -168,6 +169,18 @@ const publishAVideo = asyncHandler(async (req, res) => {
         views: 0  // Initialize views to 0
     })
 
+    // Generate transcription in background
+    if (process.env.GEMINI_API_KEY) {
+        generateTranscription(videoFile.url)
+            .then(transcription => {
+                if (transcription) {
+                    videoModel.findByIdAndUpdate(video._id, { transcription })
+                        .catch(err => console.error('Failed to save transcription:', err));
+                }
+            })
+            .catch(err => console.error('Transcription generation failed:', err));
+    }
+
 
     const videoUploaded = await videoModel.find(video._id);
 
@@ -285,6 +298,7 @@ const getVideoById = asyncHandler(async (req, res) => {
                 views: 1,
                 createdAt: 1,
                 duration: 1,
+                transcription: 1,
                 comments: 1,
                 owner: 1,
                 likesCount: 1,
@@ -378,6 +392,18 @@ const updateVideo = asyncHandler(async (req, res) => {
             url: videoFile.url
         };
         updateData.duration = videoFile.duration; // update duration if new video is uploaded
+        
+        // Generate new transcription for updated video
+        if (process.env.GEMINI_API_KEY) {
+            generateTranscription(videoFile.url)
+                .then(transcription => {
+                    if (transcription) {
+                        videoModel.findByIdAndUpdate(videoId, { transcription })
+                            .catch(err => console.error('Failed to save transcription:', err));
+                    }
+                })
+                .catch(err => console.error('Transcription generation failed:', err));
+        }
     }
 
     const updatedVideo = await videoModel.findByIdAndUpdate(

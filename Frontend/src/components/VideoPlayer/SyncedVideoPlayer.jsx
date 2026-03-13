@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 // Shared speed options
 const speedOptions = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
 
-const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, endScreenVideos = [], autoPlayEnabled = true, chapters = [], onChapterPillClick, className = "" }, ref) => {
+const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, endScreenVideos = [], autoPlayEnabled = true, chapters = [], onChapterPillClick, className = "", transcriptSegments = [] }, ref) => {
   const {
     currentVideo,
     isPlaying,
@@ -53,6 +53,7 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, e
   const [autoplayNext, setAutoplayNext] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
   const [isSeeking, setIsSeeking] = useState(false)
+  const [captionsEnabled, setCaptionsEnabled] = useState(false)
 
   // Hover Preview State
   const [hoverTime, setHoverTime] = useState(0)
@@ -419,7 +420,7 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, e
         setShowSettingsMenu(prev => !prev)
         break
       case 'KeyC':
-        // Toggle captions (placeholder)
+        setCaptionsEnabled(prev => !prev)
         break
       case 'Digit0':
       case 'Digit1':
@@ -837,6 +838,66 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, e
         </div>
       )}
 
+      {/* Captions Overlay - YouTube-style 2-line rolling */}
+      {captionsEnabled && transcriptSegments.length > 0 && (() => {
+        // Find current active line index
+        // Add 1s offset so captions appear slightly ahead of speech (AI timestamps tend to lag)
+        const adjustedTime = currentTime + 1;
+        let activeIdx = -1;
+        for (let i = transcriptSegments.length - 1; i >= 0; i--) {
+          if (transcriptSegments[i].time !== null && adjustedTime >= transcriptSegments[i].time) {
+            activeIdx = i;
+            break;
+          }
+        }
+        if (activeIdx === -1) return null;
+
+        const currentLine = transcriptSegments[activeIdx]?.text;
+        const prevLine = activeIdx > 0 ? transcriptSegments[activeIdx - 1]?.text : null;
+
+        if (!currentLine) return null;
+
+        return (
+          <div 
+            className="absolute left-0 right-0 flex justify-center pointer-events-none z-10"
+            style={{ bottom: showControls ? (isFullscreen ? '90px' : '70px') : '20px', transition: 'bottom 0.3s ease' }}
+          >
+            <div 
+              className="text-center px-5 py-2.5 rounded-lg max-w-[85%]"
+              style={{ backgroundColor: 'rgba(0, 0, 0, 0.75)' }}
+            >
+              {prevLine && (
+                <div 
+                  key={`prev-${activeIdx - 1}`}
+                  style={{ 
+                    fontSize: isFullscreen ? '1.1rem' : '0.85rem',
+                    lineHeight: '1.6',
+                    color: 'rgba(255,255,255,0.55)',
+                    textShadow: '0 1px 2px rgba(0,0,0,0.6)',
+                    transition: 'opacity 0.2s ease',
+                  }}
+                >
+                  {prevLine}
+                </div>
+              )}
+              <div 
+                key={`curr-${activeIdx}`}
+                style={{ 
+                  fontSize: isFullscreen ? '1.25rem' : '0.95rem',
+                  lineHeight: '1.6',
+                  color: '#ffffff',
+                  fontWeight: 500,
+                  textShadow: '0 1px 4px rgba(0,0,0,0.9)',
+                  transition: 'opacity 0.2s ease',
+                }}
+              >
+                {currentLine}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Mobile and Desktop Controls */}
       {isMobile ? (
         // Mobile Controls Layout
@@ -1104,8 +1165,8 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, e
 
             {/* Bottom Controls */}
             <div className="flex items-center justify-between">
-              {/* Bottom Left - Time Display + Volume */}
-              <div className="flex items-center gap-5">
+              {/* Bottom Left - Time Display + Volume + CC */}
+              <div className="flex items-center gap-3">
                 <span className="text-white font-medium text-xs">
                   {formatTime(currentTime)} / {formatTime(duration)}
                 </span>
@@ -1115,6 +1176,20 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, e
                   aria-label="Mute/Unmute"
                 >
                   {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                </button>
+                <button 
+                  onClick={() => setCaptionsEnabled(!captionsEnabled)} 
+                  className={`p-1 rounded-full transition-colors hover:bg-white/20 relative ${captionsEnabled ? 'text-[#3ea6ff]' : 'text-white'}`} 
+                  aria-label="Subtitles/CC"
+                  title={captionsEnabled ? 'Turn off captions' : 'Turn on captions'}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="6" width="20" height="12" rx="2" />
+                    <path d="M7 10h4M7 14h4M15 10h2M15 14h2" />
+                  </svg>
+                  {captionsEnabled && (
+                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[60%] h-[2px] bg-[#3ea6ff] rounded-full" />
+                  )}
                 </button>
               </div>
 
@@ -1251,8 +1326,19 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, e
           {/* Right controls */}
           <div className={`flex items-center ${isFullscreen ? 'gap-4' : 'gap-2'}`}>
             {/* CC Button */}
-            <button className={`hidden md:block rounded-full text-white transition-colors hover:bg-white/20 relative ${isFullscreen ? 'p-2.5' : 'p-1.5'}`} aria-label="Subtitles/CC">
-              <Subtitles size={isFullscreen ? 24 : 18} />
+            <button 
+              onClick={() => setCaptionsEnabled(!captionsEnabled)} 
+              className={`rounded-full transition-colors hover:bg-white/20 relative ${isFullscreen ? 'p-2.5' : 'p-1.5'} ${captionsEnabled ? 'text-[#3ea6ff]' : 'text-white'}`} 
+              aria-label="Subtitles/CC"
+              title={captionsEnabled ? 'Turn off captions (C)' : 'Turn on captions (C)'}
+            >
+              <svg width={isFullscreen ? "24" : "18"} height={isFullscreen ? "24" : "18"} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="6" width="20" height="12" rx="2" />
+                <path d="M7 10h4M7 14h4M15 10h2M15 14h2" />
+              </svg>
+              {captionsEnabled && (
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[60%] h-[2px] bg-[#3ea6ff] rounded-full" />
+              )}
             </button>
             
             {/* Settings button */}

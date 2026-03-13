@@ -1,5 +1,6 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { X, Share2, Repeat, PlaySquare } from 'lucide-react';
+import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react';
+import { X, Share2, PlaySquare } from 'lucide-react';
+import { transcriptionAPI } from '../../services/api';
 
 const formatTime = (timeInSeconds) => {
   if (!timeInSeconds || isNaN(timeInSeconds)) return "0:00"
@@ -12,17 +13,188 @@ const formatTime = (timeInSeconds) => {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`
 }
 
-const TranscriptSidebar = ({ chapters, currentTime, onSeek, onClose, videoThumbnail, onShareChapter }) => {
+// Parse a timestamp string like "0:00", "1:23", "1:23:45" into seconds
+const parseTimestamp = (ts) => {
+  const parts = ts.split(':').map(Number);
+  if (parts.some(isNaN)) return null;
+  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  if (parts.length === 2) return parts[0] * 60 + parts[1];
+  return null;
+};
+
+// Strip markdown formatting from text
+const stripMarkdown = (text) => {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '$1')  // bold
+    .replace(/\*(.+?)\*/g, '$1')       // italic
+    .replace(/__(.+?)__/g, '$1')       // bold alt
+    .replace(/_(.+?)_/g, '$1')         // italic alt
+    .replace(/^#+\s*/gm, '')           // headers
+    .replace(/^[-*]\s+/gm, '')         // bullet points
+    .trim();
+};
+
+// Parse transcription text into segments with timestamps
+// Handles: [0:00] text, **[0:00]** text, (0:00) text, 0:00 - text, * [0:00] text, etc.
+const parseTranscription = (text) => {
+  if (!text) return [];
+
+  // Split by lines for easier processing
+  const lines = text.split('\n');
+  const segments = [];
+  
+  // Regex to find timestamps in various formats at start of line (after optional markdown)
+  const lineTimestampRegex = /^\s*(?:[-*]\s*)?(?:\*\*)?[\[\(]?(\d{1,2}:\d{2}(?::\d{2})?)[\]\)]?(?:\*\*)?[\s\-–—:]*(.*)$/;
+  
+  let currentSegment = null;
+
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+    if (!trimmedLine) continue;
+
+    const match = trimmedLine.match(lineTimestampRegex);
+    
+    if (match) {
+      const timeStr = match[1];
+      const timeInSeconds = parseTimestamp(timeStr);
+      
+      if (timeInSeconds !== null) {
+        // Save previous segment
+        if (currentSegment) {
+          currentSegment.text = stripMarkdown(currentSegment.text);
+          segments.push(currentSegment);
+        }
+        
+        currentSegment = {
+          time: timeInSeconds,
+          timeStr: timeStr,
+          text: match[2] || ''
+        };
+        continue;
+      }
+    }
+    
+    // No timestamp found — append to current segment or create intro
+    if (currentSegment) {
+      currentSegment.text += (currentSegment.text ? '\n' : '') + trimmedLine;
+    } else {
+      // Text before any timestamp
+      if (segments.length === 0) {
+        currentSegment = { time: null, timeStr: null, text: trimmedLine };
+      }
+    }
+  }
+
+  // Push the last segment
+  if (currentSegment) {
+    currentSegment.text = stripMarkdown(currentSegment.text);
+    segments.push(currentSegment);
+  }
+
+  // If no segments at all, return full text as one segment
+  if (segments.length === 0) {
+    return [{ time: null, timeStr: null, text: stripMarkdown(text) }];
+  }
+
+  return segments;
+};
+
+const TranscriptSidebar = ({ chapters, currentTime, onSeek, onClose, videoThumbnail, onShareChapter, videoId, isOwner }) => {
   const scrollRef = useRef(null);
-  const [activeTab, setActiveTab] = useState('chapters');
+  const transcriptScrollRef = useRef(null);
+  const activeTranscriptRef = useRef(null);
+  const hasChapters = chapters && chapters.length > 0;
+  const [activeTab, setActiveTab] = useState(hasChapters ? 'chapters' : 'transcript');
+  const [transcription, setTranscription] = useState('');
+  const [transcriptionLoading, setTranscriptionLoading] = useState(false);
+  const [transcriptionError, setTranscriptionError] = useState(null);
 
   // Find active chapter index
-  const activeIndex = [...chapters].reduce((acc, chapter, idx) => {
+  const activeIndex = hasChapters ? [...chapters].reduce((acc, chapter, idx) => {
     if (currentTime >= chapter.time) {
       return idx;
     }
     return acc;
-  }, 0);
+  }, 0) : -1;
+
+  // Parse transcription into segments with timestamps
+  const transcriptSegments = useMemo(() => parseTranscription(transcription), [transcription]);
+
+  // Find active transcript segment based on currentTime
+  const activeTranscriptIndex = useMemo(() => {
+    if (!transcriptSegments.length) return -1;
+    let active = -1;
+    for (let i = 0; i < transcriptSegments.length; i++) {
+      if (transcriptSegments[i].time !== null && currentTime >= transcriptSegments[i].time) {
+        active = i;
+      }
+    }
+    return active;
+  }, [transcriptSegments, Math.floor(currentTime)]);
+
+  // Auto-scroll to active transcript segment
+  useEffect(() => {
+    if (activeTab === 'transcript' && activeTranscriptRef.current) {
+      activeTranscriptRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [activeTranscriptIndex, activeTab]);
+
+  // Fetch transcription when transcript tab is selected
+  useEffect(() => {
+    if (activeTab === 'transcript' && videoId && !transcription && !transcriptionLoading) {
+      fetchTranscription();
+    }
+  }, [activeTab, videoId]);
+
+  const fetchTranscription = async () => {
+    try {
+      setTranscriptionLoading(true);
+      setTranscriptionError(null);
+      const response = await transcriptionAPI.getTranscription(videoId);
+      const transcriptionText = response.data.data?.transcription || response.data.transcription || '';
+      
+      // Check if the transcription is actually an error message from a failed generation
+      if (transcriptionText.startsWith('Transcription could not be generated')) {
+        setTranscription('');
+        setTranscriptionError(transcriptionText);
+      } else {
+        setTranscription(transcriptionText);
+      }
+    } catch (error) {
+      setTranscriptionError('Failed to load transcription');
+      console.error('Transcription fetch error:', error);
+    } finally {
+      setTranscriptionLoading(false);
+    }
+  };
+
+  const handleRegenerateTranscript = async () => {
+    try {
+      setTranscriptionLoading(true);
+      setTranscriptionError(null);
+      setTranscription('');
+      const response = await transcriptionAPI.regenerateTranscription(videoId);
+      const transcriptionText = response.data.data?.transcription || response.data.transcription || '';
+      
+      if (transcriptionText.startsWith('Transcription could not be generated')) {
+        setTranscription('');
+        setTranscriptionError(transcriptionText);
+      } else {
+        setTranscription(transcriptionText);
+      }
+    } catch (error) {
+      setTranscriptionError('Failed to generate transcription. Please try again later.');
+      console.error('Transcription regeneration error:', error);
+    } finally {
+      setTranscriptionLoading(false);
+    }
+  };
+
+  const handleTimestampClick = useCallback((timeInSeconds) => {
+    if (onSeek) {
+      onSeek(timeInSeconds);
+    }
+  }, [onSeek]);
 
   // Auto-scroll to active chapter
   useEffect(() => {
@@ -34,32 +206,7 @@ const TranscriptSidebar = ({ chapters, currentTime, onSeek, onClose, videoThumbn
     }
   }, [activeIndex, activeTab]);
 
-  // Prevent body scroll on mobile
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 1024) {
-        document.body.style.overflow = 'hidden';
-      } else {
-        document.body.style.overflow = '';
-      }
-    };
-    
-    handleResize(); // Run on mount
-    window.addEventListener('resize', handleResize);
-    
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      document.body.style.overflow = '';
-    };
-  }, []);
 
-  if (!chapters || chapters.length === 0) {
-    return (
-      <div className="bg-[#1f1f1f] rounded-t-2xl lg:rounded-xl p-6 text-center text-[#aaaaaa]">
-        No transcript or chapters available for this video.
-      </div>
-    );
-  }
 
   return (
     <>
@@ -85,16 +232,18 @@ const TranscriptSidebar = ({ chapters, currentTime, onSeek, onClose, videoThumbn
       </div>
 
       <div className="flex items-center gap-2 px-4 pb-4">
-        <button 
-          onClick={() => setActiveTab('chapters')}
-          className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-            activeTab === 'chapters' 
-              ? 'bg-[#f1f1f1] text-[#0f0f0f]' 
-              : 'bg-white/10 text-white hover:bg-white/20'
-          }`}
-        >
-          Chapters
-        </button>
+        {hasChapters && (
+          <button 
+            onClick={() => setActiveTab('chapters')}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              activeTab === 'chapters' 
+                ? 'bg-[#f1f1f1] text-[#0f0f0f]' 
+                : 'bg-white/10 text-white hover:bg-white/20'
+            }`}
+          >
+            Chapters
+          </button>
+        )}
         <button 
           onClick={() => setActiveTab('transcript')}
           className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
@@ -107,7 +256,7 @@ const TranscriptSidebar = ({ chapters, currentTime, onSeek, onClose, videoThumbn
         </button>
       </div>
       
-      <div ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar">
+      <div ref={activeTab === 'chapters' ? scrollRef : transcriptScrollRef} className="flex-1 overflow-y-auto custom-scrollbar">
         {activeTab === 'chapters' ? (
           <div className="space-y-[1px]">
             {chapters.map((chapter, idx) => {
@@ -162,9 +311,73 @@ const TranscriptSidebar = ({ chapters, currentTime, onSeek, onClose, videoThumbn
             })}
           </div>
         ) : (
-          <div className="p-4 text-center text-[#aaaaaa] text-sm mt-10">
-            <p>Transcript syncing automatically.</p>
-            <p className="mt-2 text-xs">Scroll to see more lines as the video plays.</p>
+          <div className="p-4">
+            {transcriptionLoading ? (
+              <div className="text-center text-[#aaaaaa] text-sm mt-10">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mx-auto mb-4"></div>
+                <p>Transcript syncing automatically.</p>
+                <p className="mt-2 text-xs">Loading transcription...</p>
+              </div>
+            ) : transcriptionError ? (
+              <div className="text-center text-[#aaaaaa] text-sm mt-10">
+                <p className="text-red-400">{transcriptionError}</p>
+                <button 
+                  onClick={fetchTranscription}
+                  className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs"
+                >
+                  Retry
+                </button>
+              </div>
+            ) : transcription ? (
+              <div className="space-y-1">
+                <div className="text-xs text-[#aaaaaa] mb-4 text-center">
+                  <p>Click on a timestamp to jump to that point in the video.</p>
+                </div>
+                <div className="space-y-[2px]">
+                  {transcriptSegments.map((segment, idx) => {
+                    const isActive = idx === activeTranscriptIndex;
+                    return (
+                      <div
+                        key={idx}
+                        ref={isActive ? activeTranscriptRef : null}
+                        className={`flex items-start gap-3 px-3 py-2 rounded-lg transition-colors duration-200 ${
+                          isActive
+                            ? 'bg-[#3e3e3e]'
+                            : 'hover:bg-white/5'
+                        }`}
+                      >
+                        {segment.time !== null ? (
+                          <button
+                            onClick={() => handleTimestampClick(segment.time)}
+                            className="flex-shrink-0 mt-[2px] text-[12px] font-medium text-[#3ea6ff] bg-[#263850] hover:bg-[#2d4a6a] px-2 py-0.5 rounded transition-colors cursor-pointer min-w-[48px] text-center"
+                            title={`Jump to ${segment.timeStr}`}
+                          >
+                            {segment.timeStr}
+                          </button>
+                        ) : (
+                          <span className="flex-shrink-0 mt-[2px] min-w-[48px]" />
+                        )}
+                        <p className={`text-sm leading-relaxed ${isActive ? 'text-white' : 'text-[#d4d4d4]'}`}>
+                          {segment.text}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center text-[#aaaaaa] text-sm mt-10">
+                <p>No transcript available for this video.</p>
+                {isOwner && (
+                  <button 
+                    onClick={handleRegenerateTranscript}
+                    className="mt-4 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                  >
+                    Generate Transcript
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
