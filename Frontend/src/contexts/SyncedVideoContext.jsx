@@ -24,6 +24,7 @@ export const SyncedVideoProvider = ({ children }) => {
   const [isBuffering, setIsBuffering] = useState(false)
   
   const [isMiniPlayerActive, setIsMiniPlayerActive] = useState(false)
+  const [activePlayerType, setActivePlayerType] = useState('main') // 'main' or 'mini'
   const [miniPlayerPosition, setMiniPlayerPosition] = useState(() => {
     const defaultWidth = 1200
     const defaultHeight = 800
@@ -84,12 +85,14 @@ export const SyncedVideoProvider = ({ children }) => {
             inactivePlayer.currentTime = activePlayer.currentTime
           }
           
-          if (Math.abs(inactivePlayer.volume - activePlayer.volume) > 0.01) {
-            inactivePlayer.volume = activePlayer.volume
+          // Inactive player should ALWAYS be muted to avoid double audio issues
+          if (!inactivePlayer.muted) {
+            inactivePlayer.muted = true
           }
           
-          if (inactivePlayer.muted !== activePlayer.muted) {
-            inactivePlayer.muted = activePlayer.muted
+          // Keep volumes in sync for when we switch, but inactive is still muted
+          if (Math.abs(inactivePlayer.volume - activePlayer.volume) > 0.01) {
+            inactivePlayer.volume = activePlayer.volume
           }
           
           if (Math.abs(inactivePlayer.playbackRate - activePlayer.playbackRate) > 0.01) {
@@ -139,6 +142,7 @@ export const SyncedVideoProvider = ({ children }) => {
       const oldActiveRef = activePlayerRef.current
       
       activePlayerRef.current = newActiveRef.current
+      setActivePlayerType(playerType)
       
       const syncWhenReady = () => {
         if (newActiveRef.current && newActiveRef.current.readyState >= 2) {
@@ -151,9 +155,15 @@ export const SyncedVideoProvider = ({ children }) => {
                 newActiveRef.current.currentTime = oldActiveRef.currentTime
               }
               
-              newActiveRef.current.volume = oldActiveRef.volume
-              newActiveRef.current.muted = oldActiveRef.muted
-              newActiveRef.current.playbackRate = oldActiveRef.playbackRate
+              // New active player should have the correct audio settings
+              newActiveRef.current.volume = volume
+              newActiveRef.current.muted = isMuted
+              newActiveRef.current.playbackRate = playbackRate
+              
+              // Old active player should be muted
+              if (oldActiveRef && oldActiveRef !== newActiveRef.current) {
+                oldActiveRef.muted = true
+              }
               
               if (!oldActiveRef.paused && newActiveRef.current.paused) {
                 newActiveRef.current.play().catch((error) => {
@@ -250,11 +260,21 @@ export const SyncedVideoProvider = ({ children }) => {
     
     if (mainVideoRef.current) {
       mainVideoRef.current.volume = clampedVolume
-      mainVideoRef.current.muted = clampedVolume === 0
+      // Only unmute if it's the active player
+      if (activePlayerRef.current === mainVideoRef.current) {
+        mainVideoRef.current.muted = clampedVolume === 0 || isMuted
+      } else {
+        mainVideoRef.current.muted = true
+      }
     }
     if (miniVideoRef.current) {
       miniVideoRef.current.volume = clampedVolume
-      miniVideoRef.current.muted = clampedVolume === 0
+      // Only unmute if it's the active player
+      if (activePlayerRef.current === miniVideoRef.current) {
+        miniVideoRef.current.muted = clampedVolume === 0 || isMuted
+      } else {
+        miniVideoRef.current.muted = true
+      }
     }
   }, [])
   
@@ -263,10 +283,18 @@ export const SyncedVideoProvider = ({ children }) => {
     setIsMuted(newMutedState)
     
     if (mainVideoRef.current) {
-      mainVideoRef.current.muted = newMutedState
+      if (activePlayerRef.current === mainVideoRef.current) {
+        mainVideoRef.current.muted = newMutedState
+      } else {
+        mainVideoRef.current.muted = true
+      }
     }
     if (miniVideoRef.current) {
-      miniVideoRef.current.muted = newMutedState
+      if (activePlayerRef.current === miniVideoRef.current) {
+        miniVideoRef.current.muted = newMutedState
+      } else {
+        miniVideoRef.current.muted = true
+      }
     }
   }, [isMuted])
   
@@ -500,8 +528,12 @@ export const SyncedVideoProvider = ({ children }) => {
           videoElement.pause()
           videoElement.currentTime = 0
           videoElement.volume = volume
-          videoElement.muted = isMuted
           videoElement.playbackRate = playbackRate
+          
+          // Only unmute if it's the active player
+          const isActive = (videoElement === mainVideoRef.current && activePlayerRef.current === mainVideoRef.current) || 
+                          (videoElement === miniVideoRef.current && activePlayerRef.current === miniVideoRef.current)
+          videoElement.muted = isActive ? isMuted : true
         }
       }
       
@@ -523,8 +555,12 @@ export const SyncedVideoProvider = ({ children }) => {
       const updateVideoProperties = (videoElement) => {
         if (videoElement) {
           videoElement.volume = volume
-          videoElement.muted = isMuted
           videoElement.playbackRate = playbackRate
+          
+          // Only unmute if it's the active player
+          const isActive = (videoElement === mainVideoRef.current && activePlayerRef.current === mainVideoRef.current) || 
+                          (videoElement === miniVideoRef.current && activePlayerRef.current === miniVideoRef.current)
+          videoElement.muted = isActive ? isMuted : true
         }
       }
       
@@ -583,6 +619,7 @@ export const SyncedVideoProvider = ({ children }) => {
     mainVideoRef,
     miniVideoRef,
     activePlayerRef,
+    activePlayerType,
     
     currentPlaylist,
     playlistVideos,

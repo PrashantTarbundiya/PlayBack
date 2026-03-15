@@ -99,7 +99,7 @@ const parseTranscription = (text) => {
   return segments;
 };
 
-const TranscriptSidebar = ({ chapters, currentTime, onSeek, onClose, videoThumbnail, onShareChapter, videoId, isOwner }) => {
+const TranscriptSidebar = ({ chapters, currentTime, onSeek, onClose, videoThumbnail, onShareChapter, videoId, isOwner, className = "" }) => {
   const scrollRef = useRef(null);
   const transcriptScrollRef = useRef(null);
   const activeTranscriptRef = useRef(null);
@@ -219,7 +219,7 @@ const TranscriptSidebar = ({ chapters, currentTime, onSeek, onClose, videoThumbn
       {/* Container - Fixed Bottom Sheet on Mobile, Normal Block on Desktop */}
       <div className={`
         fixed bottom-0 left-0 right-0 h-[75vh] z-[2000] bg-[#1f1f1f] flex flex-col rounded-t-2xl transform transition-transform duration-300 shadow-[0_-10px_50px_rgba(0,0,0,0.8)]
-        lg:relative lg:inset-auto lg:z-auto lg:h-[600px] lg:rounded-xl lg:border lg:border-[#303030] lg:shadow-none lg:transform-none lg:w-full
+        lg:relative lg:inset-auto lg:z-auto lg:h-[600px] lg:rounded-xl lg:border lg:border-[#303030] lg:shadow-none lg:transform-none lg:w-full ${className}
       `}>
         <div className="flex items-center justify-between p-4 pb-2 border-b border-[#303030] lg:border-none">
         <h3 className="text-[18px] font-bold text-white tracking-wide">In this video</h3>

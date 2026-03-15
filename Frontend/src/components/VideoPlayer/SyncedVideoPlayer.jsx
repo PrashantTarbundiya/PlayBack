@@ -4,6 +4,9 @@ import { useRef, useState, useEffect, forwardRef, useImperativeHandle, useCallba
 import { Play, Pause, Volume2, VolumeX, Maximize, SkipBack, SkipForward, Settings, Minimize, RotateCcw, Gauge, PlayCircle, PictureInPicture2, Subtitles } from "lucide-react"
 import { useSyncedVideo } from "../../contexts/SyncedVideoContext"
 import { useNavigate } from 'react-router-dom';
+import TranscriptSidebar from "./TranscriptSidebar"
+import { useAuth } from "../../contexts/AuthContext"
+import toast from "react-hot-toast"
 // Shared speed options
 const speedOptions = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
 
@@ -19,6 +22,7 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, e
     isBuffering,
     mainVideoRef,
     activePlayerRef,
+    activePlayerType,
     togglePlay,
     seekTo,
     setVolumeLevel,
@@ -33,6 +37,8 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, e
     setIsBuffering,
     activateMiniPlayer
   } = useSyncedVideo()
+
+  const { user } = useAuth()
   
   const containerRef = useRef(null)
   const controlsTimeoutRef = useRef(null)
@@ -54,6 +60,7 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, e
   const [isMobile, setIsMobile] = useState(false)
   const [isSeeking, setIsSeeking] = useState(false)
   const [captionsEnabled, setCaptionsEnabled] = useState(false)
+  const [showFullscreenSidebar, setShowFullscreenSidebar] = useState(false)
 
   // Hover Preview State
   const [hoverTime, setHoverTime] = useState(0)
@@ -680,6 +687,8 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, e
       tabIndex={0}
       data-main-video-player
     >
+      <div className={`flex w-full h-full ${isFullscreen ? 'bg-black' : ''}`}>
+        <div className="flex-1 relative overflow-hidden flex flex-col items-center justify-center">
       {/* End Screen Overlay */}
       {isEndScreenVisible && endScreenVideos.length > 0 && (
         <div 
@@ -809,6 +818,7 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, e
         loop={isLoop}
         playsInline
         autoPlay={false}
+        muted={isMuted || activePlayerType !== 'main'}
         onError={(e) => {
           if (e.target.src !== "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4") {
             e.target.src = "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4"
@@ -816,7 +826,6 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, e
         }}
       />
 
-      {/* Buffering indicator */}
       {isBuffering && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/50">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-white border-t-transparent"></div>
@@ -1311,7 +1320,7 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, e
               {/* "In this video" Chapter Pill */}
               {chapters && chapters.length > 0 && (
                 <button 
-                  onClick={onChapterPillClick}
+                  onClick={isFullscreen ? () => setShowFullscreenSidebar(prev => !prev) : onChapterPillClick}
                   className={`hidden md:flex items-center gap-1.5 bg-white/10 hover:bg-white/20 transition-colors rounded-full text-white font-medium px-3 py-1.5 ${isFullscreen ? 'text-sm' : 'text-xs'}`}
                 >
                   In this video
@@ -1529,7 +1538,46 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, e
           </div>
         </div>
       </div>
-      )}
+    )}
+  </div>
+
+        {/* Fullscreen Sidebar (Integrated, not overlay) */}
+        {showFullscreenSidebar && isFullscreen && (
+          <div 
+            className="w-80 sm:w-96 h-full z-10 bg-[#0f0f0f] border-l border-white/10 flex-shrink-0 flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+            style={{ animation: 'sidebarSlideIn 0.3s ease-out' }}
+          >
+            <TranscriptSidebar
+              chapters={chapters}
+              currentTime={currentTime}
+              onSeek={(time) => {
+                if (mainVideoRef.current) {
+                  mainVideoRef.current.currentTime = time;
+                  if (isPlaying) {
+                    mainVideoRef.current.play().catch(() => {});
+                  }
+                }
+                updateCurrentTime(time);
+              }}
+              onClose={() => setShowFullscreenSidebar(false)}
+              videoThumbnail={poster}
+              onShareChapter={(time) => {
+                const baseUrl = window.location.href.split('?')[0];
+                const urlParams = new URLSearchParams(window.location.search);
+                urlParams.set('t', Math.floor(time));
+                const shareUrl = `${baseUrl}?${urlParams.toString()}`;
+                navigator.clipboard.writeText(shareUrl).then(() => {
+                  toast.success("Chapter link copied!"); 
+                });
+              }}
+              videoId={currentVideo?._id}
+              isOwner={user && (currentVideo?.owner === user?._id || currentVideo?.owner?._id === user?._id)}
+              className="!h-full !w-full !max-w-none !lg:h-full !lg:border-none !lg:shadow-none !rounded-none !static"
+            />
+          </div>
+        )}
+      </div>
 
       {/* Global styles for slider */}
       <style dangerouslySetInnerHTML={{
@@ -1560,6 +1608,10 @@ const SyncedVideoPlayer = forwardRef(({ src, poster, onVideoEnd, nextVideoSrc, e
           @keyframes endScreenSlideUp {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes sidebarSlideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
           }
         `
       }} />

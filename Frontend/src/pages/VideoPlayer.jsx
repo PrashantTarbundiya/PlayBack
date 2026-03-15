@@ -38,7 +38,8 @@ const VideoPlayer = () => {
     setCurrentVideoIndex,
     setAutoPlayNext,
     handleVideoEnd,
-    currentTime
+    currentTime,
+    updateCurrentTime
   } = useSyncedVideo()
 
   const videoRef = useRef(null)
@@ -71,6 +72,7 @@ const VideoPlayer = () => {
     if (videoRef.current) {
       videoRef.current.currentTime = timeInSeconds;
       videoRef.current.play().catch(() => { });
+      updateCurrentTime(timeInSeconds);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -971,7 +973,7 @@ const VideoPlayer = () => {
               endScreenVideos={relatedVideos.filter(v => v._id !== id).slice(0, 2)}
               autoPlayEnabled={autoPlayNext}
               chapters={videoChapters}
-              onChapterPillClick={() => setShowTranscript(true)}
+              onChapterPillClick={() => setShowTranscript(prev => !prev)}
               onError={(e) => {
                 toast.remove()
                 toast.error(`Video failed to load: ${getVideoUrl() || 'No video URL found'}. Please check if the video file exists and is accessible.`);

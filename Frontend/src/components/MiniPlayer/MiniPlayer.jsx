@@ -15,6 +15,7 @@ const MiniPlayer = () => {
     volume,
     isMuted,
     isMiniPlayerActive,
+    activePlayerType,
     miniPlayerPosition,
     miniPlayerSize,
     isDragging,
@@ -487,7 +488,7 @@ const MiniPlayer = () => {
               className="w-full h-full object-cover rounded-t-xl"
               controls={false}
               playsInline
-              muted={isMuted}
+
               onTimeUpdate={handleVideoTimeUpdate}
               onEnded={handleVideoEnd}
               onLoadedData={handleVideoLoadedData}
@@ -497,6 +498,7 @@ const MiniPlayer = () => {
               onPause={handleVideoPause}
               onLoadStart={() => setIsVideoReady(false)}
               onClick={handleVideoClick}
+              muted={isMuted || activePlayerType !== 'mini'}
               preload="metadata"
             />
             
@@ -629,7 +631,6 @@ const MiniPlayer = () => {
             className="w-full h-full object-cover rounded-xl"
             controls={false}
             playsInline
-            muted={isMuted}
             onTimeUpdate={handleVideoTimeUpdate}
             onEnded={handleVideoEnd}
             onLoadedData={handleVideoLoadedData}
@@ -638,6 +639,7 @@ const MiniPlayer = () => {
             onPlay={handleVideoPlay}
             onPause={handleVideoPause}
             onLoadStart={() => setIsVideoReady(false)}
+            muted={isMuted || activePlayerType !== 'mini'}
             preload="metadata"
           />
           
